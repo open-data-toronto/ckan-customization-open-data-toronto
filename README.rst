@@ -8,10 +8,6 @@ CKAN extension to create custom fields for City of Toronto Open Data Portal
 Installation
 ------------
 
-.. Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
-
 To install ckanext-updateschema:
 
 1. Activate your CKAN virtual environment, for example::
@@ -22,9 +18,7 @@ To install ckanext-updateschema:
 
      pip install ckanext-updateschema
 
-3. Add ``updateschema`` to the ``ckan.plugins`` setting in your CKAN
-   config file (by default the config file is located at
-   ``/etc/ckan/default/production.ini``).
+3. Add ``updateschema`` to the ``ckan.plugins`` setting in your CKAN config file (by default the config file is located at ``/etc/ckan/default/production.ini``).
 
 4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
