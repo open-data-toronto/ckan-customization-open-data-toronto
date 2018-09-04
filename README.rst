@@ -2,10 +2,6 @@
 ckanext-updateschema
 =============
 
-------------
-Requirements
-------------
-
 CKAN extension to create custom fields for City of Toronto Open Data Portal
 
 ------------
