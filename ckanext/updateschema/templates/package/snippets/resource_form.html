@@ -5,8 +5,16 @@
   {{ super() }}
 
   {{ form.input('explore_url', label=_('Explore URL'), id='field-explore_url', placeholder=_('Explore URL'), value=data.explore_url, error=errors.explore_url, classes=['control-medium']) }}
-  {{ form.input('file_type', label=_('File Type'), id='field-file_type', placeholder=_('File Type'), value=data.file_type, error=errors.file_type, classes=['control-medium']) }}
-  {{ form.input('preview_data', label=_('Preview Data'), id='field-preview_data', placeholder=_('Preview Data'), value=data.preview_data, error=errors.preview_data, classes=['control-medium']) }}
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-file_type">File Type*</label>
+    <div class="controls">
+      <select id="field-file_type" name="file_type" data-module="autocomplete">
+        {% for file_type in ['Secondary data', 'Primary data', 'ReadMe']  %}
+        <option value="{{ file_type }}" {% if file_type in data.get('file_type', []) %}selected="selected"{% endif %}>{{ file_type }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>  {{ form.input('preview_data', label=_('Preview Data'), id='field-preview_data', placeholder=_('Preview Data'), value=data.preview_data, error=errors.preview_data, classes=['control-medium']) }}
   {{ form.input('columns', label=_('Columns'), id='field-columns', placeholder=_('Columns'), value=data.columns, error=errors.columns, classes=['control-medium']) }}
   {{ form.input('rows', label=_('Rows'), id='field-rows', placeholder=_('Rows'), value=data.rows, error=errors.rows, classes=['control-medium']) }}
   {{ form.input('extract_job', label=_('Extract Job'), id='field-extract_job_id', placeholder=_('Extract Job'), value=data.extract_job, error=errors.extract_job, classes=['control-medium']) }}
