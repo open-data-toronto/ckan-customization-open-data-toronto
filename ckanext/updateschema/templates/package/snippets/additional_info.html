@@ -49,16 +49,16 @@
     <td class="dataset-details">{{ pkg_dict.refresh_rate }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.privacy_review %}
+  {% if pkg_dict.require_legal %}
   <tr>
-    <th scope="row" class="dataset-label">{{ _("Privacy Review") }}</th>
-    <td class="dataset-details">{{ pkg_dict.privacy_review }}</td>
+    <th scope="row" class="dataset-label">{{ _("Require Legal Review") }}</th>
+    <td class="dataset-details">{{ pkg_dict.require_legal }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.legal_risks %}
+  {% if pkg_dict.require_privacy %}
   <tr>
-    <th scope="row" class="dataset-label">{{ _("Legal Risks") }}</th>
-    <td class="dataset-details">{{ pkg_dict.legal_risks }}</td>
+    <th scope="row" class="dataset-label">{{ _("Require Privacy Review") }}</th>
+    <td class="dataset-details">{{ pkg_dict.require_privacy }}</td>
   </tr>
   {% endif %}
   {% if pkg_dict.approved_by %}

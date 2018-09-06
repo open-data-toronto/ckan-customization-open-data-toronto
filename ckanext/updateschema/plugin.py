@@ -63,8 +63,8 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             'dataset_category': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'pipeline_stage': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'refresh_rate': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
-            'privacy_review': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
-            'legal_risks': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'require_legal': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'require_privacy': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             # Dataset division info
             'approved_by': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'approved_date': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],

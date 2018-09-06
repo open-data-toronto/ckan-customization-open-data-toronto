@@ -12,8 +12,8 @@
   {{ form.input('dataset_category', label=_('Dataset Category'), id='field-dataset_category', placeholder=_('Dataset Category'), value=data.dataset_category, error=errors.dataset_category, classes=['control-medium']) }}
   {{ form.input('pipeline_stage', label=_('Pipeline Stage'), id='field-pipeline_stage', placeholder=_('Pipeline Stage'), value=data.pipeline_stage, error=errors.pipeline_stage, classes=['control-medium']) }}
   {{ form.input('refresh_rate', label=_('Refresh Rate'), id='field-refresh_rate', placeholder=_('Refresh Rate'), value=data.refresh_rate, error=errors.refresh_rate, classes=['control-medium']) }}
-  {{ form.input('privacy_review', label=_('Privacy Review'), id='field-privacy_review', placeholder=_('Privacy Review'), value=data.privacy_review, error=errors.privacy_review, classes=['control-medium']) }}
-  {{ form.input('legal_risks', label=_('Legal Risks'), id='field-legal_risks', placeholder=_('Legal Risks'), value=data.legal_risks, error=errors.legal_risks, classes=['control-medium']) }}
+  {{ form.input('require_legal', label=_('Require Legal Review'), id='field-require_legal', placeholder=_('Require Legal Review'), value=data.require_legal, error=errors.require_legal, classes=['control-medium']) }}
+  {{ form.input('require_privacy', label=_('Require Privacy Review'), id='field-require_privacy', placeholder=_('Require Privacy Review'), value=data.require_privacy, error=errors.require_privacy, classes=['control-medium']) }}
   <hr/>
   <h2>Dataset Owner Info</h2>
   {{ form.input('approved_by', label=_('Approver Name'), id='field-approved_by', placeholder=_('eg. John Smith'), value=data.approved_by, error=errors.approved_by, classes=['control-medium']) }}
