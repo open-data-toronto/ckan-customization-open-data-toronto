@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
@@ -9,32 +7,36 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def _modify_package_schema(self, schema):
         schema.update({
-            u"collection_method": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"excerpt": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"limitations": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"refresh_rate": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"information_url": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"owner_type": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"owner_division": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"owner_section": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"owner_unit": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"owner_email": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"image_url": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"approved_by": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"source_type": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"extraction_details": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"pipeline_stage": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"published_date": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"dataset_category": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"preview_data": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")],
-            u"primary_resource": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing"), tk.get_converter(u"convert_to_extras")]
+            # General dataset info (dropdown)
+            'dataset_category': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'refresh_rate': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'pipeline_stage': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            # General dataset info (inputs)
+            'collection_method': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'excerpt': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'information_url': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'limitations': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'published_date': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            # Dataset division info
+            'approved_by': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'approved_date': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'owner_type': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'owner_division': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'owner_section': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'owner_unit': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'owner_email': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            # Internal CKAN/WP fields
+            'image_url': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'primary_resource': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')]
         })
 
-        schema["resources"].update({
-            u"extract_job_id": [tk.get_validator(u"ignore_missing")],
-            u"file_type": [tk.get_validator(u"ignore_missing")],
-            u"shape": [tk.get_validator(u"ignore_missing")],
-            u"explore_url": [tk.get_validator(u"ignore_missing")]
+        schema['resources'].update({
+            'explore_url': [tk.get_validator('ignore_missing')]
+            'file_type': [tk.get_validator('ignore_missing')],
+            'preview_data': [tk.get_validator('ignore_missing')],
+            'columns': [tk.get_validator('ignore_missing')],
+            'rows': [tk.get_validator('ignore_missing')],
+            'extract_job_id': [tk.get_validator('ignore_missing')],
         })
         return schema
 
@@ -51,32 +53,36 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def show_package_schema(self):
         schema = super(UpdateschemaPlugin, self).show_package_schema()
         schema.update({
-            u"collection_method": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"excerpt": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"limitations": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"refresh_rate": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"information_url": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"owner_type": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"owner_division": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"owner_section": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"owner_unit": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"owner_email": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"image_url": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"approved_by": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"source_type": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"extraction_details": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"pipeline_stage": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"published_date": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"dataset_category": [tk.get_converter(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"preview_data": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing")],
-            u"primary_resource": [tk.get_validator(u"convert_from_extras"), tk.get_validator(u"ignore_missing")]
+            # General dataset info (dropdown)
+            'dataset_category': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'refresh_rate': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'pipeline_stage': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            # General dataset info (inputs)
+            'collection_method': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'excerpt': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'information_url': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'limitations': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'published_date': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            # Dataset division info
+            'approved_by': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'approved_date': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'owner_type': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'owner_division': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'owner_section': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'owner_unit': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'owner_email': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            # Internal CKAN/WP fields
+            'image_url': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'primary_resource': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')]
         })
 
-        schema["resources"].update({
-            u"extract_job_id": [tk.get_validator(u"ignore_missing")],
-            u"file_type": [tk.get_validator(u"ignore_missing")],
-            u"shape": [tk.get_validator(u"ignore_missing")],
-            u"explore_url": [tk.get_validator(u"ignore_missing")]
+        schema['resources'].update({
+            'explore_url': [tk.get_validator('ignore_missing')]
+            'file_type': [tk.get_validator('ignore_missing')],
+            'preview_data': [tk.get_validator('ignore_missing')],
+            'columns': [tk.get_validator('ignore_missing')],
+            'rows': [tk.get_validator('ignore_missing')],
+            'extract_job': [tk.get_validator('ignore_missing')],
         })
         return schema
 
@@ -86,11 +92,11 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return True
 
     def package_types(self):
-        # This plugin doesn"t handle any special package types, it just
+        # This plugin doesn't handle any special package types, it just
         # registers itself as the default (above).
         return []
 
     def update_config(self, config):
-        # Add this plugin"s templates dir to CKAN"s extra_template_paths, so
-        # that CKAN will use this plugin"s custom templates.
-        tk.add_template_directory(config, "templates")
+        # Add this plugin's templates dir to CKAN's extra_template_paths, so
+        # that CKAN will use this plugin's custom templates.
+        tk.add_template_directory(config, 'templates')
