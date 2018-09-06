@@ -1,24 +1,6 @@
 {% ckan_extends %}
 
 {% block extras %}
-  {% if pkg_dict.dataset_category %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Dataset Category") }}</th>
-      <td class="dataset-details">{{ pkg_dict.dataset_category }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.refresh_rate %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Refresh Rate") }}</th>
-      <td class="dataset-details">{{ pkg_dict.refresh_rate }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.pipeline_stage %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Pipeline Stage") }}</th>
-      <td class="dataset-details">{{ pkg_dict.pipeline_stage }}</td>
-    </tr>
-  {% endif %}
   {% if pkg_dict.collection_method %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
@@ -48,6 +30,36 @@
       <th scope="row" class="dataset-label">{{ _("Published Date") }}</th>
       <td class="dataset-details">{{ pkg_dict.published_date }}</td>
     </tr>
+  {% endif %}
+  {% if pkg_dict.dataset_category %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Dataset Category") }}</th>
+    <td class="dataset-details">{{ pkg_dict.dataset_category }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.pipeline_stage %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Pipeline Stage") }}</th>
+    <td class="dataset-details">{{ pkg_dict.pipeline_stage }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.refresh_rate %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Refresh Rate") }}</th>
+    <td class="dataset-details">{{ pkg_dict.refresh_rate }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.privacy_review %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Privacy Review") }}</th>
+    <td class="dataset-details">{{ pkg_dict.privacy_review }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.legal_risks %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Legal Risks") }}</th>
+    <td class="dataset-details">{{ pkg_dict.legal_risks }}</td>
+  </tr>
   {% endif %}
   {% if pkg_dict.approved_by %}
     <tr>
