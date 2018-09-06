@@ -6,7 +6,7 @@
   <h2>General Dataset Info</h2>
   {{ form.input('collection_method', label=_('Collection Method'), id='field-collection_method', placeholder=_('eg. This dataset was collected by...'), value=data.collection_method, error=errors.collection_method, classes=['control-medium']) }}
   <div class="form-group control-medium">
-    <label class="control-label" for="field-excerpt">Dataset Excerpt<span class="text-danger">*</span></label>
+    <label class="control-label" for="field-excerpt">Dataset Excerpt<span class="text-danger"> *</span></label>
     <div class="controls">
       <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">{{ data.get('excerpt', '') }}</textarea>
     </div>
@@ -15,7 +15,7 @@
   {{ form.input('limitations', label=_('Limitations'), id='field-limitations', placeholder=_('eg. This dataset is missing values from...'), value=data.limitations, error=errors.limitations, classes=['control-medium']) }}
   {{ form.input('published_date', label=_('Published Date'), id='field-published_date', placeholder=_('Format: YYYY-MM-DD'), value=data.published_date, error=errors.published_date, classes=['control-medium']) }}
   <div class="form-group control-medium">
-    <label class="control-label" for="field-dataset_category">Dataset Category<span class="text-danger">*</span></label>
+    <label class="control-label" for="field-dataset_category">Dataset Category<span class="text-danger"> *</span></label>
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
         {% for dataset_category in ['Tabular', 'Geospatial', 'Object']  %}
@@ -25,7 +25,7 @@
     </div>
   </div>
   <div class="form-group control-medium">
-    <label class="control-label" for="field-pipeline_stage">Pipeline Stage<span class="text-danger">*</span></label>
+    <label class="control-label" for="field-pipeline_stage">Pipeline Stage<span class="text-danger"> *</span></label>
     <div class="controls">
       <select id="field-pipeline_stage" name="pipeline_stage" data-module="autocomplete">
         {% for pipeline_stage in ['Identification', 'Initiation', 'Preparation', 'Assessment', 'Validation', 'Publication']  %}
@@ -35,7 +35,7 @@
     </div>
   </div>
   <div class="form-group control-medium">
-    <label class="control-label" for="field-refresh_rate">Refresh Rate<span class="text-danger">*</span></label>
+    <label class="control-label" for="field-refresh_rate">Refresh Rate<span class="text-danger"> *</span></label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
         {% for refresh_rate in ['', 'Real-time', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Semi-annually', 'Annually', 'As available']  %}
@@ -44,8 +44,24 @@
       </select>
     </div>
   </div>
-  {{ form.input('require_legal', label=_('Require Legal Review'), id='field-require_legal', placeholder=_('Require Legal Review'), value=data.require_legal, error=errors.require_legal, classes=['control-medium']) }}
-  {{ form.input('require_privacy', label=_('Require Privacy Review'), id='field-require_privacy', placeholder=_('Require Privacy Review'), value=data.require_privacy, error=errors.require_privacy, classes=['control-medium']) }}
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-require_legal">Legal Review<span class="text-danger"> *</span></label>
+    <div class="controls">
+      <select id="field-require_legal" name="require_legal" data-module="autocomplete">
+        <option value="False" {% if "False" in data.get('require_legal', []) %}selected="selected"{% endif %}>Not Required</option>
+        <option value="True" {% if "True" in data.get('require_legal', []) %}selected="selected"{% endif %}>Required</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-require_privacy">Privacy Review<span class="text-danger"> *</span></label>
+    <div class="controls">
+      <select id="field-require_privacy" name="require_privacy" data-module="autocomplete">
+        <option value="False" {% if "False" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Not Required</option>
+        <option value="True" {% if "True" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Required</option>
+      </select>
+    </div>
+  </div>
   <hr/>
   <h2>Dataset Owner Info</h2>
   <div class="form-group control-medium">
