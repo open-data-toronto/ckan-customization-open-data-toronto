@@ -48,8 +48,8 @@
     <label class="control-label" for="field-require_legal">Legal Review<span class="text-danger"> *</span></label>
     <div class="controls">
       <select id="field-require_legal" name="require_legal" data-module="autocomplete">
-        <option value="False" {% if "False" in data.get('require_legal', []) %}selected="selected"{% endif %}>Not Required</option>
-        <option value="True" {% if "True" in data.get('require_legal', []) %}selected="selected"{% endif %}>Required</option>
+        <option value="false" {% if "false" in data.get('require_legal', []) %}selected="selected"{% endif %}>Not Required</option>
+        <option value="true" {% if "true" in data.get('require_legal', []) %}selected="selected"{% endif %}>Required</option>
       </select>
     </div>
   </div>
@@ -57,8 +57,8 @@
     <label class="control-label" for="field-require_privacy">Privacy Review<span class="text-danger"> *</span></label>
     <div class="controls">
       <select id="field-require_privacy" name="require_privacy" data-module="autocomplete">
-        <option value="False" {% if "False" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Not Required</option>
-        <option value="True" {% if "True" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Required</option>
+        <option value="false" {% if "false" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Not Required</option>
+        <option value="true" {% if "true" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Required</option>
       </select>
     </div>
   </div>
