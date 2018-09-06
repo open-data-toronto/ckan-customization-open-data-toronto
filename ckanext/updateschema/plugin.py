@@ -7,19 +7,21 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def _modify_package_schema(self, schema):
         schema.update({
-            # General dataset info (dropdown)
-            'dataset_category': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'refresh_rate': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'pipeline_stage': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
             # General dataset info (inputs)
             'collection_method': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'excerpt': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'information_url': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'excerpt': [self.validate_string_length, tk.get_converter('convert_to_extras')],
+            'information_url': [tk.get_converter('convert_to_extras')],
             'limitations': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'published_date': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'published_date': [self.validate_date, tk.get_converter('convert_to_extras')],
+            # General dataset info (dropdowns)
+            'dataset_category': [tk.get_converter('convert_to_extras')],
+            'pipeline_stage': [tk.get_converter('convert_to_extras')],
+            'refresh_rate': [tk.get_converter('convert_to_extras')],
+            'require_legal': [tk.get_converter('convert_to_extras')],
+            'require_privacy': [tk.get_converter('convert_to_extras')],
             # Dataset division info
             'approved_by': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
-            'approved_date': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
+            'approved_date': [self.validate_date, tk.get_converter('convert_to_extras')],
             'owner_type': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
             'owner_division': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
             'owner_section': [tk.get_validator('ignore_missing'), tk.get_converter('convert_to_extras')],
@@ -36,7 +38,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             'preview_data': [tk.get_validator('ignore_missing')],
             'columns': [tk.get_validator('ignore_missing')],
             'rows': [tk.get_validator('ignore_missing')],
-            'extract_job_id': [tk.get_validator('ignore_missing')]
+            'extract_job': [tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -103,16 +105,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
 
-    # Custom validators for specific types
-
-    def validate_boolean(self, value, context):
-        if isinstance(value, bool) or value == '':
-            return value
-
-        if value.lower() in ['true', 'false']:
-            return value.lower() == 'true'
-
-        raise tk.Invalid('Please provide True or False')
+    # Custom validators
 
     def validate_date(self, value, context):
         if isinstance(value, dt.datetime) or value == '':
@@ -124,10 +117,9 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         except (TypeError, ValueError) as e:
             raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
-    # Custom validators for specific fields
-    def validate_excerpt(self, value, context):
-        if not value:
-            raise tk.Invalid('Field required')
+    def validate_string_length(self, value, context):
+        if not len(value):
+            raise tk.Invalid('Input required')
         if len(value) > 350:
-            raise tk.Invalid('Excerpt exceed 350 character limits')
+            raise tk.Invalid('Input exceed 350 character limits')
         return value
