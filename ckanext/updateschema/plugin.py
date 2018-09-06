@@ -31,12 +31,12 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         })
 
         schema['resources'].update({
-            'explore_url': [tk.get_validator('ignore_missing')]
+            'explore_url': [tk.get_validator('ignore_missing')],
             'file_type': [tk.get_validator('ignore_missing')],
             'preview_data': [tk.get_validator('ignore_missing')],
             'columns': [tk.get_validator('ignore_missing')],
             'rows': [tk.get_validator('ignore_missing')],
-            'extract_job_id': [tk.get_validator('ignore_missing')],
+            'extract_job_id': [tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -53,16 +53,18 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def show_package_schema(self):
         schema = super(UpdateschemaPlugin, self).show_package_schema()
         schema.update({
-            # General dataset info (dropdown)
-            'dataset_category': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
-            'refresh_rate': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
-            'pipeline_stage': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
-            # General dataset info (inputs)
+            # Dataset info (inputs)
             'collection_method': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'excerpt': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'information_url': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'limitations': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'published_date': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            # Dataset info (dropdowns)
+            'dataset_category': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'pipeline_stage': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'refresh_rate': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'privacy_review': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
+            'legal_risks': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             # Dataset division info
             'approved_by': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
             'approved_date': [tk.get_converter('convert_from_extras'), tk.get_validator('ignore_missing')],
@@ -77,12 +79,12 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         })
 
         schema['resources'].update({
-            'explore_url': [tk.get_validator('ignore_missing')]
+            'explore_url': [tk.get_validator('ignore_missing')],
             'file_type': [tk.get_validator('ignore_missing')],
             'preview_data': [tk.get_validator('ignore_missing')],
             'columns': [tk.get_validator('ignore_missing')],
             'rows': [tk.get_validator('ignore_missing')],
-            'extract_job': [tk.get_validator('ignore_missing')],
+            'extract_job': [tk.get_validator('ignore_missing')]
         })
         return schema
 
@@ -100,3 +102,32 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
+
+    # Custom validators for specific types
+
+    def validate_boolean(self, value, context):
+        if isinstance(value, bool) or value == '':
+            return value
+
+        if value.lower() in ['true', 'false']:
+            return value.lower() == 'true'
+
+        raise tk.Invalid('Please provide True or False')
+
+    def validate_date(self, value, context):
+        if isinstance(value, dt.datetime) or value == '':
+            return value
+
+        try:
+            date = h.date_str_to_datetime(value)
+            return date
+        except (TypeError, ValueError) as e:
+            raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
+
+    # Custom validators for specific fields
+    def validate_excerpt(self, value, context):
+        if not value:
+            raise tk.Invalid('Field required')
+        if len(value) > 350:
+            raise tk.Invalid('Excerpt exceed 350 character limits')
+        return value

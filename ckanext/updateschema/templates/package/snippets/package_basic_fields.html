@@ -2,14 +2,20 @@
 
 {% block package_basic_fields_custom %}
 
-  {{ form.input('dataset_category', label=_('Dataset Category'), id='field-dataset_category', placeholder=_('Dataset Category'), value=data.dataset_category, error=errors.dataset_category, classes=['control-medium']) }}
-  {{ form.input('refresh_rate', label=_('Refresh Rate'), id='field-refresh_rate', placeholder=_('Refresh Rate'), value=data.refresh_rate, error=errors.refresh_rate, classes=['control-medium']) }}
-  {{ form.input('pipeline_stage', label=_('Pipeline Stage'), id='field-pipeline_stage', placeholder=_('Pipeline Stage'), value=data.pipeline_stage, error=errors.pipeline_stage, classes=['control-medium']) }}
+  <hr/>
+  <h2>General Dataset Info</h2>
   {{ form.input('collection_method', label=_('Collection Method'), id='field-collection_method', placeholder=_('eg. This dataset was collected by...'), value=data.collection_method, error=errors.collection_method, classes=['control-medium']) }}
   {{ form.input('excerpt', label=_('Excerpt'), id='field-excerpt', placeholder=_('eg. This dataset contains...'), value=data.excerpt, error=errors.excerpt, classes=['control-medium']) }}
   {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
   {{ form.input('limitations', label=_('Limitations'), id='field-limitations', placeholder=_('eg. This dataset is missing values from...'), value=data.limitations, error=errors.limitations, classes=['control-medium']) }}
   {{ form.input('published_date', label=_('Published Date'), id='field-published_date', placeholder=_('Format: YYYY-MM-DD'), value=data.published_date, error=errors.published_date, classes=['control-medium']) }}
+  {{ form.input('dataset_category', label=_('Dataset Category'), id='field-dataset_category', placeholder=_('Dataset Category'), value=data.dataset_category, error=errors.dataset_category, classes=['control-medium']) }}
+  {{ form.input('pipeline_stage', label=_('Pipeline Stage'), id='field-pipeline_stage', placeholder=_('Pipeline Stage'), value=data.pipeline_stage, error=errors.pipeline_stage, classes=['control-medium']) }}
+  {{ form.input('refresh_rate', label=_('Refresh Rate'), id='field-refresh_rate', placeholder=_('Refresh Rate'), value=data.refresh_rate, error=errors.refresh_rate, classes=['control-medium']) }}
+  {{ form.input('privacy_review', label=_('Privacy Review'), id='field-privacy_review', placeholder=_('Privacy Review'), value=data.privacy_review, error=errors.privacy_review, classes=['control-medium']) }}
+  {{ form.input('legal_risks', label=_('Legal Risks'), id='field-legal_risks', placeholder=_('Legal Risks'), value=data.legal_risks, error=errors.legal_risks, classes=['control-medium']) }}
+  <hr/>
+  <h2>Dataset Owner Info</h2>
   {{ form.input('approved_by', label=_('Approver Name'), id='field-approved_by', placeholder=_('eg. John Smith'), value=data.approved_by, error=errors.approved_by, classes=['control-medium']) }}
   {{ form.input('approved_date', label=_('Approved Date'), id='field-approved_date', placeholder=_('Format: YYYY-MM-DD'), value=data.approved_date, error=errors.approved_date, classes=['control-medium']) }}
   {{ form.input('owner_type', label=_('Owner Type'), id='field-owner_type', placeholder=_('eg. Official'), value=data.owner_type, error=errors.owner_type, classes=['control-medium']) }}
@@ -17,7 +23,11 @@
   {{ form.input('owner_section', label=_('Owner Section'), id='field-owner_section', placeholder=_('eg. Traffic Management Centre'), value=data.owner_section, error=errors.owner_section, classes=['control-medium']) }}
   {{ form.input('owner_unit', label=_('Owner Unit'), id='field-owner_unit', placeholder=_('eg. Traffic Safety Unit'), value=data.owner_unit, error=errors.owner_unit, classes=['control-medium']) }}
   {{ form.input('owner_email', label=_('Owner Email'), id='field-owner_email', placeholder=_('eg. opendata@toronto.ca'), value=data.owner_email, error=errors.owner_email, classes=['control-medium']) }}
+  <hr/>
+  <h2>Internal CKAN/WP Fields</h2>
   {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
   {{ form.input('primary_resource', label=_('Primary Resource ID'), id='field-primary_resource', placeholder=_('Blank'), value=data.primary_resource, error=errors.primary_resource, classes=['control-medium']) }}
+  <hr/>
+  <h2>Default CKAN Fields</h2>
 
 {% endblock %}
