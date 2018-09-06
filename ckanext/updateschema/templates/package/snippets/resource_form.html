@@ -6,7 +6,7 @@
 
   {{ form.input('explore_url', label=_('Explore URL'), id='field-explore_url', placeholder=_('Explore URL'), value=data.explore_url, error=errors.explore_url, classes=['control-medium']) }}
   <div class="form-group control-medium">
-    <label class="control-label" for="field-file_type">File Type<span class="text-danger"> *</span></label>
+    <label class="control-label" for="field-file_type"><span class="text-danger">* </span>File Type</label>
     <div class="controls">
       <select id="field-file_type" name="file_type" data-module="autocomplete">
         {% for file_type in ['Secondary data', 'Primary data', 'ReadMe']  %}
