@@ -39,7 +39,6 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema['resources'].update({
             'explore_url': [tk.get_validator('ignore_missing')],
             'file_type': [tk.get_validator('ignore_missing')],
-            'preview_data': [tk.get_validator('ignore_missing')],
             'columns': [tk.get_validator('ignore_missing')],
             'rows': [tk.get_validator('ignore_missing')],
             'extract_job': [tk.get_validator('ignore_missing')]
@@ -87,7 +86,6 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema['resources'].update({
             'explore_url': [tk.get_validator('ignore_missing')],
             'file_type': [tk.get_validator('ignore_missing')],
-            'preview_data': [tk.get_validator('ignore_missing')],
             'columns': [tk.get_validator('ignore_missing')],
             'rows': [tk.get_validator('ignore_missing')],
             'extract_job': [tk.get_validator('ignore_missing')]
