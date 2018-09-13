@@ -130,7 +130,8 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             'owner_email': [tk.get_validator('ignore_missing')],
             # Internal CKAN/WP fields
             'image_url': [tk.get_validator('ignore_missing')],
-            'primary_resource': [tk.get_validator('ignore_missing')]
+            'primary_resource': [tk.get_validator('ignore_missing')],
+            'resource_formats': [tk.get_validators('ignore_missing')]
         }
 
         for key, value in schema.items():
