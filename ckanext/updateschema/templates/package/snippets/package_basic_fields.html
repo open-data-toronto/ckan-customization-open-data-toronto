@@ -83,7 +83,7 @@
   <hr/>
   <h2 class="text-info">Internal CKAN/WP Fields</h2>
   {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
-  <!-- {{ form.input('primary_resource', label=_('Primary Resource ID'), id='field-primary_resource', placeholder=_('Blank'), value=data.primary_resource, error=errors.primary_resource, classes=['control-medium']) }} -->
+  {{ form.input('primary_resource', label=_('Primary Resource'), id='field-primary_resource', placeholder=_('Blank'), value=data.primary_resource, error=errors.primary_resource, classes=['control-medium']) }}
   {{ form.input('resource_formats', label=_('Resource Formats'), id='field-resource_formats', placeholder=_('Blank'), value=data.resource_formats, error=errors.resource_formats, classes=['control-medium']) }}
   <hr/>
   <h2 class="text-info">Default CKAN Fields</h2>
