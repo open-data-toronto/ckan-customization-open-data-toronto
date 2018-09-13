@@ -17,6 +17,28 @@ def download_resource(context, data_dict):
 
     return records
 
+def create_country_codes():
+    user = tk.get_action('get_site_user')({'ignore_auth': True}, {})
+    context = {'user': user['name']}
+    try:
+        data = {'id': 'country_codes'}
+        tk.get_action('vocabulary_show')(context, data)
+    except tk.ObjectNotFound:
+        data = {'name': 'country_codes'}
+        vocab = tk.get_action('vocabulary_create')(context, data)
+        for tag in (u'uk', u'ie', u'de', u'fr', u'es'):
+            data = {'name': tag, 'vocabulary_id': vocab['id']}
+            tk.get_action('tag_create')(context, data)
+
+def country_codes():
+    create_country_codes()
+    try:
+        tag_list = tk.get_action('tag_list')
+        country_codes = tag_list(data_dict={'vocabulary_id': 'country_codes'})
+        return country_codes
+    except tk.ObjectNotFound:
+        return None
+
 class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IActions)
     p.implements(p.IConfigurer)
@@ -193,25 +215,3 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         if len(value) > 350:
             raise tk.Invalid('Input exceed 350 character limits')
         return value
-
-    def create_country_codes():
-        user = tk.get_action('get_site_user')({'ignore_auth': True}, {})
-        context = {'user': user['name']}
-        try:
-            data = {'id': 'country_codes'}
-            tk.get_action('vocabulary_show')(context, data)
-        except tk.ObjectNotFound:
-            data = {'name': 'country_codes'}
-            vocab = tk.get_action('vocabulary_create')(context, data)
-            for tag in (u'uk', u'ie', u'de', u'fr', u'es'):
-                data = {'name': tag, 'vocabulary_id': vocab['id']}
-                tk.get_action('tag_create')(context, data)
-
-    def country_codes():
-        create_country_codes()
-        try:
-            tag_list = tk.get_action('tag_list')
-            country_codes = tag_list(data_dict={'vocabulary_id': 'country_codes'})
-            return country_codes
-        except tk.ObjectNotFound:
-            return None
