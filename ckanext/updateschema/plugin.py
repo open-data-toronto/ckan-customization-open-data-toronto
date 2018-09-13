@@ -23,6 +23,11 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController)
 
+    p.implements(p.ITemplateHelpers)
+
+    def get_helpers(self):
+        return {'country_codes': country_codes}
+
     # ==============================
     # IActions
     # ==============================
