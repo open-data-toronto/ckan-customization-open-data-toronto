@@ -176,8 +176,8 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     r['file_type'] = 'Secondary data'
                     action.update.resource_update(context, r)
 
-        data['resource_formats'] = data['resource_formats'].split(' ') if len(data['resource_formats']) else []
-        data['resource_formats'] += [resource['format']]
+        data['resource_formats'] = data['resource_formats'].lower().split(' ') if len(data['resource_formats']) else []
+        data['resource_formats'] += [resource['format'].lower()]
         data['resource_formats'] = list(set(sorted(data['resource_formats'])))
 
         action.update.package_update(context, data)
