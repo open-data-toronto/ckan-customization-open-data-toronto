@@ -166,15 +166,21 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
     def _validate_primary_resource(self, context, resource):
+        data = action.get.package_show(context, { 'id': resource['package_id'] })
+
         if resource['file_type'] == 'Primary data':
-            data = action.get.package_show(context, { 'id': resource['package_id'] })
             data['primary_resource'] = resource['id']
-            action.update.package_update(context, data)
 
             for r in data['resources']:
                 if r['id'] != resource['id'] and r['file_type'] == 'Primary data':
                     r['file_type'] = 'Secondary data'
                     action.update.resource_update(context, r)
+
+        data['resource_formats'] = data['resource_formats'].split(' ') if len(data['resource_formats']) else []
+        data['resource_formats'] += [resource['format']]
+        data['resource_formats'] = list(set(sorted(data['resource_formats'])))
+
+        action.update.package_update(context, data)
 
     def _validate_string_length(self, value, context):
         if not len(value):
