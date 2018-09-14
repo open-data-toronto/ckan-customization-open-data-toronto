@@ -14,12 +14,20 @@ To install ckanext-updateschema:
 
      . /usr/lib/ckan/default/bin/activate
 
-2. Install the ckanext-updateschema Python package into your virtual environment::
+2. Move to CKAN installation folder::
 
-     pip install ckanext-updateschema
+     cd /usr/lib/ckan/default/src
 
-3. Add ``updateschema`` to the ``ckan.plugins`` setting in your CKAN config file (by default the config file is located at ``/etc/ckan/default/production.ini``).
+3. Clone the extension from GIT::
 
-4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
+     git clone https://github.com/CityofToronto/ckan-customization-open-data-toronto.git ckanext-updateschema
+
+4. Install the ckanext-updateschema Python package into your virtual environment::
+
+     pip install -e ckanext-updateschema
+
+5. Add ``updateschema`` to the ``ckan.plugins`` setting in your CKAN config file (by default the config file is located at ``/etc/ckan/default/production.ini``).
+
+6. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
      sudo service apache2 reload

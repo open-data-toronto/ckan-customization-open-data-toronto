@@ -35,8 +35,8 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # IConfigurer
     # ==============================
 
+    # Add plugin template to CKAN templates to be shown
     def update_config(self, config):
-        # Add this plugin's templates dir to CKAN's extra_template_paths, so that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
 
     # ==============================
@@ -68,11 +68,9 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return schema
 
     def is_fallback(self):
-        # Return True to register this plugin as the default handler for package types not handled by any other IDatasetForm plugin.
         return True
 
     def package_types(self):
-        # This plugin doesn't handle any special package types, it just registers itself as the default (above).
         return []
 
     # ==============================
@@ -83,13 +81,13 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         pass
 
     def after_create(self, context, resource):
-        self._validate_primary_resource(context, resource)
+        self._update_package_fields(context, resource)
 
     def before_update(self, context, current, resource):
         pass
 
     def after_update(self, context, resource):
-        self._validate_primary_resource(context, resource)
+        self._update_package_fields(context, resource)
 
     def before_delete(self, context, resource, resources):
         pass
@@ -103,8 +101,6 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
     # Functions for modifying default CKAN behaviours
     # ==============================
-
-    # Custom package schema
 
     def _modify_package_schema(self, convert_method):
         schema = {
@@ -134,6 +130,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             'resource_formats': [tk.get_validator('ignore_missing')]
         }
 
+        # Prepend/append appropriate converter depending if creating/updating/showing schemas
         for key, value in schema.items():
             if convert_method == 'convert_to_extras':
                 schema[key].append(tk.get_converter(convert_method))
@@ -153,19 +150,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return resource
 
-    # Custom field validators and update field structure
-
-    def _validate_date(self, value, context):
-        if isinstance(value, dt.datetime) or value == '':
-            return value
-
-        try:
-            date = h.date_str_to_datetime(value)
-            return date
-        except (TypeError, ValueError) as e:
-            raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
-
-    def _validate_primary_resource(self, context, resource):
+    def _update_package_fields(self, context, resource):
         data = action.get.package_show(context, { 'id': resource['package_id'] })
 
         if resource['file_type'] == 'Primary data':
@@ -181,6 +166,16 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         data['resource_formats'] = ' '.join(list(set(sorted(data['resource_formats']))))
 
         action.update.package_update(context, data)
+
+    def _validate_date(self, value, context):
+        if isinstance(value, dt.datetime) or value == '':
+            return value
+
+        try:
+            date = h.date_str_to_datetime(value)
+            return date
+        except (TypeError, ValueError) as e:
+            raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
     def _validate_string_length(self, value, context):
         if not len(value):
