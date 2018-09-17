@@ -1,3 +1,5 @@
+import io
+
 import ckan.lib.helpers as h
 
 import ckan.plugins as p
@@ -7,29 +9,10 @@ import datetime as dt
 
 from ckan.logic import action
 
-@tk.side_effect_free
-def download_resource(context, data_dict):
-    result = tk.get_action('datastore_search')(None, { 'resource_id': data_dict['resource_id'] })
-    records = result['records']
-
-    for x in records:
-        x.pop('_id', None)
-
-    return records
-
 class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
-    p.implements(p.IActions)
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController)
-
-    # ==============================
-    # IActions
-    # ==============================
-    def get_actions(self):
-        return {
-            'download_resource': download_resource
-        }
 
     # ==============================
     # IConfigurer
