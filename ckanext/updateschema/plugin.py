@@ -145,18 +145,25 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     action.update.resource_update(context, r)
 
         data['resource_formats'] = data['resource_formats'].lower().split(' ') if len(data['resource_formats']) else []
-        data['resource_formats'] += [resource['format'].lower()]
+
+        if resource['datastore_active'] and resource['dataset_category'] == 'Tabular':
+            data['resource_formats'] += ['CSV', 'JSON', 'XML']
+        else:
+            data['resource_formats'] += [resource['format'].upper()]
+
         data['resource_formats'] = ' '.join(list(set(sorted(data['resource_formats']))))
 
         action.update.package_update(context, data)
 
     def _validate_date(self, value, context):
-        if isinstance(value, dt.datetime) or value == '':
+        if value == '':
             return value
+        elif isinstance(value, dt.datetime):
+            return value.strftime('%Y-%m-%d')
 
         try:
             date = h.date_str_to_datetime(value)
-            return date
+            return date.strftime('%Y-%m-%d')
         except (TypeError, ValueError) as e:
             raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
