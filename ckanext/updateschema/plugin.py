@@ -18,7 +18,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # IConfigurer
     # ==============================
 
-    # Add plugin template to CKAN templates to be shown
+    # Add the plugin template's directory to CKAN UI
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')
 
@@ -73,7 +73,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         self._update_package_fields(context, resource)
 
     def before_delete(self, context, resource, resources):
-        pass
+        self._update_package_fields(context, resource, True)
 
     def after_delete(self, context, resources):
         pass
@@ -133,27 +133,34 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return resource
 
-    def _update_package_fields(self, context, resource):
-        data = action.get.package_show(context, { 'id': resource['package_id'] })
+    def _update_package_fields(self, context, resource, before_delete=False):
+        package = action.get.package_show(context, { 'id': resource['package_id'] })
 
+        # Update resource formats
+        package['resource_formats'] = []
+        for r in package['resources']:
+            # When updating package before delete occurs, skip the resource being deleted
+            if before_delete and r['id'] == resource['id']:
+                continue
+
+            if resource['file_type'] == 'Primary data' and r['id'] != resource['id'] and r['file_type'] == 'Primary data':
+                r['file_type'] = 'Secondary data'
+                action.update.resource_update(context, r)
+
+            if r['datastore_active'] and r['format'].upper() == 'CSV':
+                package['resource_formats'] += ['CSV', 'JSON', 'XML']
+            else:
+                package['resource_formats'] += ['JSON', 'XML']
+            else:
+                package['resource_formats'].append(r['format'].upper())
+
+        package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
+
+        # Update primary resource ID
         if resource['file_type'] == 'Primary data':
-            data['primary_resource'] = resource['id']
+            package['primary_resource'] = resource['id']
 
-            for r in data['resources']:
-                if r['id'] != resource['id'] and r['file_type'] == 'Primary data':
-                    r['file_type'] = 'Secondary data'
-                    action.update.resource_update(context, r)
-
-        data['resource_formats'] = data['resource_formats'].upper().split(' ') if len(data['resource_formats']) else []
-
-        if resource['datastore_active'] and resource['dataset_category'] == 'Tabular':
-            data['resource_formats'] += ['CSV', 'JSON', 'XML']
-        else:
-            data['resource_formats'] += [resource['format'].upper()]
-
-        data['resource_formats'] = ' '.join(list(set(sorted(data['resource_formats']))))
-
-        action.update.package_update(context, data)
+        action.update.package_update(context, package)
 
     def _validate_date(self, value, context):
         if value == '':
