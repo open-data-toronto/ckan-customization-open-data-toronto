@@ -144,7 +144,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     r['file_type'] = 'Secondary data'
                     action.update.resource_update(context, r)
 
-        data['resource_formats'] = data['resource_formats'].lower().split(' ') if len(data['resource_formats']) else []
+        data['resource_formats'] = data['resource_formats'].upper().split(' ') if len(data['resource_formats']) else []
 
         if resource['datastore_active'] and resource['dataset_category'] == 'Tabular':
             data['resource_formats'] += ['CSV', 'JSON', 'XML']
