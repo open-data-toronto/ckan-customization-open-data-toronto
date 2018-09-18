@@ -73,7 +73,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         self._update_package_fields(context, resource)
 
     def before_delete(self, context, resource, resources):
-        self._update_package_fields(context, resource, True)
+        pass
 
     def after_delete(self, context, resources):
         pass
@@ -133,23 +133,20 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         return resource
 
-    def _update_package_fields(self, context, resource, before_delete=False):
-        package = action.get.package_show(context, { 'id': resource['package_id'] })
+    def _update_package_fields(self, context, data, after_delete=False):
+        package = action.get.package_show(context, { 'id': data['package_id'] })
 
         # Update resource formats
         package['resource_formats'] = []
-        for r in package['resources']:
-            # When updating package before delete occurs, skip the resource being deleted
-            if before_delete and r['id'] == resource['id']:
-                continue
 
-            if resource['file_type'] == 'Primary data' and r['id'] != resource['id'] and r['file_type'] == 'Primary data':
+        for r in package['resources']:
+            if data['file_type'] == 'Primary data' and r['id'] != data['id'] and r['file_type'] == 'Primary data':
                 r['file_type'] = 'Secondary data'
                 action.update.resource_update(context, r)
 
             if r['datastore_active'] and r['format'].upper() == 'CSV':
                 package['resource_formats'] += ['CSV', 'JSON', 'XML']
-            else:
+            elif r['datastore_active']:
                 package['resource_formats'] += ['JSON', 'XML']
             else:
                 package['resource_formats'].append(r['format'].upper())
@@ -157,8 +154,8 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
 
         # Update primary resource ID
-        if resource['file_type'] == 'Primary data':
-            package['primary_resource'] = resource['id']
+        if data['file_type'] == 'Primary data':
+            package['primary_resource'] = data['id']
 
         action.update.package_update(context, package)
 
