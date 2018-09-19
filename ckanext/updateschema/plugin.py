@@ -76,7 +76,7 @@ class UpdateschemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         pass
 
     def after_delete(self, context, resources):
-        pass
+        self._update_package_fields(context, resources[0])
 
     def before_show(self, resource_dict):
         return resource_dict
