@@ -10,14 +10,14 @@ import datetime as dt
 # Functions for modifying default CKAN behaviours
 # ==============================
 
-def modify_package_schema(convert_method):
-    schema = {
+def modify_package_schema(schema, convert_method):
+    schema.update({
         # General dataset info (inputs)
         'collection_method': [tk.get_validator('ignore_missing')],
-        'excerpt': [self._validate_string_length],
+        'excerpt': [validate_string_length],
         'information_url': [],
         'limitations': [tk.get_validator('ignore_missing')],
-        'published_date': [self._validate_date],
+        'published_date': [validate_date],
         # General dataset info (dropdowns)
         'dataset_category': [],
         'pipeline_stage': [],
@@ -26,7 +26,7 @@ def modify_package_schema(convert_method):
         'require_privacy': [],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
-        'approved_date': [self._validate_date],
+        'approved_date': [validate_date],
         'owner_type': [tk.get_validator('ignore_missing')],
         'owner_division': [tk.get_validator('ignore_missing')],
         'owner_section': [tk.get_validator('ignore_missing')],
@@ -36,7 +36,7 @@ def modify_package_schema(convert_method):
         'image_url': [tk.get_validator('ignore_missing')],
         'primary_resource': [tk.get_validator('ignore_missing')],
         'resource_formats': [tk.get_validator('ignore_missing')]
-    }
+    })
 
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in schema.items():
@@ -52,6 +52,8 @@ def modify_package_schema(convert_method):
         'rows': [tk.get_validator('ignore_missing')],
         'extract_job': [tk.get_validator('ignore_missing')]
     })
+    
+    return schema
 
 def update_package_fields(context, data, after_delete=False):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
@@ -99,7 +101,7 @@ def validate_string_length(value, context):
     return value
 
 class DownloadStoresPlugin(p.SingletonPlugin):
-    p.implements(p.IRoutes)
+    p.implements(p.IRoutes, inherit=True)
 
     # ==============================
     # IRoutes
@@ -135,19 +137,22 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        schema.update(modify_package_schema('convert_to_extras'))
+        # schema.update(modify_package_schema('convert_to_extras'))
+        schema = modify_package_schema(schema, 'convert_to_extras')
 
         return schema
 
     def update_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        schema.update(self._modify_package_schema('convert_to_extras'))
+        # schema.update(modify_package_schema('convert_to_extras'))
+        schema = modify_package_schema(schema, 'convert_to_extras')
 
         return schema
 
     def show_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
-        schema.update(self._modify_package_schema('convert_from_extras'))
+        # schema.update(modify_package_schema('convert_from_extras'))
+        schema = modify_package_schema('convert_from_extras')
 
         return schema
 
@@ -162,10 +167,10 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
 
     def after_create(self, context, resource):
-        self._update_package_fields(context, resource)
+        update_package_fields(context, resource)
 
     def after_update(self, context, resource):
-        self._update_package_fields(context, resource)
+        update_package_fields(context, resource)
 
     def after_delete(self, context, resources):
-        self._update_package_fields(context, resources[0])
+        update_package_fields(context, resources[0])
