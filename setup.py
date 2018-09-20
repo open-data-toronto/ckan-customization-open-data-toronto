@@ -80,7 +80,8 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points='''
         [ckan.plugins]
-        updateschema=ckanext.updateschema.plugin:UpdateschemaPlugin
+        updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
+        downloadstores=ckanext.opendata.plugin:DownloadStoresPlugin
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan
