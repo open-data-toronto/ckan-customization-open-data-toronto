@@ -11,7 +11,7 @@ import datetime as dt
 # ==============================
 
 def modify_package_schema(schema, convert_method):
-    schema.update({
+    modifications = {
         # General dataset info (inputs)
         'collection_method': [tk.get_validator('ignore_missing')],
         'excerpt': [validate_string_length],
@@ -36,16 +36,17 @@ def modify_package_schema(schema, convert_method):
         'image_url': [tk.get_validator('ignore_missing')],
         'primary_resource': [tk.get_validator('ignore_missing')],
         'resource_formats': [tk.get_validator('ignore_missing')]
-    })
+    }
 
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
-    for key, value in schema.items():
+    for key, value in modifications.items():
         if convert_method == 'convert_to_extras':
-            schema[key].append(tk.get_converter(convert_method))
+            modifications[key].append(tk.get_converter(convert_method))
         elif convert_method == 'convert_from_extras':
-            schema[key].insert(0, tk.get_converter(convert_method))
-
-    schema['resource'].update({
+            modifications[key].insert(0, tk.get_converter(convert_method))
+    
+    schema.update(modifications)
+    schema['resources'].update({
         'explore_url': [tk.get_validator('ignore_missing')],
         'file_type': [tk.get_validator('ignore_missing')],
         'columns': [tk.get_validator('ignore_missing')],
@@ -152,7 +153,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def show_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
         # schema.update(modify_package_schema('convert_from_extras'))
-        schema = modify_package_schema('convert_from_extras')
+        schema = modify_package_schema(schema, 'convert_from_extras')
 
         return schema
 
