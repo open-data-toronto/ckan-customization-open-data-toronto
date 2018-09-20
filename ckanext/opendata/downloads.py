@@ -1,5 +1,5 @@
 from ckan.lib.base import BaseController
-from ckan.plugins.toolkit import get_action
+from ckan.plugins.toolkit import get_action, response
 from contextlib import contextmanager
 
 import csv
@@ -10,7 +10,7 @@ from flask import make_response
 
 PAGINATE_BY = 32000
 
-class DownloadsController(base.BaseController):
+class DownloadsController(BaseController):
     def download_resource(self, resource_id, format):
         records_format_map = {
             'json': 'objects',
@@ -20,14 +20,13 @@ class DownloadsController(base.BaseController):
 
         resource = get_action('datastore_search')(None, {
             'resource_id': resource_id,
-            'limit': PAGINATE_BY if limit is None else min(PAGINATE_BY, lim),
-            'offset': offs,
+            'limit': PAGINATE_BY,
             'sort': '_id',
-            'records_format': records_format_map['format'],
+            'records_format': records_format_map[format],
             'include_total': 'false',  # XXX: default() is broken
         })
 
-        with start_writer(result['fields']) as wr:
+        with csv_writer(response, resource['fields']) as wr:
             records = resource['records']
             wr.write_records(records)
 
@@ -38,7 +37,7 @@ def csv_writer(response, fields, name=None):
         if name:
             response.headers['Content-disposition'] = (b'attachment; filename="{name}.csv"'.format(name=name))
 
-    csv.writer(response, encoding='utf-8').writerow(f['id'] for f in fields)
+    csv.writer(response).writerow([f['id'] for f in fields])
     yield TextWriter(response)
 
 class TextWriter(object):
