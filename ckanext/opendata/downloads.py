@@ -1,48 +1,88 @@
 from ckan.lib.base import BaseController
-from ckan.plugins.toolkit import get_action, response
-from contextlib import contextmanager
+from ckan.plugins.toolkit import get_action, request, response
 
-import csv
-import io
-import json
+from simplejson import dumps
+from xml.etree.cElementTree import Element, SubElement, ElementTree
 
-from flask import make_response
+import urllib
+
 
 PAGINATE_BY = 32000
+CONTENT_TYPE_MAP = {
+    'csv': b'text/csv; charset=utf-8',
+    'json': b'application/json; charset=utf-8',
+    'xml': b'text/xml; charset=utf-8'
+}
+
+def insert_xml_node(self, root, k, v, key_attr=None):
+    element = SubElement(root, k)
+
+    if v is None:
+        element.attrib[u'xsi:nil'] = u'true'
+    elif not isinstance(v, (list, dict)):
+        element.text = str(v)
+    else:
+        if isinstance(v, list):
+            it = enumerate(v)
+        else:
+            it = v.items()
+
+        for key, value in it:
+            insert_xml_node(element, 'value', value, key)
+
+    if key_attr is not None:
+        element.attrib['key'] = str(key_attr)
 
 class DownloadsController(BaseController):
-    def download_resource(self, resource_id, format):
+    def download_resource(self, resource_id):
+        metadata = get_action('resource_show')(None, { 'id':resource_id })
+
+        if metadata['datastore_active']:
+            self.get_datastore(metadata)
+        else:
+            self.get_filestore(metadata)
+
+    def get_datastore(self, metadata):
+        format = request.GET.get('format', 'csv').lower()
         records_format_map = {
-            'json': 'objects',
-            'xml': 'objects',
             'csv': 'csv',
+            'json': 'objects',
+            'xml': 'objects'
         }
 
         resource = get_action('datastore_search')(None, {
-            'resource_id': resource_id,
-            'limit': PAGINATE_BY,
-            'sort': '_id',
+            'resource_id': metadata['id'],
             'records_format': records_format_map[format],
-            'include_total': 'false',  # XXX: default() is broken
+            'limit': PAGINATE_BY,
+            'sort': '_id'
         })
 
-        with csv_writer(response, resource['fields']) as wr:
-            records = resource['records']
-            wr.write_records(records)
+        response.headers['Content-Type'] = CONTENT_TYPE_MAP[format]
+        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.csv"'.format(name=metadata['name']))
 
-@contextmanager
-def csv_writer(response, fields, name=None):
-    if hasattr(response, 'headers'):
-        response.headers['Content-Type'] = b'text/csv; charset=utf-8'
-        if name:
-            response.headers['Content-disposition'] = (b'attachment; filename="{name}.csv"'.format(name=name))
+        if format == 'csv':
+            response.write(','.join([f['id'] for f in resource['fields']]) + '\n')
+            response.write(resource['records'])
+        elif format == 'json':
+            response.write(dumps(resource['records'], separators=(u',', u':')))
+        elif format == 'xml':
+            response.write(b'<data>\n')
+            for r in resource['records']:
+                root = Element(u'row')
+                root.attrib[u'_id'] = str(r[u'_id'])
 
-    csv.writer(response).writerow([f['id'] for f in fields])
-    yield TextWriter(response)
+                for c in [f['id'] for f in resource['fields'][1:]]:
+                    insert_xml_node(root, c, r[c])
 
-class TextWriter(object):
-    def __init__(self, response):
-        self.response = response
+                ElementTree(root).write(response)
+                response.write(b'\n')
 
-    def write_records(self, records):
-        self.response.write(records)
+            response.write(b'</data>\n')
+
+    def get_filestore(self, metadata):
+        response.headers['Content-Type'] = CONTENT_TYPE_MAP[metadata['format'].lower()]
+        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.xml"'.format(name=metadata['name']))
+
+        content = urllib.urlopen(metadata['url'])
+        for line in content:
+            response.write(line)

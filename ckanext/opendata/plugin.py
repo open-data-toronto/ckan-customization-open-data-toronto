@@ -44,7 +44,7 @@ def modify_package_schema(schema, convert_method):
             modifications[key].append(tk.get_converter(convert_method))
         elif convert_method == 'convert_from_extras':
             modifications[key].insert(0, tk.get_converter(convert_method))
-    
+
     schema.update(modifications)
     schema['resources'].update({
         'explore_url': [tk.get_validator('ignore_missing')],
@@ -53,7 +53,7 @@ def modify_package_schema(schema, convert_method):
         'rows': [tk.get_validator('ignore_missing')],
         'extract_job': [tk.get_validator('ignore_missing')]
     })
-    
+
     return schema
 
 def update_package_fields(context, data, after_delete=False):
@@ -110,7 +110,7 @@ class DownloadStoresPlugin(p.SingletonPlugin):
 
     def before_map(self, m):
         m.connect(
-            '/download_resource/{resource_id}/{format}',
+            '/download_resource/{resource_id}',
             controller='ckanext.opendata.downloads:DownloadsController',
             action='download_resource')
         # m.connect(
