@@ -58,7 +58,7 @@ class DownloadsController(BaseController):
         })
 
         response.headers['Content-Type'] = CONTENT_TYPE_MAP[format]
-        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.csv"'.format(name=metadata['name']))
+        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=format))
 
         if format == 'csv':
             response.write(','.join([f['id'] for f in resource['fields']]) + '\n')
