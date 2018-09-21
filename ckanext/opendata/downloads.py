@@ -2,6 +2,7 @@ from ckan.lib.base import BaseController
 from ckan.plugins.toolkit import get_action, request, response
 
 from simplejson import dumps
+from six import text_type
 from xml.etree.cElementTree import Element, SubElement, ElementTree
 
 import urllib
@@ -20,7 +21,7 @@ def insert_xml_node(root, k, v, key_attr=None):
     if v is None:
         element.attrib[u'xsi:nil'] = u'true'
     elif not isinstance(v, (list, dict)):
-        element.text = str(v)
+        element.text = text_type(v)
     else:
         if isinstance(v, list):
             it = enumerate(v)
@@ -31,7 +32,7 @@ def insert_xml_node(root, k, v, key_attr=None):
             insert_xml_node(element, 'value', value, key)
 
     if key_attr is not None:
-        element.attrib['key'] = str(key_attr)
+        element.attrib['key'] = text_type(key_attr)
 
 class DownloadsController(BaseController):
     def download_resource(self, resource_id):
@@ -69,12 +70,12 @@ class DownloadsController(BaseController):
             response.write(b'<data>\n')
             for r in resource['records']:
                 root = Element(u'row')
-                root.attrib[u'_id'] = str(r[u'_id'])
+                root.attrib[u'_id'] = text_type(r[u'_id'])
 
                 for c in [f['id'] for f in resource['fields'][1:]]:
                     insert_xml_node(root, c, r[c])
 
-                ElementTree(root).write(response)
+                ElementTree(root).write(response, encoding='utf-8')
                 response.write(b'\n')
 
             response.write(b'</data>\n')
@@ -86,3 +87,4 @@ class DownloadsController(BaseController):
         content = urllib.urlopen(metadata['url'])
         for line in content:
             response.write(line)
+
