@@ -15,6 +15,13 @@ CONTENT_TYPE_MAP = {
     'xml': b'text/xml; charset=utf-8'
 }
 
+RECORDS_FORMAT_MAP = {
+    'csv': 'csv',
+    'json': 'objects',
+    'xml': 'objects'
+}
+
+
 def insert_xml_node(root, k, v, key_attr=None):
     element = SubElement(root, k)
 
@@ -45,15 +52,10 @@ class DownloadsController(BaseController):
 
     def get_datastore(self, metadata):
         format = request.GET.get('format', 'csv').lower()
-        records_format_map = {
-            'csv': 'csv',
-            'json': 'objects',
-            'xml': 'objects'
-        }
 
         resource = get_action('datastore_search')(None, {
             'resource_id': metadata['id'],
-            'records_format': records_format_map[format],
+            'records_format': RECORDS_FORMAT_MAP[format],
             'limit': PAGINATE_BY,
             'sort': '_id'
         })
@@ -82,9 +84,8 @@ class DownloadsController(BaseController):
 
     def get_filestore(self, metadata):
         response.headers['Content-Type'] = CONTENT_TYPE_MAP[metadata['format'].lower()]
-        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.xml"'.format(name=metadata['name']))
+        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=metadata['format'].lower()))
 
         content = urllib.urlopen(metadata['url'])
         for line in content:
             response.write(line)
-

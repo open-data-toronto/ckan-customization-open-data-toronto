@@ -4,7 +4,6 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
 import datetime as dt
-# import downloads
 
 # ==============================
 # Functions for modifying default CKAN behaviours
@@ -113,10 +112,7 @@ class DownloadStoresPlugin(p.SingletonPlugin):
             '/download_resource/{resource_id}',
             controller='ckanext.opendata.downloads:DownloadsController',
             action='download_resource')
-        # m.connect(
-        #     'resource_dictionary', '/dataset/{id}/dictionary/{resource_id}',
-        #     controller='ckanext.datastore.controller:DatastoreController',
-        #     action='dictionary', ckan_icon='book')
+
         return m
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
