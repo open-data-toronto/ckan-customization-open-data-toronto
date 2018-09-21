@@ -14,7 +14,7 @@ CONTENT_TYPE_MAP = {
     'xml': b'text/xml; charset=utf-8'
 }
 
-def insert_xml_node(self, root, k, v, key_attr=None):
+def insert_xml_node(root, k, v, key_attr=None):
     element = SubElement(root, k)
 
     if v is None:
