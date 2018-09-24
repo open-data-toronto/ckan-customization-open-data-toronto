@@ -56,22 +56,22 @@ def modify_package_schema(schema, convert_method):
     return schema
 
 def update_package_fields(context, data, after_delete=False):
+    print("UPDATING PACKAGE")
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
 
     # Update resource formats
     package['resource_formats'] = []
+    has_primary = False
 
     for r in package['resources']:
-        if data['file_type'] == 'Primary data' and r['id'] != data['id'] and r['file_type'] == 'Primary data':
-            r['file_type'] = 'Secondary data'
-            tk.get_action('resource_update')(context, r)
+        if r['file_type'] == 'Primary data':
+            has_primary = True
 
-        if r['datastore_active'] and r['format'].upper() == 'CSV':
-            package['resource_formats'] += ['CSV', 'JSON', 'XML']
-        elif r['datastore_active']:
-            package['resource_formats'] += ['JSON', 'XML']
-        else:
-            package['resource_formats'].append(r['format'].upper())
+            if data['file_type'] == 'Primary data' and r['id'] != data['id']:
+                r['file_type'] = 'Secondary data'
+                tk.get_action('resource_update')(context, r)
+
+        package['resource_formats'].append(r['format'].upper())
 
     package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
 
@@ -134,21 +134,18 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        # schema.update(modify_package_schema('convert_to_extras'))
         schema = modify_package_schema(schema, 'convert_to_extras')
 
         return schema
 
     def update_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        # schema.update(modify_package_schema('convert_to_extras'))
         schema = modify_package_schema(schema, 'convert_to_extras')
 
         return schema
 
     def show_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
-        # schema.update(modify_package_schema('convert_from_extras'))
         schema = modify_package_schema(schema, 'convert_from_extras')
 
         return schema

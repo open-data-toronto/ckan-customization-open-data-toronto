@@ -10,18 +10,21 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='''ckanext-updateschema''',
+    name='''ckanext-opendatatoronto''',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version='0.0.1',
+    version='1.2.1',
 
-    description='''ok''',
+    description='''Custom extension with two plugins:
+    - updateschema for modifying default CKAN fields and enforcing validation/rules of the fields
+    - downloadstores for fetching data from CKAN filestore and datastore and serve data in various formats
+    ''',
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/yes/ckanext-updateschema',
+    url='https://github.com/CityofToronto/ckan-customization-open-data-toronto',
 
     # Author details
     author='''please''',
@@ -48,7 +51,7 @@ setup(
 
 
     # What does your project relate to?
-    keywords='''CKAN gosh darn it''',
+    keywords='''CKAN Customization for Open Data Toronto''',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
