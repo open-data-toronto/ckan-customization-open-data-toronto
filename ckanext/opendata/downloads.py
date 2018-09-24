@@ -7,8 +7,8 @@ from xml.etree.cElementTree import Element, SubElement, ElementTree
 
 import urllib
 
+PAGE_SIZE = 5000
 
-PAGINATE_BY = 32000
 CONTENT_TYPE_MAP = {
     'csv': b'text/csv; charset=utf-8',
     'json': b'application/json; charset=utf-8',
@@ -52,35 +52,54 @@ class DownloadsController(BaseController):
 
     def get_datastore(self, metadata):
         format = request.GET.get('format', 'csv').lower()
-
-        resource = get_action('datastore_search')(None, {
-            'resource_id': metadata['id'],
-            'records_format': RECORDS_FORMAT_MAP[format],
-            'limit': PAGINATE_BY,
-            'sort': '_id'
-        })
+        # limit = int(request.GET.get('limit'))
+        offset = int(request.GET.get('offset', '0'))
 
         response.headers['Content-Type'] = CONTENT_TYPE_MAP[format]
         response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=format))
 
-        if format == 'csv':
-            response.write(','.join([f['id'] for f in resource['fields']]) + '\n')
-            response.write(resource['records'])
-        elif format == 'json':
-            response.write(dumps(resource['records'], separators=(u',', u':')))
-        elif format == 'xml':
-            response.write(b'<data>\n')
-            for r in resource['records']:
-                root = Element(u'row')
-                root.attrib[u'_id'] = text_type(r[u'_id'])
+        first = True
+        while True:
+            resource = get_action('datastore_search')(None, {
+                'resource_id': metadata['id'],
+                'records_format': RECORDS_FORMAT_MAP[format],
+                'limit': PAGE_SIZE,
+                'offset': offset,
+                'sort': '_id'
+            })
 
-                for c in [f['id'] for f in resource['fields'][1:]]:
-                    insert_xml_node(root, c, r[c])
+            if first:
+                wrappers = {
+                    'csv': [(','.join([f['id'] for f in resource['fields']])), ''],
+                    'json': ['[', ']'],
+                    'xml': [b'<data>', b'</data>']
+                }
 
-                ElementTree(root).write(response, encoding='utf-8')
-                response.write(b'\n')
+                response.write(wrappers[format][0] + '\n')
 
-            response.write(b'</data>\n')
+                first = False
+
+            if format == 'csv':
+                response.write(resource['records'])
+            elif format == 'json':
+                response.write(dumps(resource['records'], separators=(u',', u':'))[1:-1])
+            elif format == 'xml':
+                for r in resource['records']:
+                    root = Element(u'row')
+                    root.attrib[u'_id'] = text_type(r[u'_id'])
+
+                    for c in [f['id'] for f in resource['fields'][1:]]:
+                        insert_xml_node(root, c, r[c])
+
+                    ElementTree(root).write(response, encoding='utf-8')
+                    response.write(b'\n')
+
+            if len(resource['records']) < PAGE_SIZE:
+                break
+
+            offset += PAGE_SIZE
+
+        response.write(wrappers[format][1])
 
     def get_filestore(self, metadata):
         response.headers['Content-Type'] = CONTENT_TYPE_MAP[metadata['format'].lower()]
