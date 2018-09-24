@@ -1,5 +1,5 @@
 =============
-ckanext-updateschema
+ckanext-opendatatoronto
 =============
 
 CKAN extension to create custom fields for City of Toronto Open Data Portal
@@ -8,7 +8,7 @@ CKAN extension to create custom fields for City of Toronto Open Data Portal
 Installation
 ------------
 
-To install ckanext-updateschema:
+To install ckanext-opendatatoronto:
 
 1. Activate your CKAN virtual environment, for example::
 
@@ -20,13 +20,13 @@ To install ckanext-updateschema:
 
 3. Clone the extension from GIT::
 
-     git clone https://github.com/CityofToronto/ckan-customization-open-data-toronto.git ckanext-updateschema
+     git clone https://github.com/CityofToronto/ckan-customization-open-data-toronto.git ckanext-opendatatoronto
 
-4. Install the ckanext-updateschema Python package into your virtual environment::
+4. Install the ckanext-opendatatoronto Python package into your virtual environment::
 
-     pip install -e ckanext-updateschema
+     pip install -e ckanext-opendatatoronto
 
-5. Add ``updateschema`` to the ``ckan.plugins`` setting in your CKAN config file (by default the config file is located at ``/etc/ckan/default/production.ini``).
+5. Add ``updateschema`` and ``downloadstores`` to the ``ckan.plugins`` setting in your CKAN config file (by default the config file is located at ``/etc/ckan/default/production.ini``).
 
 6. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 

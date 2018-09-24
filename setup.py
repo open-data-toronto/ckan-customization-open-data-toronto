@@ -27,8 +27,8 @@ setup(
     url='https://github.com/CityofToronto/ckan-customization-open-data-toronto',
 
     # Author details
-    author='''please''',
-    author_email='''work''',
+    author='''Yizhao Tan''',
+    author_email='''yizhao.tan@toronto.ca''',
 
     # Choose your license
     license='AGPL',

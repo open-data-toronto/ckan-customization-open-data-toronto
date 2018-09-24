@@ -55,30 +55,22 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def update_package_fields(context, data, after_delete=False):
-    print("UPDATING PACKAGE")
+def update_package_fields(context, data):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
-
-    # Update resource formats
     package['resource_formats'] = []
-    has_primary = False
 
-    for r in package['resources']:
-        if r['file_type'] == 'Primary data':
-            has_primary = True
+    for idx, resource in enumerate(package['resources']):
+        if resource['file_type'] == 'Primary data':
+            if resource['id'] == data['id']:
+                package['primary_resource'] = data['id']
 
-            if data['file_type'] == 'Primary data' and r['id'] != data['id']:
-                r['file_type'] = 'Secondary data'
-                tk.get_action('resource_update')(context, r)
+            if resource['id'] != data['id'] and data['file_type'] == 'Primary data':
+                package['resources'][idx]['file_type'] = 'Secondary data'
 
-        package['resource_formats'].append(r['format'].upper())
+        package['resource_formats'].append(resource['format'].upper())
 
     package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
-
-    # Update primary resource ID
-    if data['file_type'] == 'Primary data':
-        package['primary_resource'] = data['id']
-
+    
     tk.get_action('package_update')(context, package)
 
 def validate_date(value, context):
