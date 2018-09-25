@@ -129,7 +129,6 @@ class DownloadStoresPlugin(p.SingletonPlugin):
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
-    p.implements(p.IPackageController, inherit=True)
     p.implements(p.IResourceController, inherit=True)
 
     # ==============================
@@ -167,13 +166,6 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def package_types(self):
         return []
-
-    # ==============================
-    # IPackageController
-    # ==============================
-
-    def create(self, package):
-        validate_package_name(package)
 
     # ==============================
     # IResourceController
