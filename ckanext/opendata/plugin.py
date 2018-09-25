@@ -56,19 +56,15 @@ def modify_package_schema(schema, convert_method):
     return schema
 
 def update_package_fields(context, data):
-    # Check if custom fields are in the resource
-    if not 'file_type' in resource:
-        return
-
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
     package['resource_formats'] = []
 
     for idx, resource in enumerate(package['resources']):
-        if resource['file_type'] == 'Primary data':
+        if 'file_type' in resource and resource['file_type'] == 'Primary data':
             if resource['id'] == data['id']:
                 package['primary_resource'] = data['id']
 
-            if resource['id'] != data['id'] and data['file_type'] == 'Primary data':
+            if 'id' in data and resource['id'] != data['id'] and 'file_type' in data and data['file_type'] == 'Primary data':
                 package['resources'][idx]['file_type'] = 'Secondary data'
 
         package['resource_formats'].append(resource['format'].upper())
@@ -88,6 +84,15 @@ def validate_date(value, context):
         return date.strftime('%Y-%m-%d')
     except (TypeError, ValueError) as e:
         raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
+
+def validate_resource_name(context, data):
+    package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
+
+    for idx, resource in enumerate(package['resources']):
+        if resource['name'] == data['name']:
+            raise tk.ValidationError({
+                'records': ['A resource with {name} already exists for this package.'.format(name=data['name'])]
+            })
 
 def validate_string_length(value, context):
     if not len(value):
@@ -156,6 +161,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # IResourceController
     # ==============================
 
+    def before_create(self, context, resource):
+        validate_resource_name(context, resource)
+
     def after_create(self, context, resource):
         update_package_fields(context, resource)
 
@@ -164,3 +172,4 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_delete(self, context, resources):
         update_package_fields(context, resources[0])
+
