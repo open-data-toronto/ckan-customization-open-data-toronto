@@ -56,6 +56,10 @@ def modify_package_schema(schema, convert_method):
     return schema
 
 def update_package_fields(context, data):
+    # Check if custom fields are in the resource
+    if not 'file_type' in resource:
+        return
+
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
     package['resource_formats'] = []
 
@@ -70,7 +74,7 @@ def update_package_fields(context, data):
         package['resource_formats'].append(resource['format'].upper())
 
     package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
-    
+
     tk.get_action('package_update')(context, package)
 
 def validate_date(value, context):
