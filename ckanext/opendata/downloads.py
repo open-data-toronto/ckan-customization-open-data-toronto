@@ -70,12 +70,12 @@ class DownloadsController(BaseController):
 
             if first:
                 wrappers = {
-                    'csv': [(','.join([f['id'] for f in resource['fields']])), ''],
+                    'csv': ['{data}\n'.format(data=','.join([f['id'] for f in resource['fields']])), ''],
                     'json': ['[', ']'],
-                    'xml': [b'<data>', b'</data>']
+                    'xml': [b'<data>\n', b'</data>']
                 }
 
-                response.write(wrappers[format][0] + '\n')
+                response.write(wrappers[format][0])
 
                 first = False
 

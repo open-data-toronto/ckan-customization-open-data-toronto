@@ -6,7 +6,7 @@
   <h2 class="text-info">General Dataset Info</h2>
   {{ form.input('collection_method', label=_('Collection Method'), id='field-collection_method', placeholder=_('eg. This dataset was collected by...'), value=data.collection_method, error=errors.collection_method, classes=['control-medium']) }}
   <div class="form-group control-medium">
-    <label class="control-label" for="field-excerpt"><span class="text-danger">* </span>Dataset Excerpt</label>
+    <label class="control-label" for="field-excerpt"><span class="text-danger">* </span>Excerpt</label>
     <div class="controls">
       <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">{{ data.get('excerpt', '') }}</textarea>
     </div>
