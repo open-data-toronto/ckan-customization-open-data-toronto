@@ -4,6 +4,7 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
 import datetime as dt
+import re
 
 # ==============================
 # Functions for modifying default CKAN behaviours
@@ -85,13 +86,22 @@ def validate_date(value, context):
     except (TypeError, ValueError) as e:
         raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
+def validate_package_name(package):
+    data = package.as_dict()
+
+    name = re.sub(r'[^a-zA-Z0-9]+', '-', data['title'].lower())
+    if name != data['name']:
+        raise tk.ValidationError({
+            'constraints': ['Inconsistency between package name and title']
+        })
+
 def validate_resource_name(context, data):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
 
     for idx, resource in enumerate(package['resources']):
         if resource['name'] == data['name']:
             raise tk.ValidationError({
-                'records': ['A resource with {name} already exists for this package.'.format(name=data['name'])]
+                'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
             })
 
 def validate_string_length(value, context):
@@ -119,6 +129,7 @@ class DownloadStoresPlugin(p.SingletonPlugin):
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
+    p.implements(p.IPackageController, inherit=True)
     p.implements(p.IResourceController, inherit=True)
 
     # ==============================
@@ -158,6 +169,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return []
 
     # ==============================
+    # IPackageController
+    # ==============================
+
+    def create(self, package):
+        validate_package_name(package)
+
+    # ==============================
     # IResourceController
     # ==============================
 
@@ -172,4 +190,3 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_delete(self, context, resources):
         update_package_fields(context, resources[0])
-
