@@ -68,6 +68,9 @@ def update_package_fields(context, data):
             if 'id' in data and resource['id'] != data['id'] and 'file_type' in data and data['file_type'] == 'Primary data':
                 package['resources'][idx]['file_type'] = 'Secondary data'
 
+        if resource['datastore_active']:
+            package['resource_formats'] += ['JSON', 'XML']
+
         package['resource_formats'].append(resource['format'].upper())
 
     package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
@@ -181,4 +184,5 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         update_package_fields(context, resource)
 
     def after_delete(self, context, resources):
-        update_package_fields(context, resources[0])
+        if len(resources):
+            update_package_fields(context, resources[0])
