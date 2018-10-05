@@ -33,6 +33,7 @@ def modify_package_schema(schema, convert_method):
         'owner_unit': [tk.get_validator('ignore_missing')],
         'owner_email': [tk.get_validator('ignore_missing')],
         # Internal CKAN/WP fields
+        'explore_url': [tk.get_validator('ignore_missing')],
         'image_url': [tk.get_validator('ignore_missing')],
         'primary_resource': [tk.get_validator('ignore_missing')],
         'resource_formats': [tk.get_validator('ignore_missing')]
@@ -47,7 +48,6 @@ def modify_package_schema(schema, convert_method):
 
     schema.update(modifications)
     schema['resources'].update({
-        'explore_url': [tk.get_validator('ignore_missing')],
         'file_type': [tk.get_validator('ignore_missing')],
         'columns': [tk.get_validator('ignore_missing')],
         'rows': [tk.get_validator('ignore_missing')],
