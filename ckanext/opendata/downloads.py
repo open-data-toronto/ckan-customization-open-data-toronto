@@ -55,7 +55,7 @@ class DownloadsController(BaseController):
         # limit = int(request.GET.get('limit'))
         offset = int(request.GET.get('offset', '0'))
 
-        response.headers['Content-Type'] = CONTENT_TYPE_MAP[format]
+        response.headers['Content-Type'] = CONTENT_TYPE_MAP[format] if format in CONTENT_TYPE_MAP else 'application/octet-stream'
         response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=format))
 
         first = True

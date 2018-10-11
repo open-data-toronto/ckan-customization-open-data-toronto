@@ -18,7 +18,7 @@
     <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
-        {% for dataset_category in ['Tabular', 'Geospatial', 'Object']  %}
+        {% for dataset_category in ['Tabular', 'Geospatial', 'Object', 'Archived']  %}
           <option value="{{ dataset_category }}" {% if dataset_category in data.get('dataset_category', []) %}selected="selected"{% endif %}>{{ dataset_category }}</option>
         {% endfor %}
       </select>
