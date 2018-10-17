@@ -1,5 +1,5 @@
 from ckan.lib.base import BaseController
-from ckan.plugins.toolkit import get_action, request, response
+from ckan.plugins.toolkit import get_action, request, response, redirect_to
 
 from simplejson import dumps
 from six import text_type
@@ -102,9 +102,13 @@ class DownloadsController(BaseController):
         response.write(wrappers[format][1])
 
     def get_filestore(self, metadata):
-        response.headers['Content-Type'] = CONTENT_TYPE_MAP[metadata['format'].lower()] if format in CONTENT_TYPE_MAP.keys() else 'application/octet-stream'
-        response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=metadata['format'].lower()))
+        if metadata['format'].lower() in ['html']:
+            redirect_to(metadata['url'])
+        else:
+            response.headers['Content-Type'] = CONTENT_TYPE_MAP[metadata['format'].lower()] if format in CONTENT_TYPE_MAP.keys() else 'application/octet-stream'
+            response.headers['Content-Disposition'] = (b'attachment; filename="{name}.{format}"'.format(name=metadata['name'], format=metadata['format'].lower()))
 
-        content = urllib.urlopen(metadata['url'])
-        for line in content:
-            response.write(line)
+            content = urllib.urlopen(metadata['url'])
+            for line in content:
+                response.write(line)
+
