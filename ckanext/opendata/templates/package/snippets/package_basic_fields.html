@@ -48,7 +48,7 @@
     <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in [NULL, 'Real-time', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Semi-annually', 'Annually', 'As available']  %}
+        {% for refresh_rate in ['Real-time', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Semi-annually', 'Annually', 'As available']  %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
