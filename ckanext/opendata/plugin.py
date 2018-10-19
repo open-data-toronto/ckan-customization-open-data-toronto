@@ -20,6 +20,7 @@ def modify_package_schema(schema, convert_method):
         'published_date': [validate_date],
         # General dataset info (dropdowns)
         'dataset_category': [],
+        'optimization_stage': [],
         'pipeline_stage': [],
         'refresh_rate': [],
         'require_legal': [],

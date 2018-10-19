@@ -25,6 +25,16 @@
     </div>
   </div>
   <div class="form-group control-medium">
+    <label class="control-label" for="field-optimization_stage"><span class="text-danger">* </span>Optimization Stage</label>
+    <div class="controls">
+      <select id="field-optimization_stage" name="optimization_stage" data-module="autocomplete">
+        {% for optimization_stage in ['Migrated', 'Automated', 'Optimized']  %}
+        <option value="{{ optimization_stage }}" {% if optimization_stage in data.get('optimization_stage', []) %}selected="selected"{% endif %}>{{ optimization_stage }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="form-group control-medium">
     <label class="control-label" for="field-pipeline_stage"><span class="text-danger">* </span>Pipeline Stage</label>
     <div class="controls">
       <select id="field-pipeline_stage" name="pipeline_stage" data-module="autocomplete">
@@ -38,7 +48,7 @@
     <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in ['', 'Real-time', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Semi-annually', 'Annually', 'As available']  %}
+        {% for refresh_rate in [NULL, 'Real-time', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Semi-annually', 'Annually', 'As available']  %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
