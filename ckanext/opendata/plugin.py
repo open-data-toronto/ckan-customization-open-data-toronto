@@ -20,7 +20,8 @@ def modify_package_schema(schema, convert_method):
         'published_date': [validate_date],
         # General dataset info (dropdowns)
         'dataset_category': [],
-        'optimization_stage': [],
+        'is_archive': [],
+        'is_optimized': [],
         'pipeline_stage': [],
         'refresh_rate': [],
         'require_legal': [],
@@ -42,10 +43,10 @@ def modify_package_schema(schema, convert_method):
 
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in modifications.items():
-        if convert_method == 'convert_to_extras':
-            modifications[key].append(tk.get_converter(convert_method))
-        elif convert_method == 'convert_from_extras':
-            modifications[key].insert(0, tk.get_converter(convert_method))
+        if convert_method == 'input':
+            modifications[key].append(tk.get_converter('convert_to_extras'))
+        elif convert_method == 'output':
+            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
@@ -149,19 +150,21 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        schema = modify_package_schema(schema, 'convert_to_extras')
+        schema = modify_package_schema(schema, 'input')
 
         return schema
 
     def update_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        schema = modify_package_schema(schema, 'convert_to_extras')
+        schema = modify_package_schema(schema, 'input')
 
         return schema
 
     def show_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
-        schema = modify_package_schema(schema, 'convert_from_extras')
+        schema['tags']['__extras'].append(tk.get_converter('free_tags_only'))
+
+        schema = modify_package_schema(schema, 'output')
 
         return schema
 

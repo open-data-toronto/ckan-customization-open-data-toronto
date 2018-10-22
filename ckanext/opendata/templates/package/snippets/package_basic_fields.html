@@ -25,12 +25,20 @@
     </div>
   </div>
   <div class="form-group control-medium">
-    <label class="control-label" for="field-optimization_stage"><span class="text-danger">* </span>Optimization Stage</label>
+    <label class="control-label" for="field-is_archive"><span class="text-danger">* </span>Archived Dataset</label>
     <div class="controls">
-      <select id="field-optimization_stage" name="optimization_stage" data-module="autocomplete">
-        {% for optimization_stage in ['Migrated', 'Automated', 'Optimized']  %}
-        <option value="{{ optimization_stage }}" {% if optimization_stage in data.get('optimization_stage', []) %}selected="selected"{% endif %}>{{ optimization_stage }}</option>
-        {% endfor %}
+      <select id="field-is_archive" name="is_archive" data-module="autocomplete">
+        <option value="false" {% if "false" in data.get('is_archive', []) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if "true" in data.get('is_archive', []) %}selected="selected"{% endif %}>True</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-is_optimized"><span class="text-danger">* </span>Optimized Dataset</label>
+    <div class="controls">
+      <select id="field-is_optimized" name="is_optimized" data-module="autocomplete">
+        <option value="false" {% if "false" in data.get('is_optimized', []) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if "true" in data.get('is_optimized', []) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>
