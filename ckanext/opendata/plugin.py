@@ -21,7 +21,7 @@ def modify_package_schema(schema, convert_method):
         # General dataset info (dropdowns)
         'dataset_category': [],
         'is_archive': [],
-        'is_optimized': [],
+        'is_visualizable': [],
         'pipeline_stage': [],
         'refresh_rate': [],
         'require_legal': [],
