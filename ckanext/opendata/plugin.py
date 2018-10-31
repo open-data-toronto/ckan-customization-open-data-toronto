@@ -21,7 +21,6 @@ def modify_package_schema(schema, convert_method):
         # General dataset info (dropdowns)
         'dataset_category': [],
         'is_archive': [],
-        'is_visualizable': [],
         'pipeline_stage': [],
         'refresh_rate': [],
         'require_legal': [],
@@ -37,7 +36,6 @@ def modify_package_schema(schema, convert_method):
         # Internal CKAN/WP fields
         'explore_url': [tk.get_validator('ignore_missing')],
         'image_url': [tk.get_validator('ignore_missing')],
-        'primary_resource': [tk.get_validator('ignore_missing')],
         'resource_formats': [tk.get_validator('ignore_missing')]
     }
 
@@ -50,10 +48,10 @@ def modify_package_schema(schema, convert_method):
 
     schema.update(modifications)
     schema['resources'].update({
-        'file_type': [tk.get_validator('ignore_missing')],
         'columns': [tk.get_validator('ignore_missing')],
         'rows': [tk.get_validator('ignore_missing')],
-        'extract_job': [tk.get_validator('ignore_missing')]
+        'extract_job': [tk.get_validator('ignore_missing')],
+        'is_preview': [tk.get_validator('ignore_missing')]
     })
 
     return schema
@@ -63,13 +61,6 @@ def update_package_fields(context, data):
     package['resource_formats'] = []
 
     for idx, resource in enumerate(package['resources']):
-        if 'file_type' in resource and resource['file_type'] == 'Primary data':
-            if resource['id'] == data['id']:
-                package['primary_resource'] = data['id']
-
-            if 'id' in data and resource['id'] != data['id'] and 'file_type' in data and data['file_type'] == 'Primary data':
-                package['resources'][idx]['file_type'] = 'Secondary data'
-
         if resource['datastore_active']:
             package['resource_formats'] += ['JSON', 'XML']
 

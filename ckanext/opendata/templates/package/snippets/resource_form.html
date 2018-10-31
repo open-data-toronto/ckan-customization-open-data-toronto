@@ -5,12 +5,11 @@
   {{ super() }}
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-file_type"><span class="text-danger">* </span>File Type</label>
+    <label class="control-label" for="field-is_preview"><span class="text-danger">* </span>File Type</label>
     <div class="controls">
-      <select id="field-file_type" name="file_type" data-module="autocomplete">
-        {% for file_type in ['Secondary data', 'Primary data', 'Preview data', 'ReadMe']  %}
-        <option value="{{ file_type }}" {% if file_type in data.get('file_type', []) %}selected="selected"{% endif %}>{{ file_type }}</option>
-        {% endfor %}
+      <select id="field-is_preview" name="is_preview" data-module="autocomplete">
+        <option value="false" {% if "false" in data.get('is_preview', []) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if "true" in data.get('is_preview', []) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>
