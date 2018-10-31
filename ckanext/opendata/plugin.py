@@ -82,15 +82,6 @@ def validate_date(value, context):
     except (TypeError, ValueError) as e:
         raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
 
-def validate_package_name(package):
-    data = package.as_dict()
-
-    name = re.sub(r'[^a-zA-Z0-9]+', '-', data['title'].lower())
-    if name != data['name']:
-        raise tk.ValidationError({
-            'constraints': ['Inconsistency between package name and title']
-        })
-
 def validate_resource_name(context, data):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
 
@@ -101,7 +92,7 @@ def validate_resource_name(context, data):
             })
 
 def validate_string_length(value, context):
-    if not len(value):
+    if isinstance(value, str) and len(value) <= 0:
         raise tk.Invalid('Input required')
     if len(value) > 350:
         raise tk.Invalid('Input exceed 350 character limits')
