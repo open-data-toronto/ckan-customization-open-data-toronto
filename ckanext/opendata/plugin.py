@@ -6,6 +6,47 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
+@tk.side_effect_free
+def catalogue_search(context, data_dict):
+    q = []
+
+    if 'filters' in data_dict:
+        for k, v in data_dict['filters'].items():
+            if k == 'search':
+                tokens = ' AND '.join(['*{x}*'.format(x=x) for x in v.split(' ')])
+
+                q.append('(excerpt:(' + tokens + ')) OR (name:(' + tokens + ')) OR (notes:(' + tokens + '))')
+            elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'resource_formats']):
+                field = k[:-2]
+
+                if type(v) != list:
+                    v = [v]
+
+                if field in ['dataset_category', 'owner_division']:
+                    terms = ' OR '.join(['{x}'.format(x=term) for term in v])
+                elif field in ['resource_formats']:
+                    terms = ' OR '.join(['* {x} *'.format(x=term) for term in v])
+
+                q.append('{key}:({value})'.format(key=field, value=terms))
+
+    if data_dict['type'] == 'full':
+        params = {
+            'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
+            'rows': data_dict['rows'] if 'rows' in data_dict else 10,
+            'sort': data_dict['sort'] if 'sort' in data_dict else 'name asc',
+            'start': data_dict['start'] if 'start' in data_dict else 0
+        }
+    elif data_dict['type'] == 'facet':
+        params = {
+            'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
+            'rows': 0,
+            'facet': 'on',
+            'facet.limit': -1,
+            'facet.field': data_dict['facet_field[]'] if type(data_dict['facet_field[]']) == list else [data_dict['facet_field[]']]
+        }
+
+    return tk.get_action('package_search')(context, params)
+
 # ==============================
 # Functions for modifying default CKAN behaviours
 # ==============================
@@ -114,9 +155,19 @@ class DownloadStoresPlugin(p.SingletonPlugin):
         return m
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
+    p.implements(p.IActions)
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController, inherit=True)
+
+    # ==============================
+    # IActions
+    # ==============================
+
+    def get_actions(self):
+        return {
+            'catalogue_search': catalogue_search
+        }
 
     # ==============================
     # IConfigurer
