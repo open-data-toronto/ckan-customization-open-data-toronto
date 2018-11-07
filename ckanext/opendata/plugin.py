@@ -10,24 +10,27 @@ import re
 def catalogue_search(context, data_dict):
     q = []
 
-    if 'filters' in data_dict:
-        for k, v in data_dict['filters'].items():
-            if k == 'search':
-                tokens = ' AND '.join(['*{x}*'.format(x=x) for x in v.split(' ')])
+    filter_fields = ['dataset_category', 'owner_division', 'resource_formats', 'search']
 
-                q.append('(excerpt:(' + tokens + ')) OR (name:(' + tokens + ')) OR (notes:(' + tokens + '))')
-            elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'resource_formats']):
-                field = k[:-2]
+    for k, v in data_dict.items():
+        if k == 'search':
+            tokens = ' AND '.join(['*{x}*'.format(x=x) for x in v.split(' ')])
 
-                if type(v) != list:
-                    v = [v]
+            q.append('(excerpt:(' + tokens + ')) OR (name:(' + tokens + ')) OR (notes:(' + tokens + '))')
+        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'resource_formats']):
+            field = k[:-2]
 
-                if field in ['dataset_category', 'owner_division']:
-                    terms = ' OR '.join(['{x}'.format(x=term) for term in v])
-                elif field in ['resource_formats']:
-                    terms = ' OR '.join(['* {x} *'.format(x=term) for term in v])
+            if type(v) != list:
+                v = [v]
 
-                q.append('{key}:({value})'.format(key=field, value=terms))
+            if field in ['dataset_category']:
+                terms = ' OR '.join(['{x}'.format(x=term) for term in v])
+            elif field in ['owner_division']:
+                terms = ' OR '.join(['"{x}"'.format(x=term) for term in v])
+            elif field in ['resource_formats']:
+                terms = ' OR '.join(['*{x}*'.format(x=term) for term in v])
+
+            q.append('{key}:({value})'.format(key=field, value=terms))
 
     if data_dict['type'] == 'full':
         params = {
