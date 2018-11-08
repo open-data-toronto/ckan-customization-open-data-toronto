@@ -22,9 +22,9 @@ def catalogue_search(context, data_dict):
                 v = [v]
 
             if field in ['dataset_category', 'vocab_formats']:
-                terms = ' OR '.join(['{x}'.format(x=term) for term in v])
+                terms = ' AND '.join(['{x}'.format(x=term) for term in v])
             elif field in ['owner_division']:
-                terms = ' OR '.join(['"{x}"'.format(x=term) for term in v])
+                terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
 
             q.append('{key}:({value})'.format(key=field, value=terms))
 
