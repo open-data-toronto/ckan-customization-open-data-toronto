@@ -65,7 +65,7 @@ def modify_package_schema(schema, convert_method):
         'refresh_rate': [],
         'require_legal': [],
         'require_privacy': [],
-        'topic': [],
+        'topic': [tk.get_validator('ignore_missing')],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
         'approved_date': [validate_date],
