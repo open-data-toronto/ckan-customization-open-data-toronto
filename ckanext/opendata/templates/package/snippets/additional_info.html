@@ -67,6 +67,12 @@
     <td class="dataset-details">{{ pkg_dict.require_privacy }}</td>
   </tr>
   {% endif %}
+  {% if pkg_dict.topic %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Topic") }}</th>
+    <td class="dataset-details">{{ pkg_dict.topic }}</td>
+  </tr>
+  {% endif %}
   {% if pkg_dict.approved_by %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Approved By") }}</th>
@@ -119,18 +125,6 @@
     <tr>
       <th scope="row" class="dataset-label">{{ _("Image URL") }}</th>
       <td class="dataset-details">{{ pkg_dict.image_url }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.primary_resource %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Primary Resource") }}</th>
-      <td class="dataset-details">{{ pkg_dict.primary_resource }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.resource_formats %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Resource Formats") }}</th>
-      <td class="dataset-details">{{ pkg_dict.resource_formats }}</td>
     </tr>
   {% endif %}
 {% endblock %}
