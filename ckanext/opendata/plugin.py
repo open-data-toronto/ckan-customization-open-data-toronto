@@ -10,25 +10,21 @@ import re
 def catalogue_search(context, data_dict):
     q = []
 
-    filter_fields = ['dataset_category', 'owner_division', 'resource_formats', 'search']
-
     for k, v in data_dict.items():
         if k == 'search':
             tokens = ' AND '.join(['*{x}*'.format(x=x) for x in v.split(' ')])
 
             q.append('(excerpt:(' + tokens + ')) OR (name:(' + tokens + ')) OR (notes:(' + tokens + '))')
-        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'resource_formats']):
+        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats']):
             field = k[:-2]
 
             if type(v) != list:
                 v = [v]
 
-            if field in ['dataset_category']:
+            if field in ['dataset_category', 'vocab_formats']:
                 terms = ' OR '.join(['{x}'.format(x=term) for term in v])
             elif field in ['owner_division']:
                 terms = ' OR '.join(['"{x}"'.format(x=term) for term in v])
-            elif field in ['resource_formats']:
-                terms = ' OR '.join(['*{x}*'.format(x=term) for term in v])
 
             q.append('{key}:({value})'.format(key=field, value=terms))
 
@@ -80,15 +76,22 @@ def modify_package_schema(schema, convert_method):
         # Internal CKAN/WP fields
         'explore_url': [tk.get_validator('ignore_missing')],
         'image_url': [tk.get_validator('ignore_missing')],
-        'resource_formats': [tk.get_validator('ignore_missing')]
+        'formats': [tk.get_validator('ignore_missing')]
     }
 
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in modifications.items():
         if convert_method == 'input':
-            modifications[key].append(tk.get_converter('convert_to_extras'))
+            if key == 'formats':
+                modifications[key].append(tk.get_converter('convert_to_tags')('formats'))
+            else:
+                modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
+            if key == 'formats':
+                modifications[key].insert(0, tk.get_converter('convert_from_tags')('formats'))
+                # schema['tags']['__extras'].append(tk.get_converter('free_tags_only'))
+            else:
+                modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
@@ -102,15 +105,15 @@ def modify_package_schema(schema, convert_method):
 
 def update_package_fields(context, data):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
-    package['resource_formats'] = []
+    package['formats'] = []
 
     for idx, resource in enumerate(package['resources']):
         if resource['datastore_active']:
-            package['resource_formats'] += ['JSON', 'XML']
+            package['formats'] += ['JSON', 'XML']
 
-        package['resource_formats'].append(resource['format'].upper())
+        package['formats'].append(resource['format'].upper())
 
-    package['resource_formats'] = ' '.join(sorted(list(set(package['resource_formats']))))
+    package['formats'] = ' '.join(sorted(list(set(package['formats']))))
 
     tk.get_action('package_update')(context, package)
 
