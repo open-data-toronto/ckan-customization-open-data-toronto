@@ -8,9 +8,6 @@ import re
 
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
-    print("CATALOGUE SEARCH")
-    print(context)
-    print(data_dict)
     q = []
 
     for k, v in data_dict.items():
@@ -32,7 +29,6 @@ def catalogue_search(context, data_dict):
             q.append('{key}:({value})'.format(key=field, value=terms))
 
     if data_dict['type'] == 'full':
-        print("FULL")
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
             'rows': data_dict['rows'] if 'rows' in data_dict else 10,
@@ -40,7 +36,6 @@ def catalogue_search(context, data_dict):
             'start': data_dict['start'] if 'start' in data_dict else 0
         }
     elif data_dict['type'] == 'facet':
-        print("FACET")
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
             'rows': 0,
@@ -48,7 +43,6 @@ def catalogue_search(context, data_dict):
             'facet.limit': -1,
             'facet.field': data_dict['facet_field[]'] if type(data_dict['facet_field[]']) == list else [data_dict['facet_field[]']]
         }
-    print(' AND '.join(['({x})'.format(x=x) for x in q]))
 
     return tk.get_action('package_search')(context, params)
 
