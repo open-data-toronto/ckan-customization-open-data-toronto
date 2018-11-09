@@ -24,9 +24,9 @@ def catalogue_search(context, data_dict):
             if type(v) != list:
                 v = [v]
 
-            if field in ['dataset_category', 'vocab_formats', 'topic']:
+            if field in ['dataset_category', 'vocab_formats']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
-            elif field in ['owner_division']:
+            elif field in ['owner_division', 'topic']:
                 terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
 
             q.append('{key}:({value})'.format(key=field, value=terms))
@@ -49,8 +49,6 @@ def catalogue_search(context, data_dict):
             'facet.field': data_dict['facet_field[]'] if type(data_dict['facet_field[]']) == list else [data_dict['facet_field[]']]
         }
     print(' AND '.join(['({x})'.format(x=x) for x in q]))
-    print()
-    print()
 
     return tk.get_action('package_search')(context, params)
 
