@@ -8,6 +8,9 @@ import re
 
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
+    print("CATALOGUE SEARCH")
+    print(context)
+    print(data_dict)
     q = []
 
     for k, v in data_dict.items():
@@ -15,13 +18,13 @@ def catalogue_search(context, data_dict):
             tokens = ' AND '.join(['*{x}*'.format(x=x) for x in v.split(' ')])
 
             q.append('(excerpt:(' + tokens + ')) OR (name:(' + tokens + ')) OR (notes:(' + tokens + '))')
-        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats']):
+        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'topic']):
             field = k[:-2]
 
             if type(v) != list:
                 v = [v]
 
-            if field in ['dataset_category', 'vocab_formats']:
+            if field in ['dataset_category', 'vocab_formats', 'topic']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
             elif field in ['owner_division']:
                 terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
@@ -29,6 +32,7 @@ def catalogue_search(context, data_dict):
             q.append('{key}:({value})'.format(key=field, value=terms))
 
     if data_dict['type'] == 'full':
+        print("FULL")
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
             'rows': data_dict['rows'] if 'rows' in data_dict else 10,
@@ -36,6 +40,7 @@ def catalogue_search(context, data_dict):
             'start': data_dict['start'] if 'start' in data_dict else 0
         }
     elif data_dict['type'] == 'facet':
+        print("FACET")
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
             'rows': 0,
@@ -43,6 +48,9 @@ def catalogue_search(context, data_dict):
             'facet.limit': -1,
             'facet.field': data_dict['facet_field[]'] if type(data_dict['facet_field[]']) == list else [data_dict['facet_field[]']]
         }
+    print(' AND '.join(['({x})'.format(x=x) for x in q]))
+    print()
+    print()
 
     return tk.get_action('package_search')(context, params)
 
