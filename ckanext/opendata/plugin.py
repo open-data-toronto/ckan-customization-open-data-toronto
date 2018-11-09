@@ -114,7 +114,7 @@ def update_package_fields(context, data):
 
         package['formats'].append(resource['format'].upper())
 
-    package['formats'] = ' '.join(sorted(list(set(package['formats']))))
+    package['formats'] = sorted(list(set(package['formats'])))
 
     tk.get_action('package_update')(context, package)
 
