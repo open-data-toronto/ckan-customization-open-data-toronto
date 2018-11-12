@@ -12,9 +12,9 @@ def catalogue_search(context, data_dict):
 
     for k, v in data_dict.items():
         if k == 'search':
-            value = '*{x}*'.format(x=v)
+            value = '"{x}"'.format(x=v)
 
-            q.append('(excerpt:(' + value + ')) OR (name:(' + value + ')) OR (notes:(' + value + '))')
+            q.append('(name:(' + value + ')) OR (notes:(' + value + '))')
         elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'topic']):
             field = k[:-2]
 
