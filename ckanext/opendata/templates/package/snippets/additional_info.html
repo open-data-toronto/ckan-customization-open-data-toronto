@@ -1,6 +1,14 @@
 {% ckan_extends %}
 
 {% block extras %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package ID") }}</th>
+    <td class="dataset-details">{{ pkg_dict.id }}</td>
+  </tr>
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
+    <td class="dataset-details">{{ pkg_dict.name }}</td>
+  </tr>
   {% if pkg_dict.collection_method %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
