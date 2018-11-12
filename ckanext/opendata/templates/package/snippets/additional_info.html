@@ -1,6 +1,18 @@
 {% ckan_extends %}
 
 {% block extras %}
+  {% if pkg_dict.id %}
+    <tr>
+      <th scope="row" class="dataset-label">{{ _("Package ID") }}</th>
+      <td class="dataset-details">{{ pkg_dict.id }}</td>
+    </tr>
+  {% endif %}
+  {% if pkg_dict.name %}
+    <tr>
+      <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
+      <td class="dataset-details">{{ pkg_dict.name }}</td>
+    </tr>
+  {% endif %}
   {% if pkg_dict.collection_method %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
@@ -125,18 +137,6 @@
     <tr>
       <th scope="row" class="dataset-label">{{ _("Image URL") }}</th>
       <td class="dataset-details">{{ pkg_dict.image_url }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.primary_resource %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Primary Resource") }}</th>
-      <td class="dataset-details">{{ pkg_dict.primary_resource }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.resource_formats %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Resource Formats") }}</th>
-      <td class="dataset-details">{{ pkg_dict.resource_formats }}</td>
     </tr>
   {% endif %}
 {% endblock %}
