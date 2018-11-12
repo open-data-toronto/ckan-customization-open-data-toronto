@@ -11,7 +11,7 @@ def catalogue_search(context, data_dict):
     q = []
 
     for k, v in data_dict.items():
-        if k == 'search':
+        if k == 'search' and len(v) > 0:
             value = '"{x}"'.format(x=v)
 
             q.append('(name:(' + value + ')) OR (notes:(' + value + '))')
