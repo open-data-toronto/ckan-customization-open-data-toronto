@@ -1,18 +1,14 @@
 {% ckan_extends %}
 
 {% block extras %}
-  {% if pkg_dict.id %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Package ID") }}</th>
-      <td class="dataset-details">{{ pkg_dict.id }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.name %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
-      <td class="dataset-details">{{ pkg_dict.name }}</td>
-    </tr>
-  {% endif %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package ID") }}</th>
+    <td class="dataset-details">{{ pkg_dict.id }}</td>
+  </tr>
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
+    <td class="dataset-details">{{ pkg_dict.name }}</td>
+  </tr>
   {% if pkg_dict.collection_method %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
