@@ -34,15 +34,6 @@
     </div>
   </div>
   <div class="form-group control-medium">
-    <label class="control-label" for="field-is_visualizable"><span class="text-danger">* </span>Visualized Dataset</label>
-    <div class="controls">
-      <select id="field-is_visualizable" name="is_visualizable" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('is_visualizable', []) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if "true" in data.get('is_visualizable', []) %}selected="selected"{% endif %}>True</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-group control-medium">
     <label class="control-label" for="field-pipeline_stage"><span class="text-danger">* </span>Pipeline Stage</label>
     <div class="controls">
       <select id="field-pipeline_stage" name="pipeline_stage" data-module="autocomplete">
@@ -80,6 +71,7 @@
       </select>
     </div>
   </div>
+  {{ form.input('topic', label=_('Topic'), id='field-topic', placeholder=_('eg. City government'), value=data.topic, error=errors.topic, classes=['control-medium']) }}
   <hr/>
   <h2 class="text-info">Dataset Owner Info</h2>
   <div class="form-group control-medium">
@@ -102,8 +94,6 @@
   <h2 class="text-info">Internal CKAN/WP Fields</h2>
   {{ form.input('explore_url', label=_('Explore URL'), id='field-explore_url', placeholder=_('Explore URL'), value=data.explore_url, error=errors.explore_url, classes=['control-medium']) }}
   {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
-  {{ form.input('primary_resource', label=_('Primary Resource'), id='field-primary_resource', placeholder=_('Blank'), value=data.primary_resource, error=errors.primary_resource, classes=['control-medium']) }}
-  {{ form.input('resource_formats', label=_('Resource Formats'), id='field-resource_formats', placeholder=_('Blank'), value=data.resource_formats, error=errors.resource_formats, classes=['control-medium']) }}
   <hr/>
   <h2 class="text-info">Default CKAN Fields</h2>
 

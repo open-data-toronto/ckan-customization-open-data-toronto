@@ -1,6 +1,14 @@
 {% ckan_extends %}
 
 {% block extras %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package ID") }}</th>
+    <td class="dataset-details">{{ pkg_dict.id }}</td>
+  </tr>
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
+    <td class="dataset-details">{{ pkg_dict.name }}</td>
+  </tr>
   {% if pkg_dict.collection_method %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
@@ -43,12 +51,6 @@
     <td class="dataset-details">{{ pkg_dict.is_archive }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.is_visualizable %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Visualized Dataset") }}</th>
-    <td class="dataset-details">{{ pkg_dict.is_visualizable }}</td>
-  </tr>
-  {% endif %}
   {% if pkg_dict.pipeline_stage %}
   <tr>
     <th scope="row" class="dataset-label">{{ _("Pipeline Stage") }}</th>
@@ -71,6 +73,12 @@
   <tr>
     <th scope="row" class="dataset-label">{{ _("Require Privacy Review") }}</th>
     <td class="dataset-details">{{ pkg_dict.require_privacy }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.topic %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Topic") }}</th>
+    <td class="dataset-details">{{ pkg_dict.topic }}</td>
   </tr>
   {% endif %}
   {% if pkg_dict.approved_by %}
@@ -125,18 +133,6 @@
     <tr>
       <th scope="row" class="dataset-label">{{ _("Image URL") }}</th>
       <td class="dataset-details">{{ pkg_dict.image_url }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.primary_resource %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Primary Resource") }}</th>
-      <td class="dataset-details">{{ pkg_dict.primary_resource }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.resource_formats %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Resource Formats") }}</th>
-      <td class="dataset-details">{{ pkg_dict.resource_formats }}</td>
     </tr>
   {% endif %}
 {% endblock %}
