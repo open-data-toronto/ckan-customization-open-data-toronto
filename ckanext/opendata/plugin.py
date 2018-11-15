@@ -221,12 +221,12 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
 
-    def after_create(self, context, resource):
-        update_package_fields(context, resource)
-
-    def after_update(self, context, resource):
-        update_package_fields(context, resource)
-
-    def after_delete(self, context, resources):
-        if len(resources):
-            update_package_fields(context, resources[0])
+    # def after_create(self, context, resource):
+    #     update_package_fields(context, resource)
+    #
+    # def after_update(self, context, resource):
+    #     update_package_fields(context, resource)
+    #
+    # def after_delete(self, context, resources):
+    #     if len(resources):
+    #         update_package_fields(context, resources[0])
