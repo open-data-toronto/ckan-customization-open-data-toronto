@@ -87,6 +87,7 @@ class DownloadsController(BaseController):
         fn = '{id}.{format}'.format(id=metadata['id'], format=format)
 
         path = os.path.join(tmp_dirs[0], fn)
+        df = df.to_crs({'init': 'epsg:' + request.GET.get('projection', '4326')})
 
         if format == 'csv':
             df.to_csv(path, index=False)
