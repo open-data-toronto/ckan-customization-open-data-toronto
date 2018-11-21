@@ -1,27 +1,20 @@
 from ckan.lib.base import BaseController
 from ckan.plugins.toolkit import get_action, request, response, redirect_to, ValidationError
 
-from backports import tempfile
 from simplejson import loads, dumps
 from six import text_type
 
 import geopandas as gpd
 import pandas as pd
-import os
 import shapely.geometry
+
+import mimetypes
+import os
 import shutil
+import tempfile
 import urllib
 
 PAGE_SIZE = 5000
-
-CONTENT_TYPE_MAP = {
-    'csv': b'text/csv; charset=utf-8',
-    'json': b'application/json; charset=utf-8',
-    'xml': b'text/xml; charset=utf-8',
-    'geojson': b'application/vnd.geo+json',
-    'zip': b'application/zip',
-    'shp': b'application/octet-stream'
-}
 
 def df_to_xml(df, path):
     def row_to_xml(row):
@@ -42,10 +35,10 @@ class DownloadsController(BaseController):
 
         if metadata['format'].lower() in ['html']:
             redirect_to(metadata['url'])
-        else :
+        else:
             filename = self.get_datastore(metadata) if metadata['datastore_active'] else self.get_filestore(metadata)
 
-            response.headers['Content-Type'] = CONTENT_TYPE_MAP[filename[-1]] if filename[-1] in CONTENT_TYPE_MAP.keys() else 'application/octet-stream'
+            response.headers['Content-Type'] = mimetypes.guess_type('.'.join(filename))[0]
             response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
 
     def get_datastore(self, metadata):
@@ -90,10 +83,10 @@ class DownloadsController(BaseController):
             df['geometry'] = df['geometry'].apply(lambda x: shapely.geometry.shape(x))
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:4326' }, geometry='geometry')
 
-        tf = tempfile.TemporaryDirectory()
+        tmp_dirs = [tempfile.mkdtemp()]
         fn = '{id}.{format}'.format(id=metadata['id'], format=format)
 
-        path = os.path.join(tf.name, fn)
+        path = os.path.join(tmp_dirs[0], fn)
 
         if format == 'csv':
             df.to_csv(path, index=False)
@@ -106,13 +99,15 @@ class DownloadsController(BaseController):
         elif format == 'shp':
             df.to_file(path, driver='ESRI Shapefile')
 
-            shp_tmp = tempfile.TemporaryDirectory()
+            tmp_dirs.append(tempfile.mkdtemp())
             format = 'zip'
-
-            path = shutil.make_archive(os.path.join(shp_tmp.name, metadata['id']), 'zip', root_dir=shp_tmp.name, base_dir=tf.name)
+            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['id']), 'zip', root_dir=tmp_dirs[1], base_dir=tmp_dirs[0])
 
         with open(path, 'r') as f:
             shutil.copyfileobj(f, response)
+
+        for td in tmp_dirs:
+            shutil.rmtree(td)
 
         return [metadata['id'], format]
 
