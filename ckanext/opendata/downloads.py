@@ -91,7 +91,7 @@ class DownloadsController(BaseController):
         df = df.to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         if format == 'csv':
-            df.to_csv(path, index=False)
+            df.to_csv(path, index=False, encoding='utf-8')
         elif format == 'json':
             df.to_json(path, orient='records')
         elif format == 'xml':
