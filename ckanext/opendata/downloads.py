@@ -44,6 +44,7 @@ class DownloadsController(BaseController):
     def get_datastore(self, metadata):
         format = request.GET.get('format', 'csv').lower()
         offset = int(request.GET.get('offset', '0'))
+        projection = request.GET.get('projection', '4326')
         # limit = int(request.GET.get('limit'))
 
         is_valid_request = False
@@ -65,7 +66,7 @@ class DownloadsController(BaseController):
                         is_geospatial = True
                         break
 
-                if (is_geospatial and format in ['geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
+                if (is_geospatial and format in ['csv', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
                     is_valid_request = True
                 else:
                     raise ValidationError({
@@ -87,7 +88,7 @@ class DownloadsController(BaseController):
         fn = '{id}.{format}'.format(id=metadata['id'], format=format)
 
         path = os.path.join(tmp_dirs[0], fn)
-        df = df.to_crs({'init': 'epsg:' + request.GET.get('projection', '4326')})
+        df = df.to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         if format == 'csv':
             df.to_csv(path, index=False)
