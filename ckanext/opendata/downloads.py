@@ -82,13 +82,10 @@ class DownloadsController(BaseController):
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shapely.geometry.shape(x))
-            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:4326' }, geometry='geometry')
+            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:4326' }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         tmp_dirs = [tempfile.mkdtemp()]
-        fn = '{id}.{format}'.format(id=metadata['id'], format=format)
-
-        path = os.path.join(tmp_dirs[0], fn)
-        df = df.to_crs({ 'init': 'epsg:{0}'.format(projection) })
+        path = os.path.join(tmp_dirs[0], '{id}.{format}'.format(id=metadata['id'], format=format))
 
         if format == 'csv':
             df.to_csv(path, index=False, encoding='utf-8')
