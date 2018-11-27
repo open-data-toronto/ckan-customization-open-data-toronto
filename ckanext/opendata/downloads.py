@@ -85,7 +85,7 @@ class DownloadsController(BaseController):
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:4326' }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         tmp_dirs = [tempfile.mkdtemp()]
-        path = os.path.join(tmp_dirs[0], '{id}.{format}'.format(id=metadata['id'], format=format))
+        path = os.path.join(tmp_dirs[0], '{name}.{format}'.format(name=metadata['name'], format=format))
 
         if format == 'csv':
             df.to_csv(path, index=False, encoding='utf-8')
@@ -100,19 +100,18 @@ class DownloadsController(BaseController):
 
             tmp_dirs.append(tempfile.mkdtemp())
             format = 'zip'
-            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['id']), 'zip', root_dir=tmp_dirs[1], base_dir=tmp_dirs[0])
-
+            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[1], base_dir=tmp_dirs[0])
         with open(path, 'r') as f:
             shutil.copyfileobj(f, response)
 
         for td in tmp_dirs:
             shutil.rmtree(td)
 
-        return [metadata['id'], format]
+        return [metadata['name'], format]
 
     def get_filestore(self, metadata):
         content = urllib.urlopen(metadata['url'])
         for line in content:
             response.write(line)
 
-        return [metadata['id'], metadata['format']]
+        return [metadata['name'], metadata['format']]
