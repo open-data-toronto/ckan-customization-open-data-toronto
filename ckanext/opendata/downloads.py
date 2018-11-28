@@ -100,7 +100,7 @@ class DownloadsController(BaseController):
 
             tmp_dirs.append(tempfile.mkdtemp())
             format = 'zip'
-            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[1], base_dir=tmp_dirs[0])
+            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[0], base_dir='.')
         with open(path, 'r') as f:
             shutil.copyfileobj(f, response)
 
