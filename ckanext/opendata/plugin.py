@@ -218,6 +218,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
 
+    ## To-Do items: package format update on resource update
     # def after_create(self, context, resource):
     #     update_package_fields(context, resource)
     #
