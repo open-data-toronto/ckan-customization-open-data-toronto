@@ -66,7 +66,7 @@ class DownloadsController(BaseController):
                         is_geospatial = True
                         break
 
-                if (is_geospatial and format in ['csv', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
+                if (is_geospatial and format in ['csv', 'dxf', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
                     is_valid_request = True
                 else:
                     raise ValidationError({
@@ -95,12 +95,15 @@ class DownloadsController(BaseController):
             df_to_xml(df, path)
         elif format == 'geojson':
             df.to_file(path, driver='GeoJSON', encoding='utf-8')
+        elif format == 'dxf':
+            df.to_file(path, driver='DXF')
         elif format == 'shp':
             df.to_file(path, driver='ESRI Shapefile')
 
             tmp_dirs.append(tempfile.mkdtemp())
             format = 'zip'
             path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[0], base_dir='.')
+
         with open(path, 'r') as f:
             shutil.copyfileobj(f, response)
 
