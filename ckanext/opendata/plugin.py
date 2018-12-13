@@ -13,13 +13,13 @@ def catalogue_search(context, data_dict):
     for k, v in data_dict.items():
         if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '"))')
-        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topic']):
+        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']):
             field = k[:-2]
 
             if type(v) != list:
                 v = [v]
 
-            if field in ['dataset_category', 'vocab_formats', 'vocab_topic']:
+            if field in ['dataset_category', 'vocab_formats', 'vocab_topics']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
             elif field in ['owner_division']:
                 terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
@@ -63,7 +63,7 @@ def modify_package_schema(schema, convert_method):
         'refresh_rate': [],
         'require_legal': [],
         'require_privacy': [],
-        'topic': [tk.get_validator('ignore_missing')],
+        'topics': [tk.get_validator('ignore_missing')],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
         'approved_date': [validate_date],
@@ -80,12 +80,12 @@ def modify_package_schema(schema, convert_method):
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in modifications.items():
         if convert_method == 'input':
-            if key in ('formats', 'topic'):
+            if key in ('formats', 'topics'):
                 modifications[key].append(tk.get_converter('convert_to_tags')(key))
             else:
                 modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            if key in ('formats', 'topic'):
+            if key in ('formats', 'topics'):
                 modifications[key].insert(0, tk.get_converter('convert_from_tags')(key))
             else:
                 modifications[key].insert(0, tk.get_converter('convert_from_extras'))
