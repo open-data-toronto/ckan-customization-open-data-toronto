@@ -13,15 +13,15 @@ def catalogue_search(context, data_dict):
     for k, v in data_dict.items():
         if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '"))')
-        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'topic']):
+        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topic']):
             field = k[:-2]
 
             if type(v) != list:
                 v = [v]
 
-            if field in ['dataset_category', 'vocab_formats']:
+            if field in ['dataset_category', 'vocab_formats', 'vocab_topic']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
-            elif field in ['owner_division', 'topic']:
+            elif field in ['owner_division']:
                 terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
 
             q.append('{key}:({value})'.format(key=field, value=terms))
