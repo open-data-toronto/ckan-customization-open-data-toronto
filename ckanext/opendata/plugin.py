@@ -80,14 +80,13 @@ def modify_package_schema(schema, convert_method):
     # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in modifications.items():
         if convert_method == 'input':
-            if key == 'formats':
-                modifications[key].append(tk.get_converter('convert_to_tags')('formats'))
+            if key in ('formats', 'topic'):
+                modifications[key].append(tk.get_converter('convert_to_tags')(key))
             else:
                 modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            if key == 'formats':
-                modifications[key].insert(0, tk.get_converter('convert_from_tags')('formats'))
-                # schema['tags']['__extras'].append(tk.get_converter('free_tags_only'))
+            if key in ('formats', 'topic'):
+                modifications[key].insert(0, tk.get_converter('convert_from_tags')(key))
             else:
                 modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
@@ -101,19 +100,19 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def update_package_fields(context, data):
-    package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
-    package['formats'] = []
-
-    for idx, resource in enumerate(package['resources']):
-        if resource['datastore_active']:
-            package['formats'] += ['JSON', 'XML']
-
-        package['formats'].append(resource['format'].upper())
-
-    package['formats'] = sorted(list(set(package['formats'])))
-
-    tk.get_action('package_update')(context, package)
+# def update_package_fields(context, data):
+#     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
+#     package['formats'] = []
+#
+#     for idx, resource in enumerate(package['resources']):
+#         if resource['datastore_active']:
+#             package['formats'] += ['JSON', 'XML']
+#
+#         package['formats'].append(resource['format'].upper())
+#
+#     package['formats'] = sorted(list(set(package['formats'])))
+#
+#     tk.get_action('package_update')(context, package)
 
 def validate_date(value, context):
     if value == '':
