@@ -8,12 +8,25 @@ import re
 
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
+    '''
+        Parses parameters from frontend search inputs to respective CKAN fields
+        and SOLR queries with logic.
+
+        Args:
+            content: Internal CKAN field for tracking environmental variables
+                     (eg. CKAN user and permission)
+            data_dict: Content passed from the API call from the frontend
+
+        Returns:
+            Result of the SOLR search containing a list of packages
+    '''
+
     q = []
 
     for k, v in data_dict.items():
         if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '"))')
-        elif (k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']):
+        elif k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']:
             field = k[:-2]
 
             if type(v) != list:
@@ -44,11 +57,19 @@ def catalogue_search(context, data_dict):
 
     return tk.get_action('package_search')(context, params)
 
-# ==============================
-# Functions for modifying default CKAN behaviours
-# ==============================
-
 def modify_package_schema(schema, convert_method):
+    '''
+        Update the package schema on package read or write.
+
+        Args:
+            schema: Original CKAN schema
+            convert_method: Determines if the schema is for reading or writing
+                            and affects the validators for certain fields
+
+        Returns:
+            Updated schema with customization
+    '''
+
     modifications = {
         # General dataset info (inputs)
         'collection_method': [tk.get_validator('ignore_missing')],
@@ -77,7 +98,6 @@ def modify_package_schema(schema, convert_method):
         'formats': [tk.get_validator('ignore_missing')]
     }
 
-    # Prepend/append appropriate converter depending if creating/updating/showing schemas
     for key, value in modifications.items():
         if convert_method == 'input':
             if key in ('formats', 'topics'):
@@ -99,20 +119,6 @@ def modify_package_schema(schema, convert_method):
     })
 
     return schema
-
-# def update_package_fields(context, data):
-#     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
-#     package['formats'] = []
-#
-#     for idx, resource in enumerate(package['resources']):
-#         if resource['datastore_active']:
-#             package['formats'] += ['JSON', 'XML']
-#
-#         package['formats'].append(resource['format'].upper())
-#
-#     package['formats'] = sorted(list(set(package['formats'])))
-#
-#     tk.get_action('package_update')(context, package)
 
 def validate_date(value, context):
     if value == '':
