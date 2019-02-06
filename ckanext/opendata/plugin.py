@@ -120,6 +120,17 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
+def create_preview_map(context, resource):
+    tk.get_action('resource_view_create')(context, {
+        'resource_id': resource['id'],
+        'title': 'Map',
+        'view_type': 'recline_map_view',
+        'auto_zoom': True,
+        'cluster_markers': False,
+        'map_field_type': 'geojson',
+        # 'geojson_field': 'geometry'
+    })
+
 def validate_date(value, context):
     if value == '':
         return value
@@ -223,13 +234,17 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
 
-    ## To-Do items: package format update on resource update
-    # def after_create(self, context, resource):
-    #     update_package_fields(context, resource)
-    #
-    # def after_update(self, context, resource):
-    #     update_package_fields(context, resource)
-    #
-    # def after_delete(self, context, resources):
-    #     if len(resources):
-    #         update_package_fields(context, resources[0])
+    def after_update(self, context, resource):
+        if 'format' in resource and resource['format'].lower() == 'geojson' and 'is_preview' in resource and resource['is_preview'] == 'true':
+            found = False
+            views = tk.get_action('resource_view_list')(context, {
+                'id': resource['id']
+            })
+
+            for v in views:
+                if v['view_type'] == 'recline_map_view':
+                    found = True
+                    break
+
+            if not found:
+                create_preview_map(context, resource)
