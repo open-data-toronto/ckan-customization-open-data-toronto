@@ -133,4 +133,8 @@ class DownloadsController(BaseController):
         for line in content:
             response.write(line)
 
-        return [metadata['name'], metadata['format']]
+        format = metadata['format'].lower()
+        if format in ['shp', 'shapefile']:
+            format = 'zip'
+
+        return [metadata['name'], format]
