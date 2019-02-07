@@ -1,13 +1,14 @@
 from ckan.lib.base import BaseController
 from ckan.plugins.toolkit import get_action, request, response, redirect_to, ValidationError
 
+from shapely.geometry import shape
 from simplejson import loads, dumps
 from six import text_type
 
 import geopandas as gpd
 import pandas as pd
-import shapely.geometry
 
+import json
 import mimetypes
 import os
 import shutil
@@ -43,12 +44,40 @@ class DownloadsController(BaseController):
 
     def get_datastore(self, metadata):
         format = request.GET.get('format', 'csv').lower()
-        offset = int(request.GET.get('offset', '0'))
         projection = request.GET.get('projection', '4326')
-        # limit = int(request.GET.get('limit'))
+        offset = request.GET.get('offset', '0')
+        # limit = request.GET.get('limit')
 
-        is_valid_request = False
+        data = get_action('datastore_search')(None, {
+            'resource_id': metadata['id'],
+            'limit': 0,
+            'include_total': True
+        })
+
+        try:
+            offset = int(offset)
+        except:
+            raise ValidationError({
+                'offset': ['Requested offset is an invalid number']
+            })
+
+        if offset > data['total']:
+            raise ValidationError({
+                'offset': ['Requested offset greater than number of rows in data']
+            })
+
         is_geospatial = False
+        for x in data['fields']:
+            if x['id'] == 'geometry':
+                is_geospatial = True
+                break
+
+        if (is_geospatial and format in ['csv', 'dxf', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
+            is_valid_request = True
+        else:
+            raise ValidationError({
+                'constraints': ['Inconsistency between data type and requested file format']
+            })
 
         df = pd.DataFrame()
         while True:
@@ -60,19 +89,6 @@ class DownloadsController(BaseController):
                 'sort': '_id'
             })
 
-            if not is_valid_request:
-                for x in chunk['fields']:
-                    if (x['id'] == 'geometry' and x['type'] == 'json'):
-                        is_geospatial = True
-                        break
-
-                if (is_geospatial and format in ['csv', 'dxf', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
-                    is_valid_request = True
-                else:
-                    raise ValidationError({
-                        'constraints': ['Inconsistency between data type and requested file format']
-                    })
-
             df = pd.concat([df, pd.read_json(chunk['records'].encoded_json)])
 
             if len(chunk['records']) < PAGE_SIZE:
@@ -81,7 +97,7 @@ class DownloadsController(BaseController):
             offset += PAGE_SIZE
 
         if is_geospatial:
-            df['geometry'] = df['geometry'].apply(lambda x: shapely.geometry.shape(x))
+            df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:4326' }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         tmp_dirs = [tempfile.mkdtemp()]
