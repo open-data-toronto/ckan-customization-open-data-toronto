@@ -45,10 +45,10 @@
     <td class="dataset-details">{{ pkg_dict.dataset_category }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.is_archive %}
+  {% if pkg_dict.is_retired %}
   <tr>
-    <th scope="row" class="dataset-label">{{ _("Archived Dataset") }}</th>
-    <td class="dataset-details">{{ pkg_dict.is_archive }}</td>
+    <th scope="row" class="dataset-label">{{ _("Retiredd Dataset") }}</th>
+    <td class="dataset-details">{{ pkg_dict.is_retired }}</td>
   </tr>
   {% endif %}
   {% if pkg_dict.pipeline_stage %}
