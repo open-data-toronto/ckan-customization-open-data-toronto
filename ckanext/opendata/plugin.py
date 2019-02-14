@@ -85,6 +85,7 @@ def modify_package_schema(schema, convert_method):
         'require_legal': [],
         'require_privacy': [],
         'topics': [tk.get_validator('ignore_missing')],
+        'topics_string': [tk.get_validator('ignore_missing')],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
         'approved_date': [validate_date],
