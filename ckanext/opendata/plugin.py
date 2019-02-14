@@ -6,6 +6,9 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
+from six import string_types
+
+
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
     '''
@@ -85,7 +88,7 @@ def modify_package_schema(schema, convert_method):
         'require_legal': [],
         'require_privacy': [],
         'topics': [tk.get_validator('ignore_missing')],
-        'topics_string': [tk.get_validator('ignore_missing')],
+        'topics_string': [tk.get_validator('ignore_missing'), topics_string_convert],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
         'approved_date': [validate_date],
@@ -132,6 +135,23 @@ def create_preview_map(context, resource):
         # 'geojson_field': 'geometry'
     })
 
+def topics_string_convert(key, data, errors, context):
+    if isinstance(data[key], string_types):
+        topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
+        vocabs = tk.get_action('tag_list')(context, {
+            'vocabulary_id': tk.get_action('vocabulary_show')(context, {
+                'id': 'topics'
+            })['id']
+        })
+
+        for t in topics:
+            if not t in vocabs:
+                raise tk.ValidationError({
+                    'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
+                })
+
+        data[('topics',)] = topics
+
 def validate_date(value, context):
     if value == '':
         return value
@@ -142,7 +162,9 @@ def validate_date(value, context):
         date = h.date_str_to_datetime(value)
         return date.strftime('%Y-%m-%d')
     except (TypeError, ValueError) as e:
-        raise tk.Invalid('Please provide the date in YYYY-MM-DD format')
+        raise tk.ValidationError({
+            'constraints': ['Please provide the date in YYYY-MM-DD format']
+        })
 
 def validate_resource_name(context, data):
     package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
@@ -155,9 +177,13 @@ def validate_resource_name(context, data):
 
 def validate_string_length(value, context):
     if isinstance(value, str) and len(value) <= 0:
-        raise tk.Invalid('Input required')
+        raise tk.ValidationError({
+            'constraints': ['Input required']
+        })
     if len(value) > 350:
-        raise tk.Invalid('Input exceed 350 character limits')
+        raise tk.ValidationError({
+            'constraints': ['Input exceed 350 character limits']
+        })
     return value
 
 class DownloadStoresPlugin(p.SingletonPlugin):
