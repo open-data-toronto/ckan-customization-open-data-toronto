@@ -14,6 +14,8 @@
   {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
   {{ form.input('limitations', label=_('Limitations'), id='field-limitations', placeholder=_('eg. This dataset is missing values from...'), value=data.limitations, error=errors.limitations, classes=['control-medium']) }}
   {{ form.input('published_date', label=_('Published Date'), id='field-published_date', placeholder=_('Format: YYYY-MM-DD'), value=data.published_date, error=errors.published_date, classes=['control-medium']) }}
+  {% set topic_attrs = {'data-module': 'autocomplete', 'data-module-tags': 'topics', 'data-module-source': '/api/2/util/tag/autocomplete?incomplete=?'} %}
+  {{ form.input('topics_string', id='field-topics', label=_('Topics'), placeholder=_('eg. economy, mental health, government'), value=data.topics_string, error=errors.topics, classes=['control-full'], attrs=topic_attrs) }}
   <div class="form-group control-medium">
     <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
