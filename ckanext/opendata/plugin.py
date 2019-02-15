@@ -88,7 +88,6 @@ def modify_package_schema(schema, convert_method):
         'require_legal': [],
         'require_privacy': [],
         'topics': [tk.get_validator('ignore_missing')],
-        'topics_string': [tk.get_validator('ignore_missing'), topics_string_convert],
         # Dataset division info
         'approved_by': [tk.get_validator('ignore_missing')],
         'approved_date': [validate_date],
@@ -104,13 +103,19 @@ def modify_package_schema(schema, convert_method):
 
     for key, value in modifications.items():
         if convert_method == 'input':
-            if key in ('formats', 'topics'):
+            if key in ('formats'):
                 modifications[key].append(tk.get_converter('convert_to_tags')(key))
+            elif key in ('topics'):
+                modifications[key].append(convert_string_to_tags)
+                modifications[key].append(tk.get_converter('convert_to_extras'))
             else:
                 modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            if key in ('formats', 'topics'):
+            if key in ('formats'):
                 modifications[key].insert(0, tk.get_converter('convert_from_tags')(key))
+            elif key in ('topics'):
+                modifications[key].append(convert_tags_to_string)
+                modifications[key].insert(0, tk.get_converter('convert_from_extras'))
             else:
                 modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
@@ -135,22 +140,41 @@ def create_preview_map(context, resource):
         # 'geojson_field': 'geometry'
     })
 
-def topics_string_convert(key, data, errors, context):
-    if isinstance(data[key], string_types):
-        topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
-        vocabs = tk.get_action('tag_list')(context, {
-            'vocabulary_id': tk.get_action('vocabulary_show')(context, {
-                'id': 'topics'
-            })['id']
-        })
+def convert_string_to_tags(key, data, errors, context):
+    topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
 
-        for t in topics:
-            if not t in vocabs:
-                raise tk.ValidationError({
-                    'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
-                })
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': 'topics' })
+    vocab_topics = tk.get_action('tag_list')(context, { 'vocabulary_id': vocab['id'] })
 
-        data[('topics',)] = topics
+    for t in topics:
+        if not t in vocab_topics:
+            raise tk.ValidationError({
+                'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
+            })
+
+    n = 0
+    for k in data.keys():
+        if k[0] == 'tags':
+            n = max(n, k[1] + 1)
+
+    for num, tag in enumerate(topics):
+        data[('tags', num + n, 'name')] = tag
+        data[('tags', num + n, 'vocabulary_id')] = vocab['id']
+
+    return data[key]
+
+def convert_tags_to_string(key, data, errors, context):
+    tags = []
+    vocab = tk.get_action('vocabulary_show')(context, {
+        'id': 'topics'
+    })
+
+    for k in data.keys():
+        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
+            name = data[k].get('display_name', data[k]['name'])
+            tags.append(name)
+
+    return ','.join(tags)
 
 def validate_date(value, context):
     if value == '':
