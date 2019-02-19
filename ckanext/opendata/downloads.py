@@ -34,7 +34,8 @@ class DownloadsController(BaseController):
     def download_resource(self, resource_id):
         metadata = get_action('resource_show')(None, { 'id':resource_id })
 
-        if metadata['format'].lower() in ['html', 'jsp', 'web']:
+        if metadata['format'].lower() in ['html', 'jsp', 'web'] or \
+            (not metadata['datastore_active'] and metadata['url_type'] is None):
             redirect_to(metadata['url'])
         else:
             filename = self.get_datastore(metadata) if metadata['datastore_active'] else self.get_filestore(metadata)
