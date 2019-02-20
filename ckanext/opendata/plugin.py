@@ -32,7 +32,7 @@ def catalogue_search(context, data_dict):
         elif k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']:
             field = k[:-2]
 
-            if type(v) != list:
+            if not isinstance(v, list):
                 v = [v]
 
             if field in ['dataset_category', 'vocab_formats']:
@@ -46,7 +46,7 @@ def catalogue_search(context, data_dict):
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
             'rows': data_dict['rows'] if 'rows' in data_dict else 10,
-            'sort': data_dict['sort'] if 'sort' in data_dict else 'name asc',
+            'sort': data_dict['sort'] if 'sort' in data_dict else 'score desc',
             'start': data_dict['start'] if 'start' in data_dict else 0
         }
     elif data_dict['type'] == 'facet':
