@@ -60,6 +60,67 @@ def catalogue_search(context, data_dict):
 
     return tk.get_action('package_search')(context, params)
 
+def convert_string_to_tags(key, data, errors, context):
+    topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
+
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': 'topics' })
+    vocab_topics = tk.get_action('tag_list')(context, { 'vocabulary_id': vocab['id'] })
+
+    for t in topics:
+        if not t in vocab_topics:
+            raise tk.ValidationError({
+                'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
+            })
+
+    n = 0
+    for k in data.keys():
+        if k[0] == 'tags':
+            n = max(n, k[1] + 1)
+
+    for num, tag in enumerate(topics):
+        data[('tags', num + n, 'name')] = tag
+        data[('tags', num + n, 'vocabulary_id')] = vocab['id']
+
+    return data[key]
+
+def convert_tags_to_string(key, data, errors, context):
+    tags = []
+    vocab = tk.get_action('vocabulary_show')(context, {
+        'id': 'topics'
+    })
+
+    for k in data.keys():
+        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
+            name = data[k].get('display_name', data[k]['name'])
+            tags.append(name)
+
+    return ','.join(tags)
+
+def create_preview_map(context, resource):
+    if (resource['datastore_active'] or resource['url_type'] == 'datastore') and \
+        'format' in resource and resource['format'].lower() == 'geojson' and \
+        'is_preview' in resource and resource['is_preview'] == 'true':
+        found = False
+        views = tk.get_action('resource_view_list')(context, {
+            'id': resource['id']
+        })
+
+        for v in views:
+            if v['view_type'] == 'recline_map_view':
+                found = True
+                break
+
+        if not found:
+            tk.get_action('resource_view_create')(context, {
+                'resource_id': resource['id'],
+                'title': 'Map',
+                'view_type': 'recline_map_view',
+                'auto_zoom': True,
+                'cluster_markers': False,
+                'map_field_type': 'geojson',
+                # 'geojson_field': 'geometry'
+            })
+
 def modify_package_schema(schema, convert_method):
     '''
         Update the package schema on package read or write.
@@ -129,52 +190,21 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def create_preview_map(context, resource):
-    tk.get_action('resource_view_create')(context, {
-        'resource_id': resource['id'],
-        'title': 'Map',
-        'view_type': 'recline_map_view',
-        'auto_zoom': True,
-        'cluster_markers': False,
-        'map_field_type': 'geojson',
-        # 'geojson_field': 'geometry'
+def update_formats(context, resources):
+    formats = []
+    for r in resources:
+        if r['datastore_active'] or r['url_type'] == 'datastore':
+            if r['format'].lower() == 'csv':
+                formats += ['csv', 'json', 'xml']
+            elif r['format'].lower() == 'geojson':
+                formats += ['csv', 'geojson', 'shp']
+        else:
+            formats.append(r['format'])
+
+    tk.get_action('package_patch')(context, {
+        'id': resources[0]['package_id'],
+        'formats': [x.upper() for x in sorted(list(set(formats)))]
     })
-
-def convert_string_to_tags(key, data, errors, context):
-    topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
-
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': 'topics' })
-    vocab_topics = tk.get_action('tag_list')(context, { 'vocabulary_id': vocab['id'] })
-
-    for t in topics:
-        if not t in vocab_topics:
-            raise tk.ValidationError({
-                'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
-            })
-
-    n = 0
-    for k in data.keys():
-        if k[0] == 'tags':
-            n = max(n, k[1] + 1)
-
-    for num, tag in enumerate(topics):
-        data[('tags', num + n, 'name')] = tag
-        data[('tags', num + n, 'vocabulary_id')] = vocab['id']
-
-    return data[key]
-
-def convert_tags_to_string(key, data, errors, context):
-    tags = []
-    vocab = tk.get_action('vocabulary_show')(context, {
-        'id': 'topics'
-    })
-
-    for k in data.keys():
-        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
-            name = data[k].get('display_name', data[k]['name'])
-            tags.append(name)
-
-    return ','.join(tags)
 
 def validate_date(value, context):
     if value == '':
@@ -210,6 +240,18 @@ def validate_string_length(value, context):
         })
     return value
 
+class CatalogueSearchPlugin(p.SingletonPlugin):
+    p.implements(p.IActions)
+
+    # ==============================
+    # IActions
+    # ==============================
+
+    def get_actions(self):
+        return {
+            'catalogue_search': catalogue_search
+        }
+
 class DownloadStoresPlugin(p.SingletonPlugin):
     p.implements(p.IRoutes, inherit=True)
 
@@ -226,19 +268,9 @@ class DownloadStoresPlugin(p.SingletonPlugin):
         return m
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
-    p.implements(p.IActions)
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController, inherit=True)
-
-    # ==============================
-    # IActions
-    # ==============================
-
-    def get_actions(self):
-        return {
-            'catalogue_search': catalogue_search
-        }
 
     # ==============================
     # IConfigurer
@@ -285,17 +317,15 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
 
+    def after_create(self, context, resource):
+        tk.get_action('resource_patch')(context, {
+            'id': resource['id'],
+            'format': resource['format'].upper()
+        })
+
     def after_update(self, context, resource):
-        if 'format' in resource and resource['format'].lower() == 'geojson' and 'is_preview' in resource and resource['is_preview'] == 'true':
-            found = False
-            views = tk.get_action('resource_view_list')(context, {
-                'id': resource['id']
-            })
+        create_preview_map(context, resource)
+        update_formats(context, tk.get_action('package_show')(context, { 'id': resource['package_id'] })['resources'])
 
-            for v in views:
-                if v['view_type'] == 'recline_map_view':
-                    found = True
-                    break
-
-            if not found:
-                create_preview_map(context, resource)
+    def after_delete(self, context, resources):
+        update_formats(context, resources)
