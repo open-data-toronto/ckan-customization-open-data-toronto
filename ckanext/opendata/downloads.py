@@ -61,7 +61,7 @@ class DownloadsController(BaseController):
 
         if offset > data['total']:
             raise ValidationError({
-                'offset': ['Requested offset greater than number of rows in data']
+                'offset': ['Requested offset is greater than the {num} of rows available in the dataset'.format(num=data['total'])]
             })
 
         is_geospatial = False
@@ -70,9 +70,7 @@ class DownloadsController(BaseController):
                 is_geospatial = True
                 break
 
-        if (is_geospatial and format in ['csv', 'dxf', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml']):
-            is_valid_request = True
-        else:
+        if not ((is_geospatial and format in ['csv', 'dxf', 'geojson', 'shp']) or (not is_geospatial and format in ['csv', 'json', 'xml'])):
             raise ValidationError({
                 'constraints': ['Inconsistency between data type and requested file format']
             })
