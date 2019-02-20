@@ -2,20 +2,18 @@ from ckan.lib.base import BaseController
 from ckan.plugins.toolkit import get_action, request, response, redirect_to, ValidationError
 
 from shapely.geometry import shape
-from simplejson import loads, dumps
-from six import text_type
 
 import geopandas as gpd
 import pandas as pd
 
+import io
 import json
 import mimetypes
 import os
+import requests
 import shutil
 import tempfile
-import urllib
 
-PAGE_SIZE = 5000
 
 def df_to_xml(df, path):
     def row_to_xml(row):
@@ -34,11 +32,10 @@ class DownloadsController(BaseController):
     def download_resource(self, resource_id):
         metadata = get_action('resource_show')(None, { 'id':resource_id })
 
-        if metadata['format'].lower() in ['html', 'jsp', 'web'] or \
-            (not metadata['datastore_active'] and metadata['url_type'] is None):
+        if not metadata['datastore_active']:
             redirect_to(metadata['url'])
         else:
-            filename = self.get_datastore(metadata) if metadata['datastore_active'] else self.get_filestore(metadata)
+            filename = self.get_datastore(metadata)
 
             response.headers['Content-Type'] = mimetypes.guess_type('.'.join(filename))[0]
             response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
@@ -80,22 +77,8 @@ class DownloadsController(BaseController):
                 'constraints': ['Inconsistency between data type and requested file format']
             })
 
-        df = pd.DataFrame()
-        while True:
-            chunk = get_action('datastore_search')(None, {
-                'resource_id': metadata['id'],
-                'records_format': 'objects',
-                'limit': PAGE_SIZE,
-                'offset': offset,
-                'sort': '_id'
-            })
-
-            df = pd.concat([df, pd.read_json(chunk['records'].encoded_json)])
-
-            if len(chunk['records']) < PAGE_SIZE:
-                break
-
-            offset += PAGE_SIZE
+        r = requests.get(metadata['url']).content
+        df = pd.read_csv(io.StringIO(r.decode('utf-8')))
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
@@ -126,16 +109,5 @@ class DownloadsController(BaseController):
 
         for td in tmp_dirs:
             shutil.rmtree(td)
-
-        return [metadata['name'], format]
-
-    def get_filestore(self, metadata):
-        content = urllib.urlopen(metadata['url'])
-        for line in content:
-            response.write(line)
-
-        format = metadata['format'].lower()
-        if format in ['shp', 'shapefile']:
-            format = 'zip'
 
         return [metadata['name'], format]
