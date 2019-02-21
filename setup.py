@@ -15,11 +15,12 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version='1.2.1',
+    version='2.1-qa.0',
 
     description='''Custom extension with two plugins:
     - updateschema for modifying default CKAN fields and enforcing validation/rules of the fields
-    - downloadstores for fetching data from CKAN filestore and datastore and serve data in various formats
+    - extendedurl for fetching data from CKAN filestore and datastore and serve data in various formats
+    - extendedapi for additional URLs to retrieve data from CKAN outside of API formats
     ''',
     long_description=long_description,
 
@@ -84,7 +85,7 @@ setup(
     entry_points='''
         [ckan.plugins]
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
-        downloadstores=ckanext.opendata.plugin:DownloadStoresPlugin
+        extendedurl=ckanext.opendata.plugin:ExtendedURLPlugin
         extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin
 
         [babel.extractors]

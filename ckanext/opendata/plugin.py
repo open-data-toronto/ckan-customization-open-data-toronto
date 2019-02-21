@@ -242,7 +242,7 @@ def validate_string_length(value, context):
         })
     return value
 
-class DownloadStoresPlugin(p.SingletonPlugin):
+class ExtendedURLPlugin(p.SingletonPlugin):
     p.implements(p.IRoutes, inherit=True)
 
     # ==============================
