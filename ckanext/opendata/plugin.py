@@ -255,6 +255,12 @@ class DownloadStoresPlugin(p.SingletonPlugin):
             controller='ckanext.opendata.downloads:DownloadsController',
             action='download_resource')
 
+        m.connect(
+            '/tags_autocomplete',
+            controller='ckanext.opendata.tags:TagsController',
+            action='get_tag_list'
+        )
+
         return m
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
