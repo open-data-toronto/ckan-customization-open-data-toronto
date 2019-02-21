@@ -27,6 +27,8 @@ def catalogue_search(context, data_dict):
     q = []
 
     for k, v in data_dict.items():
+        v = v.lower()
+
         if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '")) OR (title:(*' + v + '*))')
         elif k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']:
