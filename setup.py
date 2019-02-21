@@ -85,6 +85,7 @@ setup(
         [ckan.plugins]
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
         downloadstores=ckanext.opendata.plugin:DownloadStoresPlugin
+        extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan

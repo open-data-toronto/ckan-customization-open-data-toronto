@@ -240,18 +240,6 @@ def validate_string_length(value, context):
         })
     return value
 
-class CatalogueSearchPlugin(p.SingletonPlugin):
-    p.implements(p.IActions)
-
-    # ==============================
-    # IActions
-    # ==============================
-
-    def get_actions(self):
-        return {
-            'catalogue_search': catalogue_search
-        }
-
 class DownloadStoresPlugin(p.SingletonPlugin):
     p.implements(p.IRoutes, inherit=True)
 
@@ -266,6 +254,19 @@ class DownloadStoresPlugin(p.SingletonPlugin):
             action='download_resource')
 
         return m
+
+class ExtendedAPIPlugin(p.SingletonPlugin):
+    p.implements(p.IActions)
+
+    # ==============================
+    # IActions
+    # ==============================
+
+    def get_actions(self):
+        return {
+            'catalogue_search': catalogue_search
+        }
+
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
