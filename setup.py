@@ -17,10 +17,8 @@ setup(
     # http://packaging.python.org/en/latest/tutorial.html#version
     version='2.1-qa.0',
 
-    description='''Custom extension with two plugins:
-    - updateschema for modifying default CKAN fields and enforcing validation/rules of the fields
-    - extendedurl for fetching data from CKAN filestore and datastore and serve data in various formats
-    - extendedapi for additional URLs to retrieve data from CKAN outside of API formats
+    description='''
+        This extension contains plugins that modifiy and extend default CKAN features for the City of Toronto Open Data Portal.
     ''',
     long_description=long_description,
 

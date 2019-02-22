@@ -2,7 +2,19 @@
 ckanext-opendatatoronto
 =============
 
-CKAN extension to create custom fields for City of Toronto Open Data Portal
+------------
+Description
+------------
+
+This extension contains plugins that modifiy and extend default CKAN features to intergrate with the City of Toronto Open Data Portal. These plugins includes:
+
+* **updateschema**: Extends package and resource schemas to include custom fields used to maintain datasets published on the OD Portal. This plugin also contains validations and triggers to automate and manage the contents of these new fields.
+
+* **extendedapi**: Extends the action API to include new endpoints to enhance the OD Portal functionalities.
+
+* **extendedurl**: Extends the URLs to include new functions that are outside the scope of the APIs.
+
+**NOTE**: The City of Toronto Open Data Portal is a work in progress. See https://github.com/CityofToronto/ckan-customization-open-data-toronto/issues/ for list of known issues.
 
 ------------
 Installation
@@ -31,3 +43,21 @@ To install ckanext-opendatatoronto:
 6. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
      sudo service apache2 reload
+
+------------
+Additional Endpoints and URLs
+------------
+
+1. /api/3/action/catalogue_search: Converts input parameters from the frontend to SOLR queries to search the dataset catalogue
+
+2. /download_resource/{resource_id}: Fetches and serves filestore and datastore content for resources and enables format and projection conversions for those resources that are in the datastore
+
+3. /tags_autocomplete: Lists tags for specific vocabularies ordered by similarity between tag name and query term
+
+------------
+Contribution
+------------
+
+------------
+License
+------------
