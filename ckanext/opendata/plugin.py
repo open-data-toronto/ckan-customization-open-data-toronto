@@ -8,6 +8,12 @@ import re
 
 from six import string_types
 
+DEFAULT_SEARCH = {
+    'rows': 10,
+    'sort': 'score desc',
+    'start': 0
+}
+MAX_STRING_LENGTH = 350
 
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
@@ -47,9 +53,9 @@ def catalogue_search(context, data_dict):
     if data_dict['type'] == 'full':
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-            'rows': data_dict['rows'] if 'rows' in data_dict else 10,
-            'sort': data_dict['sort'] if 'sort' in data_dict else 'score desc',
-            'start': data_dict['start'] if 'start' in data_dict else 0
+            'rows': data_dict['rows'] if 'rows' in data_dict else DEFAULT_SEARCH['row'],
+            'sort': data_dict['sort'] if 'sort' in data_dict else DEFAULT_SEARCH['sort'],
+            'start': data_dict['start'] if 'start' in data_dict else DEFAULT_SEARCH['start']
         }
     elif data_dict['type'] == 'facet':
         params = {
@@ -236,7 +242,7 @@ def validate_string_length(value, context):
         raise tk.ValidationError({
             'constraints': ['Input required']
         })
-    if len(value) > 350:
+    if len(value) > MAX_STRING_LENGTH:
         raise tk.ValidationError({
             'constraints': ['Input exceed 350 character limits']
         })
