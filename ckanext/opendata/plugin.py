@@ -6,8 +6,6 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
-from six import string_types
-
 DEFAULT_SEARCH = {
     'rows': 10,
     'sort': 'score desc',
@@ -33,7 +31,8 @@ def catalogue_search(context, data_dict):
     q = []
 
     for k, v in data_dict.items():
-        v = v.lower()
+        if isinstance(v, str):
+            v = v.lower()
 
         if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '")) OR (title:(*' + v + '*))')
