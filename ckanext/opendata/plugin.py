@@ -244,7 +244,7 @@ def validate_string_length(value, context):
         })
     if len(value) > MAX_STRING_LENGTH:
         raise tk.ValidationError({
-            'constraints': ['Input exceed 350 character limits']
+            'constraints': ['Input exceed 350 character limit']
         })
     return value
 
