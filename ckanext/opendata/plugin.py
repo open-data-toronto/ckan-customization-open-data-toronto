@@ -8,6 +8,10 @@ import re
 
 from six import string_types
 
+DEFAULT_FORMATS = {
+    'geospatial': ['csv', 'geojson', 'shp'],
+    'tabular': ['csv', 'json', 'xml']
+}
 DEFAULT_SEARCH = {
     'rows': 10,
     'sort': 'score desc',
@@ -203,9 +207,9 @@ def update_formats(context, resources):
     for r in resources:
         if r['datastore_active'] or r['url_type'] == 'datastore':
             if r['format'].lower() == 'csv':
-                formats += ['csv', 'json', 'xml']
+                formats += DEFAULT_FORMATS['tabular']
             elif r['format'].lower() == 'geojson':
-                formats += ['csv', 'geojson', 'shp']
+                formats += DEFAULT_FORMATS['geospatial']
         else:
             formats.append(r['format'])
 
