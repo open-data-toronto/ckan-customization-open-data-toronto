@@ -6,6 +6,10 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
+DEFAULT_FORMATS = {
+    'geospatial': ['csv', 'geojson', 'shp'],
+    'tabular': ['csv', 'json', 'xml']
+}
 DEFAULT_SEARCH = {
     'rows': 10,
     'sort': 'score desc',
@@ -202,9 +206,9 @@ def update_formats(context, resources):
     for r in resources:
         if r['datastore_active'] or r['url_type'] == 'datastore':
             if r['format'].lower() == 'csv':
-                formats += ['csv', 'json', 'xml']
+                formats += DEFAULT_FORMATS['tabular']
             elif r['format'].lower() == 'geojson':
-                formats += ['csv', 'geojson', 'shp']
+                formats += DEFAULT_FORMATS['geospatial']
         else:
             formats.append(r['format'])
 
@@ -243,7 +247,7 @@ def validate_string_length(value, context):
         })
     if len(value) > MAX_STRING_LENGTH:
         raise tk.ValidationError({
-            'constraints': ['Input exceed 350 character limits']
+            'constraints': ['Input exceed 350 character limit']
         })
     return value
 

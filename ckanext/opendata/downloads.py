@@ -52,7 +52,7 @@ class DownloadsController(BaseController):
     def get_datastore(self, metadata):
         format = tk.request.GET.get('format', DEFAULTS['format']).lower()
         projection = tk.request.GET.get('projection', DEFAULTS['projection'])
-        offset = tk.request.GET.get('offset', DEFAULTS['offset'])
+        # offset = tk.request.GET.get('offset', DEFAULTS['offset'])
         # limit = tk.request.GET.get('limit')
 
         data = tk.get_action('datastore_search')(None, {
@@ -61,17 +61,17 @@ class DownloadsController(BaseController):
             'include_total': True
         })
 
-        try:
-            offset = int(offset)
-        except:
-            raise tk.ValidationError({
-                'offset': ['Requested offset is an invalid number']
-            })
+        # try:
+        #     offset = int(offset)
+        # except:
+        #     raise tk.ValidationError({
+        #         'offset': ['Requested offset is an invalid number']
+        #     })
 
-        if offset > data['total']:
-            raise tk.ValidationError({
-                'offset': ['Requested offset is greater than the {num} of rows available in the dataset'.format(num=data['total'])]
-            })
+        # if offset > data['total']:
+        #     raise tk.ValidationError({
+        #         'offset': ['Requested offset is greater than the {num} of rows available in the dataset'.format(num=data['total'])]
+        #     })
 
         is_geospatial = False
         for x in data['fields']:
