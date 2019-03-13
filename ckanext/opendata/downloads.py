@@ -84,8 +84,8 @@ class DownloadsController(BaseController):
                 'constraints': ['Inconsistency between data type and requested file format']
             })
 
-        r = requests.get(metadata['url']).content
-        df = pd.read_csv(io.StringIO(r.decode('utf-8')))
+        r = requests.get('{host}/datastore/dump/{resource_id}'.format(host=tk.config['ckan.site_url'], resource_id=metadata['id']))
+        df = pd.read_csv(io.StringIO(r.content.decode('utf-8')))
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
