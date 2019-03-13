@@ -1,3 +1,5 @@
+from six import string_types
+
 import ckan.lib.helpers as h
 
 import ckan.plugins as p
@@ -35,7 +37,7 @@ def catalogue_search(context, data_dict):
     q = []
 
     for k, v in data_dict.items():
-        if isinstance(v, str):
+        if isinstance(v, string_types):
             v = v.lower()
 
         if k == 'search' and len(v) > 0:
