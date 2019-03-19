@@ -37,10 +37,9 @@ def catalogue_search(context, data_dict):
     q = []
 
     for k, v in data_dict.items():
-        if isinstance(v, string_types):
+        if k == 'search' and len(v) > 0:
             v = v.lower()
 
-        if k == 'search' and len(v) > 0:
             q.append('(name:(*' + v.replace(' ', '-') + '*)) OR (notes:("' + v + '")) OR (title:(*' + v + '*))')
         elif k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']:
             field = k[:-2]
@@ -58,7 +57,7 @@ def catalogue_search(context, data_dict):
     if data_dict['type'] == 'full':
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-            'rows': data_dict['rows'] if 'rows' in data_dict else DEFAULT_SEARCH['row'],
+            'rows': data_dict['rows'] if 'rows' in data_dict else DEFAULT_SEARCH['rows'],
             'sort': data_dict['sort'] if 'sort' in data_dict else DEFAULT_SEARCH['sort'],
             'start': data_dict['start'] if 'start' in data_dict else DEFAULT_SEARCH['start']
         }
