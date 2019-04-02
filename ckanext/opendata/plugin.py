@@ -74,15 +74,7 @@ def catalogue_search(context, data_dict):
 
 def convert_string_to_tags(key, data, errors, context):
     topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
-
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': 'topics' })
-    vocab_topics = tk.get_action('tag_list')(context, { 'vocabulary_id': vocab['id'] })
-
-    for t in topics:
-        if not t in vocab_topics:
-            raise tk.ValidationError({
-                'constraints': ['Tag {name} is not in the vocabulary Topics'.format(name=t)]
-            })
+    vocab = validate_vocabulary('topics', topics, context)
 
     n = 0
     for k in data.keys():
@@ -252,6 +244,20 @@ def validate_string_length(value, context):
         })
     return value
 
+def validate_vocabulary(vocab_name, tags, context):
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
+    vocab_tags = tk.get_action('tag_list')(context, {
+        'vocabulary_id': vocab['id']
+    })
+
+    for t in tags:
+        if not t in vocab_tags:
+            raise tk.ValidationError({
+                'constraints': ['Tag {0} is not in the vocabulary'.format(t)]
+            })
+
+    return vocab
+
 class ExtendedURLPlugin(p.SingletonPlugin):
     p.implements(p.IRoutes, inherit=True)
 
@@ -335,6 +341,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
+        validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
         tk.get_action('resource_patch')(context, {
