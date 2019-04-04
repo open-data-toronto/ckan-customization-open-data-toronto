@@ -1,5 +1,5 @@
 from ckan.lib.base import BaseController
-from shapely.geometry import shape
+from shapely.geometry import shape, MultiPolygon, MultiPoint, MultiLineString
 
 import ckan.plugins.toolkit as tk
 import geopandas as gpd
@@ -22,6 +22,12 @@ DEFAULTS = {
     'projection': '4326',
     'offset': '0',
     'limit': '0'
+}
+
+GEOM_TYPE_MAP = {
+    'Polygon': MultiPolygon,
+    'LineString': MultiLineString,
+    'Point': MultiPoint
 }
 
 def df_to_xml(df, path):
@@ -90,6 +96,9 @@ class DownloadsController(BaseController):
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DEFAULTS['projection']) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
+
+            if any([x.startswith('Multi') for x in gdf.geom_type]):
+                gdf['geometry'] = gdf['geometry'].apply(lambda x: GEOM_TYPE_MAP[x.geom_type]([x]) if not x.geom_type.startswith('Multi') else x)
 
         tmp_dirs = [tempfile.mkdtemp()]
         path = os.path.join(tmp_dirs[0], '{name}.{format}'.format(name=metadata['name'], format=format))
