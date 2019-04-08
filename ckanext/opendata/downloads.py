@@ -97,7 +97,7 @@ class DownloadsController(BaseController):
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DEFAULTS['projection']) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
-            if any([x.startswith('Multi') for x in df.geom_type]):
+            if any([x.startswith('Multi') for x in df['geometry'].apply(lambda x: x.geom_type)]):
                 df['geometry'] = df['geometry'].apply(lambda x: GEOM_TYPE_MAP[x.geom_type]([x]) if not x.geom_type.startswith('Multi') else x)
 
         tmp_dirs = [tempfile.mkdtemp()]
