@@ -56,8 +56,11 @@ class DownloadsController(BaseController):
             tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
 
     def get_datastore(self, metadata):
-        format = tk.request.GET.get('format', DEFAULTS['format']).lower()
         projection = tk.request.GET.get('projection', DEFAULTS['projection'])
+        format = tk.request.GET.get('format', DEFAULTS['format']).lower()
+        if format == 'shp':
+            format = 'zip'
+
         # offset = tk.request.GET.get('offset', DEFAULTS['offset'])
         # limit = tk.request.GET.get('limit')
 
@@ -100,8 +103,8 @@ class DownloadsController(BaseController):
             if any([x.startswith('Multi') for x in df['geometry'].apply(lambda x: x.geom_type)]):
                 df['geometry'] = df['geometry'].apply(lambda x: GEOM_TYPE_MAP[x.geom_type]([x]) if not x.geom_type.startswith('Multi') else x)
 
-        tmp_dirs = [tempfile.mkdtemp()]
-        path = os.path.join(tmp_dirs[0], '{name}.{format}'.format(name=metadata['name'], format=format))
+        tmp_dirs = tempfile.mkdtemp()
+        path = os.path.join(tmp_dirs, '{name}.{format}'.format(name=metadata['name'], format=format))
 
         if format == 'csv':
             df.to_csv(path, index=False, encoding='utf-8')
@@ -114,11 +117,7 @@ class DownloadsController(BaseController):
         elif format == 'dxf':
             df.to_file(path, driver='DXF')
         elif format == 'shp':
-            df.to_file(path, driver='ESRI Shapefile')
-
-            tmp_dirs.append(tempfile.mkdtemp())
-            format = 'zip'
-            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[0], base_dir='.')
+            df.to_file(path, driver='ESRI Shapefile', vsf='zip://{0}'.format(path))
 
         with open(path, 'r') as f:
             shutil.copyfileobj(f, tk.response)
