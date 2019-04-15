@@ -6,6 +6,7 @@ import geopandas as gpd
 import pandas as pd
 import requests
 
+import csv
 import io
 import json
 import mimetypes
@@ -114,10 +115,17 @@ class DownloadsController(BaseController):
         elif format == 'dxf':
             df.to_file(path, driver='DXF')
         elif format == 'shp':
+            format = 'zip'
+
+            if any([len(x) > 10 for x in df.columns]):
+                fields = pd.DataFrame([['FIELD_{0}'.format(i+1) if x != 'geometry' else x, x] for i, x in enumerate(df.columns)], columns=['field', 'name'])
+                fields.to_csv(os.path.join(tmp_dirs[0], 'fields.csv'), index=False, encoding='utf-8')
+
+                df.columns = fields['field']
+
             df.to_file(path, driver='ESRI Shapefile')
 
             tmp_dirs.append(tempfile.mkdtemp())
-            format = 'zip'
             path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[0], base_dir='.')
 
         with open(path, 'r') as f:
