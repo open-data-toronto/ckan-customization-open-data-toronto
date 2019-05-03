@@ -9,11 +9,15 @@ import requests
 import csv
 import io
 import json
+import logging
 import mimetypes
 import os
 import shutil
 import tempfile
 
+
+# Change default Fiona logs from WARNING to ERROR
+logging.getLogger('fiona._env').setLevel(logging.ERROR)
 
 GEOSPATIAL_FORMATS = ['csv', 'dxf', 'geojson', 'shp']
 TABULAR_FORMATS = ['csv', 'json', 'xml']
