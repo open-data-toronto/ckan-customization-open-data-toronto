@@ -1,5 +1,5 @@
 from ckan.lib.base import BaseController
-from shapely.geometry import shape, MultiPolygon, MultiPoint, MultiLineString
+from shapely.geometry import shape
 
 import ckan.plugins.toolkit as tk
 
