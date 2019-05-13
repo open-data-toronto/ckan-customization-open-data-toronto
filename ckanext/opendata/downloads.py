@@ -2,11 +2,12 @@ from ckan.lib.base import BaseController
 from shapely.geometry import shape, MultiPolygon, MultiPoint, MultiLineString
 
 import ckan.plugins.toolkit as tk
+
 import geopandas as gpd
+import iotrans
 import pandas as pd
 import requests
 
-import csv
 import io
 import json
 import logging
@@ -17,9 +18,9 @@ import tempfile
 
 
 # Change default Fiona logs from WARNING to ERROR
-logging.getLogger('fiona._env').setLevel(logging.ERROR)
+logging.getLogger('fiona').setLevel(logging.ERROR)
 
-GEOSPATIAL_FORMATS = ['csv', 'dxf', 'geojson', 'shp']
+GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
 TABULAR_FORMATS = ['csv', 'json', 'xml']
 
 DEFAULTS = {
@@ -27,12 +28,6 @@ DEFAULTS = {
     'projection': '4326',
     'offset': '0',
     'limit': '0'
-}
-
-GEOM_TYPE_MAP = {
-    'Polygon': MultiPolygon,
-    'LineString': MultiLineString,
-    'Point': MultiPoint
 }
 
 def df_to_xml(df, path):
@@ -102,40 +97,19 @@ class DownloadsController(BaseController):
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
             df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DEFAULTS['projection']) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
-            if any([x.startswith('Multi') for x in df['geometry'].apply(lambda x: x.geom_type)]):
-                df['geometry'] = df['geometry'].apply(lambda x: GEOM_TYPE_MAP[x.geom_type]([x]) if not x.geom_type.startswith('Multi') else x)
+        tmp_dir = tempfile.mkdtemp()
+        path = os.path.join(tmp_dir, '{0}.{1}'.format(metadata['name'], format))
 
-        tmp_dirs = [tempfile.mkdtemp()]
-        path = os.path.join(tmp_dirs[0], '{name}.{format}'.format(name=metadata['name'], format=format))
+        output = iotrans.to_file(
+            df,
+            path,
+            projection=projection,
+            zip_content=(format=='shp')
+        )
 
-        if format == 'csv':
-            df.to_csv(path, index=False, encoding='utf-8')
-        elif format == 'json':
-            df.to_json(path, orient='records')
-        elif format == 'xml':
-            df_to_xml(df, path)
-        elif format == 'geojson':
-            df.to_file(path, driver='GeoJSON', encoding='utf-8')
-        elif format == 'dxf':
-            df.to_file(path, driver='DXF')
-        elif format == 'shp':
-            format = 'zip'
-
-            if any([len(x) > 10 for x in df.columns]):
-                fields = pd.DataFrame([['FIELD_{0}'.format(i+1) if x != 'geometry' else x, x] for i, x in enumerate(df.columns)], columns=['field', 'name'])
-                fields.to_csv(os.path.join(tmp_dirs[0], 'fields.csv'), index=False, encoding='utf-8')
-
-                df.columns = fields['field']
-
-            df.to_file(path, driver='ESRI Shapefile')
-
-            tmp_dirs.append(tempfile.mkdtemp())
-            path = shutil.make_archive(os.path.join(tmp_dirs[1], metadata['name']), 'zip', root_dir=tmp_dirs[0], base_dir='.')
-
-        with open(path, 'r') as f:
+        with open(output, 'r') as f:
             shutil.copyfileobj(f, tk.response)
 
-        for td in tmp_dirs:
-            shutil.rmtree(td)
+        iotrans.utils.prune(tmp_dir)
 
-        return [metadata['name'], format]
+        return [metadata['name'], output.split('.')[-1]]
