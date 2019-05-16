@@ -30,7 +30,7 @@ setup(
     namespace_packages=['ckanext'],
     install_requires=[
         'geopandas>=0.4.0',
-        'iotrans>=0.0.3'
+        'iotrans>=0.0.4'
     ],
     include_package_data=True,
     package_data={},
