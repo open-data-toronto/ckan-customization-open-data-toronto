@@ -28,10 +28,7 @@ setup(
     keywords='',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     namespace_packages=['ckanext'],
-    install_requires=[
-        'geopandas>=0.4.0',
-        'iotrans>=0.0.4'
-    ],
+    install_requires=[],
     include_package_data=True,
     package_data={},
     data_files=[],
