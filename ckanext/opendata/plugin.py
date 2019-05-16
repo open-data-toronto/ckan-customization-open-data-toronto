@@ -40,7 +40,7 @@ def catalogue_search(context, data_dict):
         if k == 'search' and len(v) > 0:
             v = v.lower()
 
-            q.append('(name:(*' + v.replace(' ', '-') + '*))^2.0 OR (notes:("' + v + '")) OR (title:(*' + v + '*))^3.0')
+            q.append('(name:(*' + v.replace(' ', '-') + '*))^5.0 OR (notes:("' + v + '")) OR (title:(*' + v + '*))^10.0')
         elif k.endswith('[]') and k[:-2] in ['dataset_category', 'owner_division', 'vocab_formats', 'vocab_topics']:
             field = k[:-2]
 
