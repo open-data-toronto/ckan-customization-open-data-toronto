@@ -1,6 +1,6 @@
 import ckan.plugins.toolkit as tk
 
-import opendata.config as config
+from .config import CATALOGUE_ROWS, CATALOGUE_SORT, CATALOGUE_START
 
 
 @tk.side_effect_free
@@ -41,9 +41,9 @@ def search(context, data_dict):
     if data_dict['type'] == 'full':
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-            'rows': data_dict['rows'] if 'rows' in data_dict else config.CATALOGUE_ROWS,
-            'sort': data_dict['sort'] if 'sort' in data_dict else config.CATALOGUE_SORT,
-            'start': data_dict['start'] if 'start' in data_dict else config.CATALOGUE_START
+            'rows': data_dict['rows'] if 'rows' in data_dict else CATALOGUE_ROWS,
+            'sort': data_dict['sort'] if 'sort' in data_dict else CATALOGUE_SORT,
+            'start': data_dict['start'] if 'start' in data_dict else CATALOGUE_START
         }
     elif data_dict['type'] == 'facet':
         params = {

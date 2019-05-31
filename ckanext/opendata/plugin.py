@@ -1,4 +1,5 @@
-from six import string_types
+from .catalogue import search
+from .config import MAX_FIELD_LENGTH
 
 import ckan.lib.helpers as h
 
@@ -7,9 +8,6 @@ import ckan.plugins.toolkit as tk
 
 import datetime as dt
 import re
-
-import opendata.catalogue as catalogue
-import opendata.config as config
 
 
 def convert_string_to_tags(key, data, errors, context):
@@ -170,7 +168,7 @@ def validate_string_length(value, context):
         raise tk.ValidationError({
             'constraints': ['Input required']
         })
-    if len(value) > config.MAX_FIELD_LENGTH:
+    if len(value) > MAX_FIELD_LENGTH:
         raise tk.ValidationError({
             'constraints': ['Input exceed 350 character limit']
         })
@@ -284,5 +282,5 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'catalogue_search': catalogue.search
+            'catalogue_search': search
         }

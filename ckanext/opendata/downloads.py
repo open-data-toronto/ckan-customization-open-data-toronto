@@ -1,6 +1,8 @@
 from ckan.lib.base import BaseController
 from shapely.geometry import shape
 
+from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, DOWNLOAD_FORMAT, DOWNLOAD_PROJECTION
+
 import ckan.plugins.toolkit as tk
 
 import geopandas as gpd
@@ -10,7 +12,6 @@ import requests
 
 import io
 import json
-import logging
 import mimetypes
 import os
 import shutil
@@ -43,8 +44,8 @@ class DownloadsController(BaseController):
             tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
 
     def get_datastore(self, metadata):
-        format = tk.request.GET.get('format', config.DOWNLOAD_FORMAT).lower()
-        projection = tk.request.GET.get('projection', config.DOWNLOAD_PROJECTION)
+        format = tk.request.GET.get('format', DOWNLOAD_FORMAT).lower()
+        projection = tk.request.GET.get('projection', DOWNLOAD_PROJECTION)
         # offset = tk.request.GET.get('offset')
         # limit = tk.request.GET.get('limit')
 
@@ -72,8 +73,8 @@ class DownloadsController(BaseController):
                 is_geospatial = True
                 break
 
-        if not ((is_geospatial and format in config.DATASTORE_GEOSPATIAL_FORMATS) or \
-            (not is_geospatial and format in config.DATASTORE_TABULAR_FORMATS)):
+        if not ((is_geospatial and format in DATASTORE_GEOSPATIAL_FORMATS) or \
+            (not is_geospatial and format in DATASTORE_TABULAR_FORMATS)):
             raise tk.ValidationError({
                 'constraints': ['Inconsistency between data type and requested file format']
             })
