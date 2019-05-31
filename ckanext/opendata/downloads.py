@@ -17,9 +17,6 @@ import shutil
 import tempfile
 
 
-# Change default Fiona logs from WARNING to ERROR
-# logging.getLogger('fiona').setLevel(logging.ERROR)
-
 GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
 TABULAR_FORMATS = ['csv', 'json', 'xml']
 

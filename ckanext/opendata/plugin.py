@@ -142,28 +142,21 @@ def modify_package_schema(schema, convert_method):
         # General dataset info (inputs)
         'collection_method': [tk.get_validator('ignore_missing')],
         'excerpt': [validate_string_length],
-        'information_url': [],
         'limitations': [tk.get_validator('ignore_missing')],
-        'published_date': [validate_date],
+        'information_url': [tk.get_validator('ignore_missing')],
         # General dataset info (dropdowns)
         'dataset_category': [],
         'is_retired': [],
-        'pipeline_stage': [],
         'refresh_rate': [],
-        'require_legal': [],
-        'require_privacy': [],
         'topics': [tk.get_validator('ignore_missing')],
         # Dataset division info
-        'approved_by': [tk.get_validator('ignore_missing')],
-        'approved_date': [validate_date],
-        'owner_type': [tk.get_validator('ignore_missing')],
         'owner_division': [tk.get_validator('ignore_missing')],
         'owner_section': [tk.get_validator('ignore_missing')],
         'owner_unit': [tk.get_validator('ignore_missing')],
         'owner_email': [tk.get_validator('ignore_missing')],
         # Internal CKAN/WP fields
-        'image_url': [tk.get_validator('ignore_missing')],
-        'formats': [tk.get_validator('ignore_missing')]
+        'formats': [tk.get_validator('ignore_missing')],
+        'image_url': [tk.get_validator('ignore_missing')]
     }
 
     for key, value in modifications.items():
@@ -186,8 +179,6 @@ def modify_package_schema(schema, convert_method):
 
     schema.update(modifications)
     schema['resources'].update({
-        'columns': [tk.get_validator('ignore_missing')],
-        'rows': [tk.get_validator('ignore_missing')],
         'extract_job': [tk.get_validator('ignore_missing')],
         'is_preview': [tk.get_validator('ignore_missing')]
     })
