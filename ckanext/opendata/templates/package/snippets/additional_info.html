@@ -9,22 +9,16 @@
     <th scope="row" class="dataset-label">{{ _("Package Name") }}</th>
     <td class="dataset-details">{{ pkg_dict.name }}</td>
   </tr>
-  {% if pkg_dict.collection_method %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
-      <td class="dataset-details">{{ pkg_dict.collection_method }}</td>
-    </tr>
-  {% endif %}
   {% if pkg_dict.excerpt %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Excerpt") }}</th>
       <td class="dataset-details">{{ pkg_dict.excerpt }}</td>
     </tr>
   {% endif %}
-  {% if pkg_dict.information_url %}
+  {% if pkg_dict.collection_method %}
     <tr>
-      <th scope="row" class="dataset-label">{{ _("Information URL") }}</th>
-      <td class="dataset-details">{{ pkg_dict.information_url }}</td>
+      <th scope="row" class="dataset-label">{{ _("Collection Method") }}</th>
+      <td class="dataset-details">{{ pkg_dict.collection_method }}</td>
     </tr>
   {% endif %}
   {% if pkg_dict.limitations %}
@@ -39,16 +33,16 @@
     <td class="dataset-details">{{ pkg_dict.dataset_category }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.is_retired %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Retired Dataset") }}</th>
-    <td class="dataset-details">{{ pkg_dict.is_retired }}</td>
-  </tr>
-  {% endif %}
   {% if pkg_dict.refresh_rate %}
   <tr>
     <th scope="row" class="dataset-label">{{ _("Refresh Rate") }}</th>
     <td class="dataset-details">{{ pkg_dict.refresh_rate }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.is_retired %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Retired Dataset") }}</th>
+    <td class="dataset-details">{{ pkg_dict.is_retired }}</td>
   </tr>
   {% endif %}
   {% if pkg_dict.topic %}
@@ -85,6 +79,12 @@
     <tr>
       <th scope="row" class="dataset-label">{{ _("Image URL") }}</th>
       <td class="dataset-details">{{ pkg_dict.image_url }}</td>
+    </tr>
+  {% endif %}
+  {% if pkg_dict.information_url %}
+    <tr>
+      <th scope="row" class="dataset-label">{{ _("Information URL") }}</th>
+      <td class="dataset-details">{{ pkg_dict.information_url }}</td>
     </tr>
   {% endif %}
 {% endblock %}

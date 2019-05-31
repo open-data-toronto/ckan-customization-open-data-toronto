@@ -26,9 +26,6 @@
     </div>
   </div>
 
-  {% set topic_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
-  {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topic_attrs) }}
-
   <div class="form-group control-medium">
     <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
@@ -36,16 +33,6 @@
         {% for dataset_category in ['Document', 'Map', 'Table', 'Website']  %}
           <option value="{{ dataset_category }}" {% if dataset_category in data.get('dataset_category', []) %}selected="selected"{% endif %}>{{ dataset_category }}</option>
         {% endfor %}
-      </select>
-    </div>
-  </div>
-
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
-    <div class="controls">
-      <select id="field-is_retired" name="is_retired" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('is_retired', []) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if "true" in data.get('is_retired', []) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>
@@ -60,6 +47,19 @@
       </select>
     </div>
   </div>
+
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
+    <div class="controls">
+      <select id="field-is_retired" name="is_retired" data-module="autocomplete">
+        <option value="false" {% if false in data.get('is_retired', []) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if true in data.get('is_retired', []) %}selected="selected"{% endif %}>True</option>
+      </select>
+    </div>
+  </div>
+
+  {% set topic_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
+  {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topic_attrs) }}
 
   <hr/>
 
