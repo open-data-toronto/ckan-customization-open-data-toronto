@@ -114,6 +114,7 @@ def create_preview_map(context, resource):
                 'auto_zoom': True,
                 'cluster_markers': False,
                 'map_field_type': 'geojson',
+                'limit': 500
                 # 'geojson_field': 'geometry'
             })
 
