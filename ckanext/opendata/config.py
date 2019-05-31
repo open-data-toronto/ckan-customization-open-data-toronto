@@ -1,22 +1,16 @@
 GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
 TABULAR_FORMATS = ['csv', 'json', 'xml']
 
-DEFAULTS = {
-    'format': 'csv',
-    'projection': '4326',
-    'offset': '0',
-    'limit': '0'
-}
+CATALOGUE_ROWS = 10
+CATALOGUE_SORT = 'score desc'
+CATALOGUE_START = 0
 
-DEFAULT_FORMATS = {
-    'geospatial': ['csv', 'geojson', 'shp'],
-    'tabular': ['csv', 'json', 'xml']
-}
+DATASTORE_GEOSPATIAL_FORMATS = ['csv', 'geojson', 'shp']
+DATASTORE_TABULAR_FORMATS = ['csv', 'json', 'xml']
 
-DEFAULT_SEARCH = {
-    'rows': 10,
-    'sort': 'score desc',
-    'start': 0
-}
+DOWNLOAD_FORMAT = 'csv'
+DOWNLOAD_PROJECTION = '4326'
+DOWNLOAD_OFFSET = '0'
+DOWNLOAD_LIMIT = '0'
 
-MAX_STRING_LENGTH = 350
+MAX_FIELD_LENGTH = 350

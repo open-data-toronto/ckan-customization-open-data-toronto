@@ -17,16 +17,6 @@ import shutil
 import tempfile
 
 
-GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
-TABULAR_FORMATS = ['csv', 'json', 'xml']
-
-DEFAULTS = {
-    'format': 'csv',
-    'projection': '4326',
-    'offset': '0',
-    'limit': '0'
-}
-
 def df_to_xml(df, path):
     def row_to_xml(row):
         xml = ['<row>']
@@ -53,9 +43,9 @@ class DownloadsController(BaseController):
             tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
 
     def get_datastore(self, metadata):
-        format = tk.request.GET.get('format', DEFAULTS['format']).lower()
-        projection = tk.request.GET.get('projection', DEFAULTS['projection'])
-        # offset = tk.request.GET.get('offset', DEFAULTS['offset'])
+        format = tk.request.GET.get('format', config.DOWNLOAD_FORMAT).lower()
+        projection = tk.request.GET.get('projection', config.DOWNLOAD_PROJECTION)
+        # offset = tk.request.GET.get('offset')
         # limit = tk.request.GET.get('limit')
 
         data = tk.get_action('datastore_search')(None, {
@@ -82,7 +72,8 @@ class DownloadsController(BaseController):
                 is_geospatial = True
                 break
 
-        if not ((is_geospatial and format in GEOSPATIAL_FORMATS) or (not is_geospatial and format in TABULAR_FORMATS)):
+        if not ((is_geospatial and format in config.DATASTORE_GEOSPATIAL_FORMATS) or \
+            (not is_geospatial and format in config.DATASTORE_TABULAR_FORMATS)):
             raise tk.ValidationError({
                 'constraints': ['Inconsistency between data type and requested file format']
             })

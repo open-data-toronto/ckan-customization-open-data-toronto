@@ -8,16 +8,8 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
-DEFAULT_FORMATS = {
-    'geospatial': ['csv', 'geojson', 'shp'],
-    'tabular': ['csv', 'json', 'xml']
-}
-DEFAULT_SEARCH = {
-    'rows': 10,
-    'sort': 'score desc',
-    'start': 0
-}
-MAX_STRING_LENGTH = 350
+import opendata.config as config
+
 
 @tk.side_effect_free
 def catalogue_search(context, data_dict):
@@ -57,9 +49,9 @@ def catalogue_search(context, data_dict):
     if data_dict['type'] == 'full':
         params = {
             'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-            'rows': data_dict['rows'] if 'rows' in data_dict else DEFAULT_SEARCH['rows'],
-            'sort': data_dict['sort'] if 'sort' in data_dict else DEFAULT_SEARCH['sort'],
-            'start': data_dict['start'] if 'start' in data_dict else DEFAULT_SEARCH['start']
+            'rows': data_dict['rows'] if 'rows' in data_dict else config.CATALOGUE_ROWS,
+            'sort': data_dict['sort'] if 'sort' in data_dict else config.CATALOGUE_SORT,
+            'start': data_dict['start'] if 'start' in data_dict else config.CATALOGUE_START
         }
     elif data_dict['type'] == 'facet':
         params = {
@@ -190,9 +182,9 @@ def update_formats(context, resources):
     for r in resources:
         if r['datastore_active'] or r['url_type'] == 'datastore':
             if r['format'].lower() == 'csv':
-                formats += DEFAULT_FORMATS['tabular']
+                formats += DATASTORE_TABULAR_FORMATS
             elif r['format'].lower() == 'geojson':
-                formats += DEFAULT_FORMATS['geospatial']
+                formats += DATASTORE_GEOSPATIAL_FORMATS
         else:
             formats.append(r['format'])
 
@@ -229,7 +221,7 @@ def validate_string_length(value, context):
         raise tk.ValidationError({
             'constraints': ['Input required']
         })
-    if len(value) > MAX_STRING_LENGTH:
+    if len(value) > config.MAX_FIELD_LENGTH:
         raise tk.ValidationError({
             'constraints': ['Input exceed 350 character limit']
         })
