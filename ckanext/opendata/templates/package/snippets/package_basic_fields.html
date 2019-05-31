@@ -52,8 +52,8 @@
     <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
     <div class="controls">
       <select id="field-is_retired" name="is_retired" data-module="autocomplete">
-        <option value="false" {% if false in data.get('is_retired', []) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if true in data.get('is_retired', []) %}selected="selected"{% endif %}>True</option>
+        <option value="false" {% if "false" in data.get('is_retired', []) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if "true" in data.get('is_retired', []) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>
@@ -77,9 +77,9 @@
 
   <h2 class="text-info">WordPress Fields</h2>
 
-  {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
-
   {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
+
+  {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
 
   <hr/>
 
