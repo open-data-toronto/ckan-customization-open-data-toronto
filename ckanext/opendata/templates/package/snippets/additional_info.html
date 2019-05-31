@@ -45,12 +45,6 @@
     <td class="dataset-details">{{ pkg_dict.is_retired }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.topic %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Topic") }}</th>
-    <td class="dataset-details">{{ pkg_dict.topic }}</td>
-  </tr>
-  {% endif %}
   {% if pkg_dict.owner_division %}
     <tr>
       <th scope="row" class="dataset-label">{{ _("Owner Division") }}</th>
@@ -74,6 +68,18 @@
       <th scope="row" class="dataset-label">{{ _("Owner Email") }}</th>
       <td class="dataset-details">{{ pkg_dict.owner_email }}</td>
     </tr>
+  {% endif %}
+  {% if pkg_dict.formats %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Formats") }}</th>
+    <td class="dataset-details">{{ pkg_dict.formats }}</td>
+  </tr>
+  {% endif %}
+  {% if pkg_dict.topic %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Topics") }}</th>
+    <td class="dataset-details">{{ pkg_dict.topic }}</td>
+  </tr>
   {% endif %}
   {% if pkg_dict.image_url %}
     <tr>

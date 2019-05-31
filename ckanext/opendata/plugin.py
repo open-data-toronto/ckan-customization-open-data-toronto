@@ -11,15 +11,15 @@ import re
 
 
 def convert_string_to_tags(key, data, errors, context):
-    topics = [topic.strip() for topic in data[key].split(',') if topic.strip()]
-    vocab = validate_vocabulary('topics', topics, context)
+    tags = [t.strip() for t in data[key].split(',') if t.strip()]
+    vocab = validate_vocabulary(key, tags, context)
 
     n = 0
     for k in data.keys():
         if k[0] == 'tags':
             n = max(n, k[1] + 1)
 
-    for num, tag in enumerate(topics):
+    for num, tag in enumerate(tags):
         data[('tags', num + n, 'name')] = tag
         data[('tags', num + n, 'vocabulary_id')] = vocab['id']
 
@@ -28,7 +28,7 @@ def convert_string_to_tags(key, data, errors, context):
 def convert_tags_to_string(key, data, errors, context):
     tags = []
     vocab = tk.get_action('vocabulary_show')(context, {
-        'id': 'topics'
+        'id': key
     })
 
     for k in data.keys():
@@ -87,6 +87,8 @@ def modify_package_schema(schema, convert_method):
         'dataset_category': [],
         'is_retired': [],
         'refresh_rate': [],
+        # Filters
+        'formats': [tk.get_validator('ignore_missing')],
         'topics': [tk.get_validator('ignore_missing')],
         # Dataset division info
         'owner_division': [tk.get_validator('ignore_missing')],
@@ -94,23 +96,18 @@ def modify_package_schema(schema, convert_method):
         'owner_unit': [tk.get_validator('ignore_missing')],
         'owner_email': [tk.get_validator('ignore_missing')],
         # Internal CKAN/WP fields
-        'formats': [tk.get_validator('ignore_missing')],
         'image_url': [tk.get_validator('ignore_missing')]
     }
 
     for key, value in modifications.items():
         if convert_method == 'input':
-            if key in ('formats'):
-                modifications[key].append(tk.get_converter('convert_to_tags')(key))
-            elif key in ('topics'):
+            if key in ('formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
                 modifications[key].append(tk.get_converter('convert_to_extras'))
             else:
                 modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            if key in ('formats'):
-                modifications[key].insert(0, tk.get_converter('convert_from_tags')(key))
-            elif key in ('topics'):
+            if key in ('formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
                 modifications[key].insert(0, tk.get_converter('convert_from_extras'))
             else:
@@ -137,7 +134,7 @@ def update_formats(context, resources):
 
     tk.get_action('package_patch')(context, {
         'id': resources[0]['package_id'],
-        'formats': [x.upper() for x in sorted(list(set(formats)))]
+        'formats': ','.join([x.upper() for x in sorted(list(set(formats)))])
     })
 
 def validate_date(value, context):
@@ -175,18 +172,59 @@ def validate_string_length(value, context):
     return value
 
 def validate_vocabulary(vocab_name, tags, context):
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = tk.get_action('tag_list')(context, {
-        'vocabulary_id': vocab['id']
-    })
+    try:
+        vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
+        vocab_tags = tk.get_action('tag_list')(context, {
+            'vocabulary_id': vocab['id']
+        })
 
-    for t in tags:
-        if not t in vocab_tags:
-            raise tk.ValidationError({
-                'constraints': ['Tag {0} is not in the vocabulary'.format(t)]
-            })
+        if not isinstance(tags, list):
+            tags = tags.split(',')
+
+        for t in tags:
+            if not t in vocab_tags:
+                raise tk.ValidationError({
+                    'constraints': ['Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)]
+                })
+    except:
+        raise tk.ValidationError({
+            'constraints': ['{0}'.format(vocab_name)]
+        })
 
     return vocab
+
+class ExtendedAPIPlugin(p.SingletonPlugin):
+    p.implements(p.IActions)
+
+    # ==============================
+    # IActions
+    # ==============================
+
+    def get_actions(self):
+        return {
+            'catalogue_search': search
+        }
+
+class ExtendedURLPlugin(p.SingletonPlugin):
+    p.implements(p.IRoutes, inherit=True)
+
+    # ==============================
+    # IRoutes
+    # ==============================
+
+    def before_map(self, m):
+        m.connect(
+            '/download_resource/{resource_id}',
+            controller='ckanext.opendata.downloads:DownloadsController',
+            action='download_resource')
+
+        m.connect(
+            '/tags_autocomplete',
+            controller='ckanext.opendata.tags:TagsController',
+            action='get_tag_list'
+        )
+
+        return m
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
@@ -237,6 +275,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
+        print(resource['format'])
         validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
@@ -251,36 +290,3 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_delete(self, context, resources):
         update_formats(context, resources)
-
-class ExtendedURLPlugin(p.SingletonPlugin):
-    p.implements(p.IRoutes, inherit=True)
-
-    # ==============================
-    # IRoutes
-    # ==============================
-
-    def before_map(self, m):
-        m.connect(
-            '/download_resource/{resource_id}',
-            controller='ckanext.opendata.downloads:DownloadsController',
-            action='download_resource')
-
-        m.connect(
-            '/tags_autocomplete',
-            controller='ckanext.opendata.tags:TagsController',
-            action='get_tag_list'
-        )
-
-        return m
-
-class ExtendedAPIPlugin(p.SingletonPlugin):
-    p.implements(p.IActions)
-
-    # ==============================
-    # IActions
-    # ==============================
-
-    def get_actions(self):
-        return {
-            'catalogue_search': search
-        }

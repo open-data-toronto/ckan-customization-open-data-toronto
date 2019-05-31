@@ -58,9 +58,6 @@
     </div>
   </div>
 
-  {% set topic_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
-  {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topic_attrs) }}
-
   <hr/>
 
   <h2 class="text-info">Owner Information</h2>
@@ -75,11 +72,21 @@
 
   <hr/>
 
-  <h2 class="text-info">WordPress Fields</h2>
+  <h2 class="text-info">WordPress Filters</h2>
+
+  {% set formats_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=formats&incomplete=?'} %}
+  {{ form.input('formats', id='field-formats', label=_('Formats'), placeholder=_('eg. CSV, XML'), value=data.formats, error=errors.formats, classes=['control-full'], attrs=formats_attrs) }}
+
+  {% set topics_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
+  {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topics_attrs) }}
+
+  <hr/>
+
+  <h2 class="text-info">Others</h2>
 
   {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
 
-  {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
+  {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('eg. /wp-content/image/1.png'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
 
   <hr/>
 
