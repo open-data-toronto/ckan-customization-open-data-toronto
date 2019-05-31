@@ -33,12 +33,6 @@
       <td class="dataset-details">{{ pkg_dict.limitations }}</td>
     </tr>
   {% endif %}
-  {% if pkg_dict.published_date %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Published Date") }}</th>
-      <td class="dataset-details">{{ pkg_dict.published_date }}</td>
-    </tr>
-  {% endif %}
   {% if pkg_dict.dataset_category %}
   <tr>
     <th scope="row" class="dataset-label">{{ _("Dataset Category") }}</th>
@@ -51,28 +45,10 @@
     <td class="dataset-details">{{ pkg_dict.is_retired }}</td>
   </tr>
   {% endif %}
-  {% if pkg_dict.pipeline_stage %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Pipeline Stage") }}</th>
-    <td class="dataset-details">{{ pkg_dict.pipeline_stage }}</td>
-  </tr>
-  {% endif %}
   {% if pkg_dict.refresh_rate %}
   <tr>
     <th scope="row" class="dataset-label">{{ _("Refresh Rate") }}</th>
     <td class="dataset-details">{{ pkg_dict.refresh_rate }}</td>
-  </tr>
-  {% endif %}
-  {% if pkg_dict.require_legal %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Require Legal Review") }}</th>
-    <td class="dataset-details">{{ pkg_dict.require_legal }}</td>
-  </tr>
-  {% endif %}
-  {% if pkg_dict.require_privacy %}
-  <tr>
-    <th scope="row" class="dataset-label">{{ _("Require Privacy Review") }}</th>
-    <td class="dataset-details">{{ pkg_dict.require_privacy }}</td>
   </tr>
   {% endif %}
   {% if pkg_dict.topic %}
@@ -80,24 +56,6 @@
     <th scope="row" class="dataset-label">{{ _("Topic") }}</th>
     <td class="dataset-details">{{ pkg_dict.topic }}</td>
   </tr>
-  {% endif %}
-  {% if pkg_dict.approved_by %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Approved By") }}</th>
-      <td class="dataset-details">{{ pkg_dict.approved_by }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.approved_date %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Approved Date") }}</th>
-      <td class="dataset-details">{{ pkg_dict.approved_date }}</td>
-    </tr>
-  {% endif %}
-  {% if pkg_dict.owner_type %}
-    <tr>
-      <th scope="row" class="dataset-label">{{ _("Owner Type") }}</th>
-      <td class="dataset-details">{{ pkg_dict.owner_type }}</td>
-    </tr>
   {% endif %}
   {% if pkg_dict.owner_division %}
     <tr>

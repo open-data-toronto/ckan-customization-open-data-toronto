@@ -3,19 +3,32 @@
 {% block package_basic_fields_custom %}
 
   <hr/>
-  <h2 class="text-info">General Dataset Info</h2>
-  {{ form.input('collection_method', label=_('Collection Method'), id='field-collection_method', placeholder=_('eg. This dataset was collected by...'), value=data.collection_method, error=errors.collection_method, classes=['control-medium']) }}
+  <h2 class="text-info">General Information</h2>
+
   <div class="form-group control-medium">
     <label class="control-label" for="field-excerpt"><span class="text-danger">* </span>Excerpt</label>
     <div class="controls">
       <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">{{ data.get('excerpt', '') }}</textarea>
     </div>
   </div>
-  {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
-  {{ form.input('limitations', label=_('Limitations'), id='field-limitations', placeholder=_('eg. This dataset is missing values from...'), value=data.limitations, error=errors.limitations, classes=['control-medium']) }}
-  {{ form.input('published_date', label=_('Published Date'), id='field-published_date', placeholder=_('Format: YYYY-MM-DD'), value=data.published_date, error=errors.published_date, classes=['control-medium']) }}
+
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-collection_method">Collection Method</label>
+    <div class="controls">
+      <textarea id="field-collection_method" name="collection_method" cols="20" rows="5" placeholder="This dataset was collected by..." class="form-control">{{ data.get('collection_method', '') }}</textarea>
+    </div>
+  </div>
+
+  <div class="form-group control-medium">
+    <label class="control-label" for="field-limitations">Limitations</label>
+    <div class="controls">
+      <textarea id="field-limitations" name="limitations" cols="20" rows="5" placeholder="This dataset is missing values from..." class="form-control">{{ data.get('limitations', '') }}</textarea>
+    </div>
+  </div>
+
   {% set topic_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
   {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topic_attrs) }}
+
   <div class="form-group control-medium">
     <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
@@ -26,6 +39,7 @@
       </select>
     </div>
   </div>
+
   <div class="form-group control-medium">
     <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
     <div class="controls">
@@ -35,16 +49,7 @@
       </select>
     </div>
   </div>
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-pipeline_stage"><span class="text-danger">* </span>Pipeline Stage</label>
-    <div class="controls">
-      <select id="field-pipeline_stage" name="pipeline_stage" data-module="autocomplete">
-        {% for pipeline_stage in ['Identification', 'Initiation', 'Preparation', 'Assessment', 'Validation', 'Publication']  %}
-        <option value="{{ pipeline_stage }}" {% if pipeline_stage in data.get('pipeline_stage', []) %}selected="selected"{% endif %}>{{ pipeline_stage }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+
   <div class="form-group control-medium">
     <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
     <div class="controls">
@@ -55,46 +60,29 @@
       </select>
     </div>
   </div>
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-require_legal"><span class="text-danger">* </span>Legal Review</label>
-    <div class="controls">
-      <select id="field-require_legal" name="require_legal" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('require_legal', []) %}selected="selected"{% endif %}>Not Required</option>
-        <option value="true" {% if "true" in data.get('require_legal', []) %}selected="selected"{% endif %}>Required</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-require_privacy"><span class="text-danger">* </span>Privacy Review</label>
-    <div class="controls">
-      <select id="field-require_privacy" name="require_privacy" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Not Required</option>
-        <option value="true" {% if "true" in data.get('require_privacy', []) %}selected="selected"{% endif %}>Required</option>
-      </select>
-    </div>
-  </div>
+
   <hr/>
-  <h2 class="text-info">Dataset Owner Info</h2>
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-owner_type"><span class="text-danger">* </span>Owner Type</label>
-    <div class="controls">
-      <select id="field-owner_type" name="owner_type" data-module="autocomplete">
-        {% for owner_type in ['Official', 'Community']  %}
-        <option value="{{ owner_type }}" {% if owner_type in data.get('owner_type', []) %}selected="selected"{% endif %}>{{ owner_type }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
-  {{ form.input('approved_by', label=_('Approver Name'), id='field-approved_by', placeholder=_('eg. John Smith'), value=data.approved_by, error=errors.approved_by, classes=['control-medium']) }}
-  {{ form.input('approved_date', label=_('Approved Date'), id='field-approved_date', placeholder=_('Format: YYYY-MM-DD'), value=data.approved_date, error=errors.approved_date, classes=['control-medium']) }}
+
+  <h2 class="text-info">Owner Information</h2>
+
   {{ form.input('owner_division', label=_('Owner Division'), id='field-owner_division', placeholder=_('eg. Transportation Services'), value=data.owner_division, error=errors.owner_division, classes=['control-medium']) }}
+
   {{ form.input('owner_section', label=_('Owner Section'), id='field-owner_section', placeholder=_('eg. Traffic Management Centre'), value=data.owner_section, error=errors.owner_section, classes=['control-medium']) }}
+
   {{ form.input('owner_unit', label=_('Owner Unit'), id='field-owner_unit', placeholder=_('eg. Traffic Safety Unit'), value=data.owner_unit, error=errors.owner_unit, classes=['control-medium']) }}
+
   {{ form.input('owner_email', label=_('Owner Email'), id='field-owner_email', placeholder=_('eg. opendata@toronto.ca'), value=data.owner_email, error=errors.owner_email, classes=['control-medium']) }}
+
   <hr/>
-  <h2 class="text-info">Internal CKAN/WP Fields</h2>
+
+  <h2 class="text-info">WordPress Fields</h2>
+
   {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('Blank'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
+
+  {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
+
   <hr/>
-  <h2 class="text-info">Default CKAN Fields</h2>
+
+  <h2 class="text-info">Built-In Fields</h2>
 
 {% endblock %}
