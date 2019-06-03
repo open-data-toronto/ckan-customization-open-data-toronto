@@ -14,3 +14,5 @@ DOWNLOAD_OFFSET = '0'
 DOWNLOAD_LIMIT = '0'
 
 MAX_FIELD_LENGTH = 350
+
+REMOVED_FIELDS = ['author', 'maintainer', 'version']

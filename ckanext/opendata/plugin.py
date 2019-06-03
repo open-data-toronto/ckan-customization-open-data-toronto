@@ -1,5 +1,5 @@
 from .catalogue import search
-from .config import MAX_FIELD_LENGTH
+from .config import MAX_FIELD_LENGTH, REMOVED_FIELDS
 
 import ckan.lib.helpers as h
 
@@ -10,11 +10,11 @@ import datetime as dt
 import re
 
 
-def convert_empty_to_null(key, data, errors, context):
-    if not data[key] or not data[key].strip():
-        data[key] = None
-
-    return data[key]
+# def convert_empty_to_null(key, data, errors, context):
+#     if not data[key] or not data[key].strip():
+#         data[key] = None
+#
+#     return data[key]
 
 def convert_string_to_tags(key, data, errors, context):
     if data[key]:
@@ -86,24 +86,24 @@ def modify_package_schema(schema, convert_method):
 
     modifications = {
         # General dataset info (inputs)
-        'collection_method': [validate_string_length, convert_empty_to_null],
-        'excerpt': [validate_string_length, convert_empty_to_null],
-        'limitations': [validate_string_length, convert_empty_to_null],
-        'information_url': [convert_empty_to_null],
+        'collection_method': [validate_string],
+        'excerpt': [validate_string],
+        'limitations': [validate_string],
+        'information_url': [validate_string],
         # General dataset info (dropdowns)
         'dataset_category': [],
         'is_retired': [tk.get_validator('boolean_validator')],
         'refresh_rate': [],
         # Filters
-        'formats': [convert_empty_to_null],
-        'topics': [convert_empty_to_null],
+        'formats': [validate_string],
+        'topics': [validate_string],
         # Dataset division info
-        'owner_division': [convert_empty_to_null],
-        'owner_section': [convert_empty_to_null],
-        'owner_unit': [convert_empty_to_null],
-        'owner_email': [convert_empty_to_null],
+        'owner_division': [validate_string],
+        'owner_section': [validate_string],
+        'owner_unit': [validate_string],
+        'owner_email': [validate_string],
         # Internal CKAN/WP fields
-        'image_url': [convert_empty_to_null]
+        'image_url': [validate_string]
     }
 
     required_fields = []
@@ -122,9 +122,13 @@ def modify_package_schema(schema, convert_method):
 
     schema.update(modifications)
     schema['resources'].update({
-        'extract_job': [convert_empty_to_null],
+        'extract_job': [validate_string],
         'is_preview': [tk.get_validator('boolean_validator')]
     })
+
+    for key in schema.keys():
+        if any([x in key for x in REMOVED_FIELDS]):
+            schema.pop(key, None)
 
     return schema
 
@@ -167,13 +171,15 @@ def validate_resource_name(context, data):
                 'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
             })
 
-def validate_string_length(value, context):
-    if value and len(value) > MAX_FIELD_LENGTH:
+def validate_string(key, data, errors, context):
+    if data[key] and len(data[key]) > MAX_FIELD_LENGTH:
         raise tk.ValidationError({
             'constraints': ['Input exceed 350 character limit']
         })
+    elif not data[key] or not data[key].strip():
+        data[key] = None
 
-    return value
+    return data[key]
 
 def validate_vocabulary(vocab_name, tags, context):
     try:
