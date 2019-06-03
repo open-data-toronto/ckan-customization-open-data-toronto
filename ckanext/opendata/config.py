@@ -5,7 +5,7 @@ CATALOGUE_ROWS = 10
 CATALOGUE_SORT = 'score desc'
 CATALOGUE_START = 0
 
-DATASTORE_GEOSPATIAL_FORMATS = ['csv', 'geojson', 'shp']
+DATASTORE_GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
 DATASTORE_TABULAR_FORMATS = ['csv', 'json', 'xml']
 
 DOWNLOAD_FORMAT = 'csv'

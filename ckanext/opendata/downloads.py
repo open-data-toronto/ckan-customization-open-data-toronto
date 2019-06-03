@@ -39,9 +39,13 @@ class DownloadsController(BaseController):
             tk.redirect_to(metadata['url'])
         else:
             filename = self.get_datastore(metadata)
+            mimetype, encoding = mimetypes.guess_type(filename)
 
-            tk.response.headers['Content-Type'] = mimetypes.guess_type('.'.join(filename))[0]
-            tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
+            if mimetype is None and filename.endswith('gpkg'):
+                mimetype = 'application/geopackage+vnd.sqlite3'
+
+            tk.response.headers['Content-Type'] = mimetype
+            tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn=filename))
 
     def get_datastore(self, metadata):
         format = tk.request.GET.get('format', DOWNLOAD_FORMAT).lower()
@@ -84,7 +88,7 @@ class DownloadsController(BaseController):
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
-            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DEFAULTS['projection']) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
+            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DOWNLOAD_PROJECTION) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         tmp_dir = tempfile.mkdtemp()
         path = os.path.join(tmp_dir, '{0}.{1}'.format(metadata['name'], format))
@@ -101,4 +105,4 @@ class DownloadsController(BaseController):
 
         iotrans.utils.prune(tmp_dir)
 
-        return [metadata['name'], output.split('.')[-1]]
+        return '{fn}.{fmt}'.format(fn=metadata['name'], fmt=output.split('.')[-1])
