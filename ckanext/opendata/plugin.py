@@ -7,14 +7,9 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
 import datetime as dt
+import mimetypes
 import re
 
-
-# def convert_empty_to_null(key, data, errors, context):
-#     if not data[key] or not data[key].strip():
-#         data[key] = None
-#
-#     return data[key]
 
 def convert_string_to_tags(key, data, errors, context):
     if data[key]:
@@ -148,29 +143,6 @@ def update_formats(context, resources):
         'formats': ','.join([x.upper() for x in sorted(list(set(formats)))])
     })
 
-def validate_date(value, context):
-    if value == '':
-        return value
-    elif isinstance(value, dt.datetime):
-        return value.strftime('%Y-%m-%d')
-
-    try:
-        date = h.date_str_to_datetime(value)
-        return date.strftime('%Y-%m-%d')
-    except (TypeError, ValueError) as e:
-        raise tk.ValidationError({
-            'constraints': ['Please provide the date in YYYY-MM-DD format']
-        })
-
-def validate_resource_name(context, data):
-    package = tk.get_action('package_show')(context, { 'id': data['package_id'] })
-
-    for idx, resource in enumerate(package['resources']):
-        if resource['name'] == data['name']:
-            raise tk.ValidationError({
-                'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
-            })
-
 def validate_string(key, data, errors, context):
     if data[key] and len(data[key]) > MAX_FIELD_LENGTH:
         raise tk.ValidationError({
@@ -182,24 +154,19 @@ def validate_string(key, data, errors, context):
     return data[key]
 
 def validate_vocabulary(vocab_name, tags, context):
-    try:
-        vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-        vocab_tags = tk.get_action('tag_list')(context, {
-            'vocabulary_id': vocab['id']
-        })
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
+    vocab_tags = tk.get_action('tag_list')(context, {
+        'vocabulary_id': vocab['id']
+    })
 
-        if not isinstance(tags, list):
-            tags = tags.split(',')
+    if not isinstance(tags, list):
+        tags = tags.split(',')
 
-        for t in tags:
-            if not t in vocab_tags:
-                raise tk.ValidationError({
-                    'constraints': ['Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)]
-                })
-    except:
-        raise tk.ValidationError({
-            'constraints': ['{0}'.format(vocab_name)]
-        })
+    for t in tags:
+        if not t in vocab_tags:
+            raise tk.ValidationError({
+                'constraints': ['Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)]
+            })
 
     return vocab
 
@@ -284,7 +251,17 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
 
     def before_create(self, context, resource):
-        validate_resource_name(context, resource)
+        package = tk.get_action('package_show')(context, { 'id': resource['package_id'] })
+        for idx, r in enumerate(package['resources']):
+            if r['name'] == resource['name']:
+                raise tk.ValidationError({
+                    'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
+                })
+
+        if not resource['format']:
+            mimetype, encoding = mimetypes.guess_type(resource['url'])
+            resource['format'] = mimetype.split('/')[-1].upper()
+
         validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
