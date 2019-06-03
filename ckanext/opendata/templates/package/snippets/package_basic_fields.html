@@ -6,23 +6,29 @@
   <h2 class="text-info">General Information</h2>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-excerpt"><span class="text-danger">* </span>Excerpt</label>
+    <label class="control-label" for="field-collection_method">Collection Method</label>
     <div class="controls">
-      <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">{{ data.get('excerpt', '') }}</textarea>
+      <textarea id="field-collection_method" name="collection_method" cols="20" rows="5" placeholder="This dataset was collected by..." class="form-control">
+        {{ data.get('collection_method', '') or '' }}
+      </textarea>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-collection_method">Collection Method</label>
+    <label class="control-label" for="field-excerpt">Excerpt</label>
     <div class="controls">
-      <textarea id="field-collection_method" name="collection_method" cols="20" rows="5" placeholder="This dataset was collected by..." class="form-control">{{ data.get('collection_method', '') }}</textarea>
+      <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">
+        {{ data.get('excerpt', '') or '' }}
+      </textarea>
     </div>
   </div>
 
   <div class="form-group control-medium">
     <label class="control-label" for="field-limitations">Limitations</label>
     <div class="controls">
-      <textarea id="field-limitations" name="limitations" cols="20" rows="5" placeholder="This dataset is missing values from..." class="form-control">{{ data.get('limitations', '') }}</textarea>
+      <textarea id="field-limitations" name="limitations" cols="20" rows="5" placeholder="This dataset is missing values from..." class="form-control">
+        {{ data.get('limitations', '') or '' }}
+      </textarea>
     </div>
   </div>
 
