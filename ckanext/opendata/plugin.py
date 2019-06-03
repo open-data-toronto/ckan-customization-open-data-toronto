@@ -9,6 +9,25 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
+import logging
+logger = logging.getLogger('ckan.lib.base')
+
+
+def convert_string_to_bool(key, data, errors, context):
+    logger.info(('in', data[key]))
+
+    data[key] = data[key] == 'true'
+
+    logger.info(('in', data[key]))
+
+    return data[key]
+
+def convert_bool_to_string(key, data, errors, context):
+    logger.info(('out', data[key]))
+
+    data[key] = 'true' if data[key] else 'false'
+
+    return data[key]
 
 def convert_string_to_tags(key, data, errors, context):
     tags = [t.strip() for t in data[key].split(',') if t.strip()]
@@ -103,20 +122,23 @@ def modify_package_schema(schema, convert_method):
         if convert_method == 'input':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
-                modifications[key].append(tk.get_converter('convert_to_extras'))
-            else:
-                modifications[key].append(tk.get_converter('convert_to_extras'))
+            # TODO: convert bool to actual bool, empty to actual nulls
+            elif key in ('is_retired'):
+                modifications[key].append(tk.get_validator('boolean_validator'))
+
+            modifications[key].append(tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
-                modifications[key].insert(0, tk.get_converter('convert_from_extras'))
-            else:
-                modifications[key].insert(0, tk.get_converter('convert_from_extras'))
+            elif key in ('is_retired'):
+                modifications[key].append(tk.get_validator('boolean_validator'))
+
+            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
         'extract_job': [tk.get_validator('ignore_missing')],
-        'is_preview': [tk.get_validator('ignore_missing')]
+        'is_preview': [tk.get_validator('boolean_validator')]
     })
 
     return schema

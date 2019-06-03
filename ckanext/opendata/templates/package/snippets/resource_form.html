@@ -9,8 +9,8 @@
     <label class="control-label" for="field-is_preview"><span class="text-danger">* </span>Preview</label>
     <div class="controls">
       <select id="field-is_preview" name="is_preview" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('is_preview', []) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if "true" in data.get('is_preview', []) %}selected="selected"{% endif %}>True</option>
+        <option value="false" {% if data.get('is_preview', false) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if data.get('is_preview', false) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>

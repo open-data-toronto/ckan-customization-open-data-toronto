@@ -52,8 +52,8 @@
     <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
     <div class="controls">
       <select id="field-is_retired" name="is_retired" data-module="autocomplete">
-        <option value="false" {% if "false" in data.get('is_retired', []) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if "true" in data.get('is_retired', []) %}selected="selected"{% endif %}>True</option>
+        <option value="false" {% if data.get('is_retired', false) %}selected="selected"{% endif %}>False</option>
+        <option value="true" {% if data.get('is_retired', false) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>
   </div>
