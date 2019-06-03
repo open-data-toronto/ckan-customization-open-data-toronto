@@ -10,18 +10,25 @@ import datetime as dt
 import re
 
 
+def convert_empty_to_null(key, data, errors, context):
+    if not data[key]:
+        data[key] = None
+
+    return data[key]
+
 def convert_string_to_tags(key, data, errors, context):
-    tags = [t.strip() for t in data[key].split(',') if t.strip()]
-    vocab = validate_vocabulary(key, tags, context)
+    if data[key]:
+        tags = [t.strip() for t in data[key].split(',') if t.strip()]
+        vocab = validate_vocabulary(key, tags, context)
 
-    n = 0
-    for k in data.keys():
-        if k[0] == 'tags':
-            n = max(n, k[1] + 1)
+        n = 0
+        for k in data.keys():
+            if k[0] == 'tags':
+                n = max(n, k[1] + 1)
 
-    for num, tag in enumerate(tags):
-        data[('tags', num + n, 'name')] = tag
-        data[('tags', num + n, 'vocabulary_id')] = vocab['id']
+        for num, tag in enumerate(tags):
+            data[('tags', num + n, 'name')] = tag
+            data[('tags', num + n, 'vocabulary_id')] = vocab['id']
 
     return data[key]
 
@@ -79,46 +86,43 @@ def modify_package_schema(schema, convert_method):
 
     modifications = {
         # General dataset info (inputs)
-        'collection_method': [tk.get_validator('ignore_missing')],
-        'excerpt': [validate_string_length],
-        'limitations': [tk.get_validator('ignore_missing')],
-        'information_url': [tk.get_validator('ignore_missing')],
+        'collection_method': [validate_string_length, convert_empty_to_null],
+        'excerpt': [validate_string_length, convert_empty_to_null],
+        'limitations': [validate_string_length, convert_empty_to_null],
+        'information_url': [convert_empty_to_null],
         # General dataset info (dropdowns)
         'dataset_category': [],
-        'is_retired': [],
+        'is_retired': [tk.get_validator('boolean_validator')],
         'refresh_rate': [],
         # Filters
-        'formats': [tk.get_validator('ignore_missing')],
-        'topics': [tk.get_validator('ignore_missing')],
+        'formats': [convert_empty_to_null],
+        'topics': [convert_empty_to_null],
         # Dataset division info
-        'owner_division': [tk.get_validator('ignore_missing')],
-        'owner_section': [tk.get_validator('ignore_missing')],
-        'owner_unit': [tk.get_validator('ignore_missing')],
-        'owner_email': [tk.get_validator('ignore_missing')],
+        'owner_division': [convert_empty_to_null],
+        'owner_section': [convert_empty_to_null],
+        'owner_unit': [convert_empty_to_null],
+        'owner_email': [convert_empty_to_null],
         # Internal CKAN/WP fields
-        'image_url': [tk.get_validator('ignore_missing')]
+        'image_url': [convert_empty_to_null]
     }
+
+    required_fields = []
 
     for key, value in modifications.items():
         if convert_method == 'input':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
-            # TODO: convert bool to actual bool, empty to actual nulls
-            elif key in ('is_retired'):
-                modifications[key].append(tk.get_validator('boolean_validator'))
 
-            modifications[key].append(tk.get_converter('convert_to_extras'))
+            modifications[key].insert(0, tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
-            elif key in ('is_retired'):
-                modifications[key].append(tk.get_validator('boolean_validator'))
 
             modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
-        'extract_job': [tk.get_validator('ignore_missing')],
+        'extract_job': [convert_empty_to_null],
         'is_preview': [tk.get_validator('boolean_validator')]
     })
 
@@ -164,14 +168,11 @@ def validate_resource_name(context, data):
             })
 
 def validate_string_length(value, context):
-    if isinstance(value, str) and len(value) <= 0:
-        raise tk.ValidationError({
-            'constraints': ['Input required']
-        })
-    if len(value) > MAX_FIELD_LENGTH:
+    if value and len(value) > MAX_FIELD_LENGTH:
         raise tk.ValidationError({
             'constraints': ['Input exceed 350 character limit']
         })
+
     return value
 
 def validate_vocabulary(vocab_name, tags, context):
@@ -278,7 +279,6 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def before_create(self, context, resource):
         validate_resource_name(context, resource)
-        print(resource['format'])
         validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
