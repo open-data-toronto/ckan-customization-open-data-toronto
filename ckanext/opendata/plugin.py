@@ -9,25 +9,6 @@ import ckan.plugins.toolkit as tk
 import datetime as dt
 import re
 
-import logging
-logger = logging.getLogger('ckan.lib.base')
-
-
-def convert_string_to_bool(key, data, errors, context):
-    logger.info(('in', data[key]))
-
-    data[key] = data[key] == 'true'
-
-    logger.info(('in', data[key]))
-
-    return data[key]
-
-def convert_bool_to_string(key, data, errors, context):
-    logger.info(('out', data[key]))
-
-    data[key] = 'true' if data[key] else 'false'
-
-    return data[key]
 
 def convert_string_to_tags(key, data, errors, context):
     tags = [t.strip() for t in data[key].split(',') if t.strip()]
