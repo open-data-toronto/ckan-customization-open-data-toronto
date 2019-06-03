@@ -11,7 +11,7 @@ import re
 
 
 def convert_empty_to_null(key, data, errors, context):
-    if not data[key]:
+    if not data[key] or not data[key].strip():
         data[key] = None
 
     return data[key]
