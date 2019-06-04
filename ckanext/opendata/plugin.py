@@ -81,44 +81,43 @@ def modify_package_schema(schema, convert_method):
 
     modifications = {
         # General dataset info (inputs)
-        'collection_method': [validate_string],
-        'excerpt': [validate_string],
-        'limitations': [validate_string],
-        'information_url': [validate_string],
+        'collection_method': [tk.get_validator('ignore_missing'), validate_string],
+        'excerpt': [tk.get_validator('ignore_missing'), validate_string],
+        'limitations': [tk.get_validator('ignore_missing'), validate_string],
+        'information_url': [tk.get_validator('ignore_missing'), validate_string],
         # General dataset info (dropdowns)
-        'dataset_category': [],
-        'is_retired': [tk.get_validator('boolean_validator')],
-        'refresh_rate': [],
+        'dataset_category': [tk.get_validator('ignore_missing')],
+        'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
+        'refresh_rate': [tk.get_validator('ignore_missing')],
         # Filters
-        'formats': [validate_string],
-        'topics': [validate_string],
+        'formats': [tk.get_validator('ignore_missing'), validate_string],
+        'topics': [tk.get_validator('ignore_missing'), validate_string],
         # Dataset division info
-        'owner_division': [validate_string],
-        'owner_section': [validate_string],
-        'owner_unit': [validate_string],
-        'owner_email': [validate_string],
+        'owner_division': [tk.get_validator('ignore_missing'), validate_string],
+        'owner_section': [tk.get_validator('ignore_missing'), validate_string],
+        'owner_unit': [tk.get_validator('ignore_missing'), validate_string],
+        'owner_email': [tk.get_validator('ignore_missing'), validate_string],
         # Internal CKAN/WP fields
-        'image_url': [validate_string]
+        'image_url': [tk.get_validator('ignore_missing'), validate_string],
+        'last_refreshed': [tk.get_validator('ignore_missing'), tk.get_validator('isodate')]
     }
-
-    required_fields = []
 
     for key, value in modifications.items():
         if convert_method == 'input':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
 
-            modifications[key].insert(0, tk.get_converter('convert_to_extras'))
+            modifications[key].insert(1, tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
 
-            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
+            modifications[key].insert(1, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
-        'extract_job': [validate_string],
-        'is_preview': [tk.get_validator('boolean_validator')]
+        'extract_job': [tk.get_validator('ignore_missing'), validate_string],
+        'is_preview': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')]
     })
 
     for key in schema.keys():
@@ -127,8 +126,9 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def update_formats(context, resources):
-    formats = []
+def update_package(context, resources):
+    formats, last_refreshed = [], []
+
     for r in resources:
         if r['datastore_active'] or r['url_type'] == 'datastore':
             if r['format'].lower() == 'csv':
@@ -138,9 +138,11 @@ def update_formats(context, resources):
         else:
             formats.append(r['format'])
 
+
     tk.get_action('package_patch')(context, {
         'id': resources[0]['package_id'],
-        'formats': ','.join([x.upper() for x in sorted(list(set(formats)))])
+        'formats': ','.join([x.upper() for x in sorted(list(set(formats)))]),
+        'last_refreshed': max([x['last_refreshed'] for x in resources])
     })
 
 def validate_string(key, data, errors, context):
@@ -272,7 +274,12 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_update(self, context, resource):
         create_preview_map(context, resource)
-        update_formats(context, tk.get_action('package_show')(context, { 'id': resource['package_id'] })['resources'])
+
+        # package = tk.get_action('package_show')(context, {
+        #     'id': resource['package_id']
+        # })
+        # update_package(context, package['resources'])
 
     def after_delete(self, context, resources):
-        update_formats(context, resources)
+        # update_package(context, resources)
+        pass
