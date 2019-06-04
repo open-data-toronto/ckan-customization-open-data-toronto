@@ -1,5 +1,5 @@
 from .catalogue import search
-from .config import MAX_FIELD_LENGTH, REMOVED_FIELDS
+from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, MAX_FIELD_LENGTH, REMOVED_FIELDS
 
 import ckan.lib.helpers as h
 
@@ -112,7 +112,7 @@ def modify_package_schema(schema, convert_method):
             if key in ('formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
 
-            modifications[key].insert(1, tk.get_converter('convert_from_extras'))
+            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
     schema.update(modifications)
     schema['resources'].update({
@@ -138,11 +138,11 @@ def update_package(context, resources):
         else:
             formats.append(r['format'])
 
-
+    # TODO: IF LAST WILL CRASH
     tk.get_action('package_patch')(context, {
         'id': resources[0]['package_id'],
         'formats': ','.join([x.upper() for x in sorted(list(set(formats)))]),
-        'last_refreshed': max([x['last_refreshed'] for x in resources])
+        # 'last_refreshed': max([x['last_refreshed'] for x in resources])
     })
 
 def validate_string(key, data, errors, context):
@@ -260,7 +260,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
                 })
 
-        if not resource['format']:
+        if 'format' not in resource or not resource['format']:
             mimetype, encoding = mimetypes.guess_type(resource['url'])
             resource['format'] = mimetype.split('/')[-1].upper()
 
@@ -275,11 +275,10 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     def after_update(self, context, resource):
         create_preview_map(context, resource)
 
-        # package = tk.get_action('package_show')(context, {
-        #     'id': resource['package_id']
-        # })
-        # update_package(context, package['resources'])
+        package = tk.get_action('package_show')(context, {
+            'id': resource['package_id']
+        })
+        update_package(context, package['resources'])
 
     def after_delete(self, context, resources):
-        # update_package(context, resources)
-        pass
+        update_package(context, resources)
