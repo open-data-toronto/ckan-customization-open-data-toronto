@@ -142,7 +142,7 @@ def update_package(context, resources):
     tk.get_action('package_patch')(context, {
         'id': resources[0]['package_id'],
         'formats': ','.join([x.upper() for x in sorted(list(set(formats)))]),
-        # 'last_refreshed': max([x['last_refreshed'] for x in resources])
+        'last_refreshed': max([x['created'] if x['last_modified'] is None else x['last_modified'] for x in resources])
     })
 
 def validate_string(key, data, errors, context):
