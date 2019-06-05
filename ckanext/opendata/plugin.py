@@ -99,7 +99,7 @@ def modify_package_schema(schema, convert_method):
         'owner_email': [tk.get_validator('ignore_missing'), validate_string],
         # Internal CKAN/WP fields
         'image_url': [tk.get_validator('ignore_missing'), validate_string],
-        'last_refreshed': [tk.get_validator('ignore_missing'), tk.get_validator('isodate')]
+        'last_refreshed': [tk.get_validator('ignore_missing')]
     }
 
     for key, value in modifications.items():
@@ -257,7 +257,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         for idx, r in enumerate(package['resources']):
             if r['name'] == resource['name']:
                 raise tk.ValidationError({
-                    'constraints': ['A resource with {name} already exists for this package'.format(name=data['name'])]
+                    'constraints': ['A resource with {name} already exists for this package'.format(name=r['name'])]
                 })
 
         if 'format' not in resource or not resource['format']:
