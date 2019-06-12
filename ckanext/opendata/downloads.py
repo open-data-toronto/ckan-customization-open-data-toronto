@@ -1,6 +1,8 @@
 from ckan.lib.base import BaseController
 from shapely.geometry import shape
 
+from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, DOWNLOAD_FORMAT, DOWNLOAD_PROJECTION
+
 import ckan.plugins.toolkit as tk
 
 import geopandas as gpd
@@ -10,25 +12,11 @@ import requests
 
 import io
 import json
-import logging
 import mimetypes
 import os
 import shutil
 import tempfile
 
-
-# Change default Fiona logs from WARNING to ERROR
-# logging.getLogger('fiona').setLevel(logging.ERROR)
-
-GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
-TABULAR_FORMATS = ['csv', 'json', 'xml']
-
-DEFAULTS = {
-    'format': 'csv',
-    'projection': '4326',
-    'offset': '0',
-    'limit': '0'
-}
 
 def df_to_xml(df, path):
     def row_to_xml(row):
@@ -51,14 +39,18 @@ class DownloadsController(BaseController):
             tk.redirect_to(metadata['url'])
         else:
             filename = self.get_datastore(metadata)
+            mimetype, encoding = mimetypes.guess_type(filename)
 
-            tk.response.headers['Content-Type'] = mimetypes.guess_type('.'.join(filename))[0]
-            tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn='.'.join(filename)))
+            if mimetype is None and filename.endswith('gpkg'):
+                mimetype = 'application/geopackage+vnd.sqlite3'
+
+            tk.response.headers['Content-Type'] = mimetype
+            tk.response.headers['Content-Disposition'] = (b'attachment; filename="{fn}"'.format(fn=filename))
 
     def get_datastore(self, metadata):
-        format = tk.request.GET.get('format', DEFAULTS['format']).lower()
-        projection = tk.request.GET.get('projection', DEFAULTS['projection'])
-        # offset = tk.request.GET.get('offset', DEFAULTS['offset'])
+        format = tk.request.GET.get('format', DOWNLOAD_FORMAT).lower()
+        projection = tk.request.GET.get('projection', DOWNLOAD_PROJECTION)
+        # offset = tk.request.GET.get('offset')
         # limit = tk.request.GET.get('limit')
 
         data = tk.get_action('datastore_search')(None, {
@@ -85,7 +77,8 @@ class DownloadsController(BaseController):
                 is_geospatial = True
                 break
 
-        if not ((is_geospatial and format in GEOSPATIAL_FORMATS) or (not is_geospatial and format in TABULAR_FORMATS)):
+        if not ((is_geospatial and format in DATASTORE_GEOSPATIAL_FORMATS) or \
+            (not is_geospatial and format in DATASTORE_TABULAR_FORMATS)):
             raise tk.ValidationError({
                 'constraints': ['Inconsistency between data type and requested file format']
             })
@@ -95,7 +88,7 @@ class DownloadsController(BaseController):
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
-            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DEFAULTS['projection']) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
+            df = gpd.GeoDataFrame(df, crs={ 'init': 'epsg:{0}'.format(DOWNLOAD_PROJECTION) }, geometry='geometry').to_crs({ 'init': 'epsg:{0}'.format(projection) })
 
         tmp_dir = tempfile.mkdtemp()
         path = os.path.join(tmp_dir, '{0}.{1}'.format(metadata['name'], format))
@@ -112,4 +105,4 @@ class DownloadsController(BaseController):
 
         iotrans.utils.prune(tmp_dir)
 
-        return [metadata['name'], output.split('.')[-1]]
+        return '{fn}.{fmt}'.format(fn=metadata['name'], fmt=output.split('.')[-1])
