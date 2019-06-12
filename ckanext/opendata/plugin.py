@@ -7,7 +7,6 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
 import datetime as dt
-import mimetypes
 import re
 
 
