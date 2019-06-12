@@ -261,8 +261,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                 })
 
         if 'format' not in resource or not resource['format']:
-            mimetype, encoding = mimetypes.guess_type(resource['url'])
-            resource['format'] = mimetype.split('/')[-1]
+            resource['format'] = resource['url'].split('.')[-1]
 
         resource['format'] = resource['format'].upper()
 
