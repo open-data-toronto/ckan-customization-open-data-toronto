@@ -81,7 +81,7 @@ def modify_package_schema(schema, convert_method):
     modifications = {
         # General dataset info (inputs)
         'collection_method': [tk.get_validator('ignore_missing'), validate_string],
-        'excerpt': [tk.get_validator('ignore_missing'), validate_string],
+        'excerpt': [tk.get_validator('ignore_missing'), validate_string, validate_length],
         'limitations': [tk.get_validator('ignore_missing'), validate_string],
         'information_url': [tk.get_validator('ignore_missing'), validate_string],
         # General dataset info (dropdowns)
@@ -144,12 +144,16 @@ def update_package(context, resources):
         'last_refreshed': max([x['created'] if x['last_modified'] is None else x['last_modified'] for x in resources])
     })
 
-def validate_string(key, data, errors, context):
+def validate_length(key, data, errors, context):
     if data[key] and len(data[key]) > MAX_FIELD_LENGTH:
         raise tk.ValidationError({
-            'constraints': ['Input exceed 350 character limit']
+            'constraints': ['Input exceed {0} character limit'.format(MAX_FIELD_LENGTH)]
         })
-    elif not data[key] or not data[key].strip():
+
+    return data[key]
+
+def validate_string(key, data, errors, context):
+    if not data[key] or not data[key].strip():
         data[key] = None
 
     return data[key]
