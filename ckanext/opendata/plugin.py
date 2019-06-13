@@ -271,14 +271,14 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
-        tk.get_action('resource_patch')(context, {
-            'id': resource['id'],
-            'format': resource['format'].upper()
-        })
-
-    def after_update(self, context, resource):
         create_preview_map(context, resource)
 
+        package = tk.get_action('package_show')(context, {
+            'id': resource['package_id']
+        })
+        update_package(context, package['id'], package['resources'])
+
+    def after_update(self, context, resource):
         package = tk.get_action('package_show')(context, {
             'id': resource['package_id']
         })
