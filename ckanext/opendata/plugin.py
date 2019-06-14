@@ -125,9 +125,8 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def update_package(context, resources):
-    formats, last_refreshed = [], []
-
+def update_package(context, package_id, resources):
+    formats = []
     for r in resources:
         if r['datastore_active'] or r['url_type'] == 'datastore':
             if r['format'].lower() == 'csv':
@@ -137,11 +136,12 @@ def update_package(context, resources):
         else:
             formats.append(r['format'])
 
-    # TODO: IF LAST WILL CRASH
+    last_refreshed = [x['created'] if x['last_modified'] is None else x['last_modified'] for x in resources]
+
     tk.get_action('package_patch')(context, {
-        'id': resources[0]['package_id'],
+        'id': package_id,
         'formats': ','.join([x.upper() for x in sorted(list(set(formats)))]),
-        'last_refreshed': max([x['created'] if x['last_modified'] is None else x['last_modified'] for x in resources])
+        'last_refreshed': max(last_refreshed) if len(last_refreshed) > 0 else None
     })
 
 def validate_length(key, data, errors, context):
@@ -271,18 +271,21 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         validate_vocabulary('formats', [resource['format']], context)
 
     def after_create(self, context, resource):
-        tk.get_action('resource_patch')(context, {
-            'id': resource['id'],
-            'format': resource['format'].upper()
-        })
-
-    def after_update(self, context, resource):
         create_preview_map(context, resource)
 
         package = tk.get_action('package_show')(context, {
             'id': resource['package_id']
         })
-        update_package(context, package['resources'])
+        update_package(context, package['id'], package['resources'])
 
-    def after_delete(self, context, resources):
-        update_package(context, resources)
+    def after_update(self, context, resource):
+        package = tk.get_action('package_show')(context, {
+            'id': resource['package_id']
+        })
+        update_package(context, package['id'], package['resources'])
+
+    def before_delete(self, context, resource, resources):
+        package = tk.get_action('package_show')(context, {
+            'id': resources[0]['package_id']
+        })
+        update_package(context, package['id'], [x for x in package['resources'] if x['id'] != resource['id']])
