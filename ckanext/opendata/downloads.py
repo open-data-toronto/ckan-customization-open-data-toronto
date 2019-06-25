@@ -14,22 +14,8 @@ import io
 import json
 import mimetypes
 import os
-import shutil
 import tempfile
 
-
-def df_to_xml(df, path):
-    def row_to_xml(row):
-        xml = ['<row>']
-        for i, col_name in enumerate(row.index):
-            xml.append('  <field name="{0}">{1}</field>'.format(col_name, row.iloc[i]))
-        xml.append('</row>')
-        return '\n'.join(xml)
-
-    content = '\n'.join(df.apply(row_to_xml, axis=1))
-
-    with open(path, 'w') as f:
-        f.write(content)
 
 class DownloadsController(BaseController):
     def download_resource(self, resource_id):
@@ -50,32 +36,9 @@ class DownloadsController(BaseController):
     def get_datastore(self, metadata):
         format = tk.request.GET.get('format', DOWNLOAD_FORMAT).lower()
         projection = tk.request.GET.get('projection', DOWNLOAD_PROJECTION)
-        # offset = tk.request.GET.get('offset')
-        # limit = tk.request.GET.get('limit')
 
-        data = tk.get_action('datastore_search')(None, {
-            'resource_id': metadata['id'],
-            'limit': 0,
-            'include_total': True
-        })
-
-        # try:
-        #     offset = int(offset)
-        # except:
-        #     raise tk.ValidationError({
-        #         'offset': ['Requested offset is an invalid number']
-        #     })
-
-        # if offset > data['total']:
-        #     raise tk.ValidationError({
-        #         'offset': ['Requested offset is greater than the {num} of rows available in the dataset'.format(num=data['total'])]
-        #     })
-
-        is_geospatial = False
-        for x in data['fields']:
-            if x['id'] == 'geometry':
-                is_geospatial = True
-                break
+        info = tk.get_action('datastore_info')(None, { 'id': metadata['id'] })
+        is_geospatial = 'geometry' in info['schema']
 
         if not ((is_geospatial and format in DATASTORE_GEOSPATIAL_FORMATS) or \
             (not is_geospatial and format in DATASTORE_TABULAR_FORMATS)):
@@ -100,8 +63,8 @@ class DownloadsController(BaseController):
             zip_content=(format=='shp')
         )
 
-        with open(output, 'r') as f:
-            shutil.copyfileobj(f, tk.response)
+        with open(output, 'rb') as f:
+            tk.response.write(f.read())
 
         iotrans.utils.prune(tmp_dir)
 
