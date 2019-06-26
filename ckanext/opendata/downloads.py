@@ -10,6 +10,7 @@ import iotrans
 import pandas as pd
 import requests
 
+import gc
 import io
 import json
 import mimetypes
@@ -46,8 +47,14 @@ class DownloadsController(BaseController):
                 'constraints': ['Inconsistency between data type and requested file format']
             })
 
-        r = requests.get('{host}/datastore/dump/{resource_id}'.format(host=tk.config['ckan.site_url'], resource_id=metadata['id']))
-        df = pd.read_csv(io.StringIO(r.content.decode('utf-8')))
+        raw = requests.get('{host}/datastore/dump/{resource_id}'.format(
+            host=tk.config['ckan.site_url'],
+            resource_id=metadata['id']
+        )).content.decode('utf-8')
+
+        df = pd.read_csv(io.StringIO(raw))
+
+        del raw
 
         if is_geospatial:
             df['geometry'] = df['geometry'].apply(lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x)))
@@ -63,9 +70,12 @@ class DownloadsController(BaseController):
             zip_content=(format=='shp')
         )
 
+        del df
+
         with open(output, 'rb') as f:
             tk.response.write(f.read())
 
         iotrans.utils.prune(tmp_dir)
+        gc.collect()
 
         return '{fn}.{fmt}'.format(fn=metadata['name'], fmt=output.split('.')[-1])
