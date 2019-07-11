@@ -40,9 +40,9 @@ def convert_tags_to_string(key, data, errors, context):
     return ','.join(tags)
 
 def create_preview_map(context, resource):
-    if (resource['datastore_active'] or resource['url_type'] == 'datastore') and \
+    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
         'format' in resource and resource['format'].lower() == 'geojson' and \
-        'is_preview' in resource and resource['is_preview'] == 'true':
+        'is_preview' in resource and resource['is_preview']:
         found = False
         views = tk.get_action('resource_view_list')(context, {
             'id': resource['id']
