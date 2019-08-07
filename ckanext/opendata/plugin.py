@@ -1,6 +1,10 @@
 from .catalogue import search
 from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, MAX_FIELD_LENGTH, REMOVED_FIELDS
 
+from ckan.common import config
+
+from urlparse import urlsplit, urlunsplit
+
 import ckan.lib.helpers as h
 
 import ckan.plugins as p
@@ -289,3 +293,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
             'id': resources[0]['package_id']
         })
         update_package(context, package['id'], [x for x in package['resources'] if x['id'] != resource['id']])
+
+    def before_show(self, resource_dict):
+        if not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active'):
+            link = list(urlsplit(resource_dict.get('url')))
+            site = list(urlsplit(config.get('ckan.site_url')))
+
+            link[1] = site[1]
+            resource_dict['url'] = urlunsplit(link)
+
+        return resource_dict
