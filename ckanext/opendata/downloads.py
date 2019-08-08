@@ -1,6 +1,5 @@
 from ckan.lib.base import BaseController
 from shapely.geometry import shape
-from urlparse import urlsplit, urlunsplit
 ​
 from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, DOWNLOAD_FORMAT, DOWNLOAD_PROJECTION
 ​
