@@ -85,6 +85,9 @@
 
   <h2 class="text-info">WordPress Filters</h2>
 
+  {% set civic_issues_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'} %}
+  {{ form.input('civic_issues', id='field-civic_issues', label=_('Civic Issues'), placeholder=_('eg. Climate change'), value=data.civic_issues, error=errors.civic_issues, classes=['control-full'], attrs=civic_issues_attrs) }}
+
   {{ form.hidden('formats', value=data.formats) }}
 
   {% set topics_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
