@@ -1,4 +1,3 @@
-from ckan.common import config
 from ckan.lib.base import BaseController
 from shapely.geometry import shape
 from urlparse import urlsplit, urlunsplit
@@ -25,12 +24,7 @@ class DownloadsController(BaseController):
         metadata = tk.get_action('resource_show')(None, { 'id':resource_id })
 ​
         if not metadata['datastore_active']:
-            link = list(urlsplit(metadata['url']))
-            site = list(urlsplit(config.get('ckan.site_url')))
-​
-            link[1] = site[1]
-
-            tk.redirect_to(urlunsplit(link))
+            tk.redirect_to(metadata['url'])
         else:
             filename = self.get_datastore(metadata)
             mimetype, encoding = mimetypes.guess_type(filename)
