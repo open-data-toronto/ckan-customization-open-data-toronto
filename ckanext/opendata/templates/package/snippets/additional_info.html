@@ -69,6 +69,12 @@
       <td class="dataset-details">{{ pkg_dict.owner_email }}</td>
     </tr>
   {% endif %}
+  {% if pkg_dict.civic_issues %}
+  <tr>
+    <th scope="row" class="dataset-label">{{ _("Civic Issues") }}</th>
+    <td class="dataset-details">{{ pkg_dict.civic_issues }}</td>
+  </tr>
+  {% endif %}
   {% if pkg_dict.formats %}
   <tr>
     <th scope="row" class="dataset-label">{{ _("Formats") }}</th>

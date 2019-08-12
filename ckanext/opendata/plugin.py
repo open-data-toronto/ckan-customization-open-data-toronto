@@ -93,6 +93,7 @@ def modify_package_schema(schema, convert_method):
         'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
         'refresh_rate': [tk.get_validator('ignore_missing')],
         # Filters
+        'civic_issues': [tk.get_validator('ignore_missing'), validate_string],
         'formats': [tk.get_validator('ignore_missing'), validate_string],
         'topics': [tk.get_validator('ignore_missing'), validate_string],
         # Dataset division info
@@ -107,12 +108,12 @@ def modify_package_schema(schema, convert_method):
 
     for key, value in modifications.items():
         if convert_method == 'input':
-            if key in ('formats', 'topics'):
+            if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
 
             modifications[key].insert(1, tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
-            if key in ('formats', 'topics'):
+            if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
 
             modifications[key].insert(0, tk.get_converter('convert_from_extras'))
