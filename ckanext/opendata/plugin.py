@@ -296,7 +296,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         update_package(context, package['id'], [x for x in package['resources'] if x['id'] != resource['id']])
 
     def before_show(self, resource_dict):
-        if not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active'):
+        if (not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active')) and \
+            resource_dict.get('url_type', '') == 'upload':
             link = list(urlsplit(resource_dict.get('url')))
             site = list(urlsplit(config.get('ckan.site_url')))
 
