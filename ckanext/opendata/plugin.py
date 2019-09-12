@@ -130,22 +130,31 @@ def modify_package_schema(schema, convert_method):
 
     return schema
 
-def update_package(context, package_id, resources):
+def update_package(context):
+    package = context['package']
+    resources = [
+        r for r in package.resources_all if r.state == 'active'
+    ]
+
     formats = []
     for r in resources:
-        if r['datastore_active'] or r['url_type'] == 'datastore':
-            if r['format'].lower() == 'csv':
+        if r.extra['datastore_active'] or r.url_type == 'datastore':
+            if r.format.lower() == 'csv':
                 formats += DATASTORE_TABULAR_FORMATS
-            elif r['format'].lower() == 'geojson':
+            elif r.format.lower() == 'geojson':
                 formats += DATASTORE_GEOSPATIAL_FORMATS
         else:
-            formats.append(r['format'])
+            formats.append(r.format)
 
-    last_refreshed = [x['created'] if x['last_modified'] is None else x['last_modified'] for x in resources]
+    formats = sorted(list(set([ f.upper() for f in formats ])))
+
+    last_refreshed = [
+        r.create if r.last_modified is None else r.last_modified for r in resources
+    ]
 
     tk.get_action('package_patch')(context, {
-        'id': package_id,
-        'formats': ','.join([x.upper() for x in sorted(list(set(formats)))]),
+        'id': package.id,
+        'formats': ','.join(formats) if len(formats) > 0 else None,
         'last_refreshed': max(last_refreshed) if len(last_refreshed) > 0 else None
     })
 
@@ -277,23 +286,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_create(self, context, resource):
         create_preview_map(context, resource)
-
-        package = tk.get_action('package_show')(context, {
-            'id': resource['package_id']
-        })
-        update_package(context, package['id'], package['resources'])
+        update_package(context)
 
     def after_update(self, context, resource):
-        package = tk.get_action('package_show')(context, {
-            'id': resource['package_id']
-        })
-        update_package(context, package['id'], package['resources'])
+        update_package(context)
 
-    def before_delete(self, context, resource, resources):
-        package = tk.get_action('package_show')(context, {
-            'id': resources[0]['package_id']
-        })
-        update_package(context, package['id'], [x for x in package['resources'] if x['id'] != resource['id']])
+    def after_delete(self, context, resources):
+        update_package(context)
 
     def before_show(self, resource_dict):
         if (not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active')) and \
