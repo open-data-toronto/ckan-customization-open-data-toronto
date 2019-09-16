@@ -110,11 +110,19 @@ def modify_package_schema(schema, convert_method):
         if convert_method == 'input':
             if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
+            elif key in ('dataset_category', 'refresh_rate', 'owner_division'):
+                modifications[key].append(
+                    tk.get_converter('convert_to_tags')(_to_plural(key))
+                )
 
             modifications[key].insert(1, tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
             if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
+            elif key in ('dataset_category', 'refresh_rate', 'owner_division'):
+                modifications[key].append(
+                    tk.get_converter('convert_from_tags')(_to_plural(key))
+                )
 
             modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 
@@ -188,6 +196,12 @@ def validate_vocabulary(vocab_name, tags, context):
             })
 
     return vocab
+
+def _to_plural(word):
+    if word.endswith('y'):
+        return word[:-1] + 'ies'
+    else:
+        return word + 's'
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
