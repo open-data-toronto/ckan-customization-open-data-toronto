@@ -305,7 +305,11 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return []
 
     def get_helpers(self):
-        return {'dataset_categories': dataset_categories, 'refresh_rates': refresh_rates, 'owner_divisions': owner_divisions} 
+        return {
+            'dataset_categories': dataset_categories, 
+            'refresh_rates': refresh_rates, 
+            'owner_divisions': owner_divisions
+        } 
 
     
 

@@ -23,7 +23,7 @@
     <label class="control-label" for="field-refresh_rate">{{ _("Refresh Rate") }}</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in h.refresh_rates %}
+        {% for refresh_rate in h.refresh_rates() %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
@@ -68,7 +68,7 @@
     <label class="control-label" for="field-owner_division">{{_("Owner Division") }}</label>
     <div class="controls">
       <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
-        {% for owner_division in h.owner_divisions %}
+        {% for owner_division in h.owner_divisions() %}
           <option value="{{ owner_division }}" {% if owner_division in data.get('owner_division', []) %}selected="selected"{% endif %}>{{ owner_division }}</option>
         {% endfor %}
       </select>
