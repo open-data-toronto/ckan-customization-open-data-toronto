@@ -203,6 +203,14 @@ def _to_plural(word):
     else:
         return word + 's'
 
+def country_codes():
+    try:
+        tag_list = tk.get_action('tag_list')
+        country_codes = tag_list(data_dict={'vocabulary_id': 'country_codes'})
+        return country_codes
+    except tk.ObjectNotFound:
+        return None
+
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
 
@@ -240,6 +248,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController, inherit=True)
+    p.implements(p.ITemplateHelpers)
 
     # ==============================
     # IConfigurer
@@ -278,6 +287,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def package_types(self):
         return []
+
+    def get_helpers(self):
+        return {'country_codes': country_codes}
 
     # ==============================
     # IResourceController
