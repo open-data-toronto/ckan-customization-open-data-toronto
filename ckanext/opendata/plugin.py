@@ -203,11 +203,27 @@ def _to_plural(word):
     else:
         return word + 's'
 
-def country_codes():
+def dataset_categories():
     try:
         tag_list = tk.get_action('tag_list')
-        country_codes = tag_list(data_dict={'vocabulary_id': 'country_codes'})
-        return country_codes
+        dataset_categories = tag_list(data_dict={'vocabulary_id': 'dataset_categories'})
+        return dataset_categories
+    except tk.ObjectNotFound:
+        return None
+
+def refresh_rates():
+    try:
+        tag_list = tk.get_action('tag_list')
+        refresh_rates = tag_list(data_dict={'vocabulary_id': 'refresh_rates'})
+        return refresh_rates
+    except tk.ObjectNotFound:
+        return None
+
+def owner_divisions():
+    try:
+        tag_list = tk.get_action('tag_list')
+        owner_divisions = tag_list(data_dict={'vocabulary_id': 'owner_divisions'})
+        return owner_divisions
     except tk.ObjectNotFound:
         return None
 
@@ -289,7 +305,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return []
 
     def get_helpers(self):
-        return {'country_codes': country_codes}
+        return {'dataset_categories': dataset_categories}
+
+    def get_helpers(self):
+        return {'refresh_rates': refresh_rates}
+
+    def get_helpers(self):
+        return {'owner_divisions': owner_divisions}
 
     # ==============================
     # IResourceController
