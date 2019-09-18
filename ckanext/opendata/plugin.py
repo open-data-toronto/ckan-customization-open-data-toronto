@@ -100,15 +100,15 @@ def modify_package_schema(schema, convert_method):
         'limitations': [tk.get_validator('ignore_missing'), validate_string],
         'information_url': [tk.get_validator('ignore_missing'), validate_string],
         # General dataset info (dropdowns)
-        'dataset_category': [tk.get_validator('ignore_missing')],
+        'dataset_category': [tk.get_validator('ignore_missing'), validate_vocabulary],
         'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
-        'refresh_rate': [tk.get_validator('ignore_missing')],
+        'refresh_rate': [tk.get_validator('ignore_missing'), validate_vocabulary],
         # Filters
         'civic_issues': [tk.get_validator('ignore_missing'), validate_string],
         'formats': [tk.get_validator('ignore_missing'), validate_string],
         'topics': [tk.get_validator('ignore_missing'), validate_string],
         # Dataset division info
-        'owner_division': [tk.get_validator('ignore_missing'), validate_string],
+        'owner_division': [tk.get_validator('ignore_missing'), validate_vocabulary],
         'owner_section': [tk.get_validator('ignore_missing'), validate_string],
         'owner_unit': [tk.get_validator('ignore_missing'), validate_string],
         'owner_email': [tk.get_validator('ignore_missing'), validate_string],
@@ -121,19 +121,11 @@ def modify_package_schema(schema, convert_method):
         if convert_method == 'input':
             if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_string_to_tags)
-            elif key in ('dataset_category', 'refresh_rate', 'owner_division'):
-                modifications[key].append(
-                    tk.get_converter('convert_to_tags')(_to_plural(key))
-                )
 
             modifications[key].insert(1, tk.get_converter('convert_to_extras'))
         elif convert_method == 'output':
             if key in ('civic_issues', 'formats', 'topics'):
                 modifications[key].append(convert_tags_to_string)
-            elif key in ('dataset_category', 'refresh_rate', 'owner_division'):
-                modifications[key].append(
-                    tk.get_converter('convert_from_tags')(_to_plural(key))
-                )
 
             modifications[key].insert(0, tk.get_converter('convert_from_extras'))
 

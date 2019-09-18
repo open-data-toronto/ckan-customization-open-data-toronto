@@ -5,7 +5,7 @@
   <h2 class="text-info">General Information</h2>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-dataset_category">{{ _("Dataset Category") }}</label>
+    <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
         {% for dataset_category in h.get_tags('dataset_categories') %}
@@ -16,7 +16,7 @@
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-refresh_rate">{{ _("Refresh Rate") }}</label>
+    <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
         {% for refresh_rate in h.get_tags('refresh_rates') %}
@@ -61,7 +61,7 @@
   <h2 class="text-info">Owner Information</h2>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-owner_division">{{_("Owner Division") }}</label>
+    <label class="control-label" for="field-owner_division"><span class="text-danger">* </span>Owner Division</label>
     <div class="controls">
       <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
         {% for owner_division in h.get_tags('owner_divisions') %}
