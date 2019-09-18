@@ -223,6 +223,9 @@ def owner_divisions():
     try:
         tag_list = tk.get_action('tag_list')
         owner_divisions = tag_list(data_dict={'vocabulary_id': 'owner_divisions'})
+        # HEX TO STRING
+        for index, t in enumerate(owner_divisions):
+            owner_divisions[inx] = bytes.fromhex(t).decode('utf-8')
         return owner_divisions
     except tk.ObjectNotFound:
         return None
