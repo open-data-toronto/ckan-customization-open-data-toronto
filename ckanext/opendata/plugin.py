@@ -203,30 +203,12 @@ def _to_plural(word):
     else:
         return word + 's'
 
-def dataset_categories():
+def get_tag_list(vocab):
     try:
-        tag_list = tk.get_action('tag_list')
-        dataset_categories = tag_list(data_dict={'vocabulary_id': 'dataset_categories'})
-        return dataset_categories
-    except tk.ObjectNotFound:
-        return None
-
-def refresh_rates():
-    try:
-        tag_list = tk.get_action('tag_list')
-        refresh_rates = tag_list(data_dict={'vocabulary_id': 'refresh_rates'})
-        return refresh_rates
-    except tk.ObjectNotFound:
-        return None
-
-def owner_divisions():
-    try:
-        tag_list = tk.get_action('tag_list')
-        owner_divisions = tag_list(data_dict={'vocabulary_id': 'owner_divisions'})
-        # HEX TO STRING
-        for index, t in enumerate(owner_divisions):
-            owner_divisions[index] = bytearray.fromhex(t).decode()
-        return owner_divisions
+        tag_list = tk.get_action('tag_list')(data_dict={'vocabulary_id': vocab})
+        for index, t in enumerate(tag_list):
+            tag_list[index] = bytearray.fromhex(t).decode()
+        return tag_list
     except tk.ObjectNotFound:
         return None
 
@@ -309,9 +291,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {
-            'dataset_categories': dataset_categories, 
-            'refresh_rates': refresh_rates, 
-            'owner_divisions': owner_divisions
+            'dataset_categories': get_tag_list('dataset_categories'), 
+            'refresh_rates': get_tag_list('refresh_rates'), 
+            'owner_divisions': get_tag_list('owner_divisions')
         } 
 
     
