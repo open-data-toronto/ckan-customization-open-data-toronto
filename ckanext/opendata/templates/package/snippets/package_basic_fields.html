@@ -23,7 +23,7 @@
     <label class="control-label" for="field-refresh_rate">{{ _("Refresh Rate") }}</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in h.get_tag_list('refresh_rates' %}
+        {% for refresh_rate in h.get_tag_list('refresh_rates') %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
