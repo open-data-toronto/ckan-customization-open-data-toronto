@@ -1,10 +1,6 @@
 {% ckan_extends %}
 
 {% block package_basic_fields_custom %}
-  <!-- {% set dataset_categories = ["Document", "Map", "Table", "Website"] %}
-  {% set refresh_rates = ["Real-time", "Daily", "Weekly", "Monthly", "Quarterly", "Semi-annually", "Annually", "As available"] %}
-  {% set owner_divisions = ["311 Toronto", "Accounting Services", "Affordable Housing Office", "Chief Resilience Office", "Children's Services", "City Clerk's Office", "City Manager's Office", "City Planning", "Civic Innovation Office", "Corporate Finance", "Corporate Security", "Court Services", "Economic Development & Culture", "Employment & Social Services", "Engineering & Construction Services", "Environment & Energy", "Equity, Diversity & Human Rights", "Executive Management", "Facilities Management", "Finance & Administration", "Financial Planning", "Fire Services", "Fleet Services", "Human Resources", "Indigenous Affairs Office", "Information & Technology", "Internal Audit", "Legal Services", "Long-Term Care Homes & Services", "Major Capital Infrastructure Coordination Office", "Municipal Licensing & Standards", "Office of Emergency Management", "Parks, Forestry & Recreation", "Pension, Payroll & Employee Benefits", "Policy, Planning, Finance & Administration", "Purchasing & Materials Management", "Real Estate Services", "Revenue Services", "Shelter, Support & Housing Administration", "Social Development, Finance & Administration", "Solid Waste Management Services", "Strategic & Corporate Policy", "Strategic Communications", "Toronto Building", "Toronto Office of Partnerships", "Toronto Paramedic Services", "Toronto Water", "Transformation Office", "Transportation Services", "Waterfront Secretariat", "CreateTO", "Exhibition Place", "Heritage Toronto", "TO Live", "Toronto Atmospheric Fund", "Toronto Investment Board", "Toronto Parking Authority", "Toronto Police Service", "Toronto Public Health", "Toronto Public Library", "Toronto & Region Conservation Authority", "Toronto Transit Commission", "Toronto Zoo", "Yonge-Dundas Square"] %}  
-  -->
   <hr/>
   <h2 class="text-info">General Information</h2>
 
@@ -12,7 +8,7 @@
     <label class="control-label" for="field-dataset_category">{{ _("Dataset Category") }}</label>
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
-        {% for dataset_category in h.get_tag_list('dataset_categories') %}
+        {% for dataset_category in h.get_tags('dataset_categories') %}
           <option value="{{ dataset_category }}" {% if dataset_category in data.get('dataset_category', []) %}selected="selected"{% endif %}>{{ dataset_category }}</option>
         {% endfor %}
       </select>
@@ -23,7 +19,7 @@
     <label class="control-label" for="field-refresh_rate">{{ _("Refresh Rate") }}</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in h.get_tag_list('refresh_rates') %}
+        {% for refresh_rate in h.get_tags('refresh_rates') %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
@@ -68,7 +64,7 @@
     <label class="control-label" for="field-owner_division">{{_("Owner Division") }}</label>
     <div class="controls">
       <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
-        {% for owner_division in h.get_tag_list('owner_divisions') %}
+        {% for owner_division in h.get_tags('owner_divisions') %}
           <option value="{{ owner_division }}" {% if owner_division in data.get('owner_division', []) %}selected="selected"{% endif %}>{{ owner_division }}</option>
         {% endfor %}
       </select>

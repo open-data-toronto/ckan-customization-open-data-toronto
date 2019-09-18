@@ -69,6 +69,17 @@ def create_preview_map(context, resource):
                 # 'geojson_field': 'geometry'
             })
 
+def get_tags(vocabulary_id):
+    try:
+        return [
+            bytearry.fromhex(x).decode()
+                for x in tk.get_action('tag_list')(
+                    data_dict={'vocabulary_id': vocabulary_id}
+                )
+        ]
+    except tk.ObjectNotFound:
+        return None
+
 def modify_package_schema(schema, convert_method):
     '''
         Update the package schema on package read or write.
@@ -203,15 +214,6 @@ def _to_plural(word):
     else:
         return word + 's'
 
-def get_tag_list(vocab):
-    try:
-        tag_list = tk.get_action('tag_list')(data_dict={'vocabulary_id': vocab})
-        for index, t in enumerate(tag_list):
-            tag_list[index] = bytearray.fromhex(t).decode()
-        return tag_list
-    except tk.ObjectNotFound:
-        return None
-
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
 
@@ -291,10 +293,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {
-            'get_tag_list': get_tag_list
-        } 
-
-    
+            'get_tags': get_tags
+        }
 
     # ==============================
     # IResourceController
