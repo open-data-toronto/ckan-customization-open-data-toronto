@@ -138,7 +138,7 @@ def update_package(context):
 
     formats = []
     for r in resources:
-        if r.extra['datastore_active'] or r.url_type == 'datastore':
+        if ('datastore_active' in r.extras and r.extras['datastore_active']) or r.url_type == 'datastore':
             if r.format.lower() == 'csv':
                 formats += DATASTORE_TABULAR_FORMATS
             elif r.format.lower() == 'geojson':
