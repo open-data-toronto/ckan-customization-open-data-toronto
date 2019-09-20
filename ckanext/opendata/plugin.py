@@ -47,6 +47,7 @@ def create_preview_map(context, resource):
     if (resource['datastore_active'] or 'datastore' in resource['url']) and \
         'format' in resource and resource['format'].lower() == 'geojson' and \
         'is_preview' in resource and resource['is_preview']:
+
         found = False
         views = tk.get_action('resource_view_list')(context, {
             'id': resource['id']
@@ -69,7 +70,7 @@ def create_preview_map(context, resource):
                 # 'geojson_field': 'geometry'
             })
 
-def get_tags(vocabulary_id):
+def get_hex_tags(vocabulary_id):
     try:
         return [
             bytearry.fromhex(x).decode()
@@ -283,7 +284,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {
-            'get_tags': get_tags
+            'get_hex_tags': get_hex_tags
         }
 
     # ==============================

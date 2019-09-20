@@ -8,7 +8,7 @@
     <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
-        {% for dataset_category in h.get_tags('dataset_categories') %}
+        {% for dataset_category in h.get_hex_tags('dataset_categories') %}
           <option value="{{ dataset_category }}" {% if dataset_category in data.get('dataset_category', []) %}selected="selected"{% endif %}>{{ dataset_category }}</option>
         {% endfor %}
       </select>
@@ -19,7 +19,7 @@
     <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
-        {% for refresh_rate in h.get_tags('refresh_rates') %}
+        {% for refresh_rate in h.get_hex_tags('refresh_rates') %}
           <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
         {% endfor %}
       </select>
@@ -64,7 +64,7 @@
     <label class="control-label" for="field-owner_division"><span class="text-danger">* </span>Owner Division</label>
     <div class="controls">
       <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
-        {% for owner_division in h.get_tags('owner_divisions') %}
+        {% for owner_division in h.get_hex_tags('owner_divisions') %}
           <option value="{{ owner_division }}" {% if owner_division in data.get('owner_division', []) %}selected="selected"{% endif %}>{{ owner_division }}</option>
         {% endfor %}
       </select>
