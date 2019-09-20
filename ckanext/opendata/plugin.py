@@ -185,9 +185,7 @@ def validate_string(key, data, errors, context):
 
 def validate_vocabulary(vocab_name, tags, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = tk.get_action('tag_list')(context, {
-        'vocabulary_id': vocab['id']
-    })
+    vocab_tags = [t['name'] for t in vocab['tags']]
 
     if not isinstance(tags, list):
         tags = tags.split(',')
