@@ -18,7 +18,7 @@ import re
 def convert_hex_to_string(key, data, errors, context):
     tag = data[key] if _is_hex(data[key]) else codecs.encode(data[key].encode('utf-8'), 'hex')
 
-    validate_vocabulary(_to_plural(key), tag, context)
+    validate_vocabulary(key[0], tag, context)
 
     return codecs.decode(tag, 'hex').decode('utf-8')
 
@@ -213,12 +213,6 @@ def _is_hex(s):
         return True
     except ValueError:
         return False
-
-def _to_plural(word):
-    if word.endswith('y'):
-        return word[:-1] + 'ies'
-    else:
-        return word + 's'
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
