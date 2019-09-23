@@ -10,9 +10,17 @@ import ckan.lib.helpers as h
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
+import codecs
 import datetime as dt
 import re
 
+
+def convert_hex_to_string(key, data, errors, context):
+    tag = data[key] if _is_hex(data[key]) else codecs.encode(data[key].encode('utf-8'), 'hex')
+
+    validate_vocabulary(_to_plural(key), tag, context)
+
+    return codecs.decode(tag, 'hex').decode('utf-8')
 
 def convert_string_to_tags(key, data, errors, context):
     if data[key]:
@@ -73,7 +81,7 @@ def create_preview_map(context, resource):
 def get_hex_tags(vocabulary_id):
     try:
         return [
-            bytearry.fromhex(x).decode()
+            codecs.decode(x, 'hex').decode('utf-8')
                 for x in tk.get_action('tag_list')(
                     data_dict={'vocabulary_id': vocabulary_id}
                 )
@@ -101,15 +109,15 @@ def modify_package_schema(schema, convert_method):
         'limitations': [tk.get_validator('ignore_missing'), validate_string],
         'information_url': [tk.get_validator('ignore_missing'), validate_string],
         # General dataset info (dropdowns)
-        'dataset_category': [tk.get_validator('ignore_missing'), validate_vocabulary],
+        'dataset_category': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
-        'refresh_rate': [tk.get_validator('ignore_missing'), validate_vocabulary],
+        'refresh_rate': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         # Filters
         'civic_issues': [tk.get_validator('ignore_missing'), validate_string],
         'formats': [tk.get_validator('ignore_missing'), validate_string],
         'topics': [tk.get_validator('ignore_missing'), validate_string],
         # Dataset division info
-        'owner_division': [tk.get_validator('ignore_missing'), validate_vocabulary],
+        'owner_division': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         'owner_section': [tk.get_validator('ignore_missing'), validate_string],
         'owner_unit': [tk.get_validator('ignore_missing'), validate_string],
         'owner_email': [tk.get_validator('ignore_missing'), validate_string],
@@ -198,6 +206,13 @@ def validate_vocabulary(vocab_name, tags, context):
             })
 
     return vocab
+
+def _is_hex(s):
+    try:
+        int(s, 16)
+        return True
+    except ValueError:
+        return False
 
 def _to_plural(word):
     if word.endswith('y'):
