@@ -10,9 +10,17 @@ import ckan.lib.helpers as h
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 
+import codecs
 import datetime as dt
 import re
 
+
+def convert_hex_to_string(key, data, errors, context):
+    tag = data[key] if _is_hex(data[key]) else codecs.encode(data[key].encode('utf-8'), 'hex')
+
+    validate_vocabulary(key[0], tag, context)
+
+    return codecs.decode(tag, 'hex').decode('utf-8')
 
 def convert_string_to_tags(key, data, errors, context):
     if data[key]:
@@ -47,6 +55,7 @@ def create_preview_map(context, resource):
     if (resource['datastore_active'] or 'datastore' in resource['url']) and \
         'format' in resource and resource['format'].lower() == 'geojson' and \
         'is_preview' in resource and resource['is_preview']:
+
         found = False
         views = tk.get_action('resource_view_list')(context, {
             'id': resource['id']
@@ -69,6 +78,17 @@ def create_preview_map(context, resource):
                 # 'geojson_field': 'geometry'
             })
 
+def get_hex_tags(vocabulary_id):
+    try:
+        return [
+            codecs.decode(x, 'hex').decode('utf-8')
+                for x in tk.get_action('tag_list')(
+                    data_dict={'vocabulary_id': vocabulary_id}
+                )
+        ]
+    except tk.ObjectNotFound:
+        return None
+
 def modify_package_schema(schema, convert_method):
     '''
         Update the package schema on package read or write.
@@ -89,15 +109,15 @@ def modify_package_schema(schema, convert_method):
         'limitations': [tk.get_validator('ignore_missing'), validate_string],
         'information_url': [tk.get_validator('ignore_missing'), validate_string],
         # General dataset info (dropdowns)
-        'dataset_category': [tk.get_validator('ignore_missing')],
+        'dataset_category': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
-        'refresh_rate': [tk.get_validator('ignore_missing')],
+        'refresh_rate': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         # Filters
         'civic_issues': [tk.get_validator('ignore_missing'), validate_string],
         'formats': [tk.get_validator('ignore_missing'), validate_string],
         'topics': [tk.get_validator('ignore_missing'), validate_string],
         # Dataset division info
-        'owner_division': [tk.get_validator('ignore_missing'), validate_string],
+        'owner_division': [tk.get_validator('ignore_missing'), convert_hex_to_string],
         'owner_section': [tk.get_validator('ignore_missing'), validate_string],
         'owner_unit': [tk.get_validator('ignore_missing'), validate_string],
         'owner_email': [tk.get_validator('ignore_missing'), validate_string],
@@ -174,9 +194,7 @@ def validate_string(key, data, errors, context):
 
 def validate_vocabulary(vocab_name, tags, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = tk.get_action('tag_list')(context, {
-        'vocabulary_id': vocab['id']
-    })
+    vocab_tags = [t['name'] for t in vocab['tags']]
 
     if not isinstance(tags, list):
         tags = tags.split(',')
@@ -188,6 +206,13 @@ def validate_vocabulary(vocab_name, tags, context):
             })
 
     return vocab
+
+def _is_hex(s):
+    try:
+        int(s, 16)
+        return True
+    except ValueError:
+        return False
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
@@ -226,6 +251,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
     p.implements(p.IDatasetForm)
     p.implements(p.IResourceController, inherit=True)
+    p.implements(p.ITemplateHelpers)
 
     # ==============================
     # IConfigurer
@@ -264,6 +290,11 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def package_types(self):
         return []
+
+    def get_helpers(self):
+        return {
+            'get_hex_tags': get_hex_tags
+        }
 
     # ==============================
     # IResourceController
