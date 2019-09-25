@@ -169,7 +169,7 @@ def update_package(context):
     formats = sorted(list(set([ f.upper() for f in formats ])))
 
     last_refreshed = [
-        r.create if r.last_modified is None else r.last_modified for r in resources
+        r.created if r.last_modified is None else r.last_modified for r in resources
     ]
 
     tk.get_action('package_patch')(context, {
