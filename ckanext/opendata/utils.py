@@ -5,23 +5,64 @@ import ckan.plugins.toolkit as tk
 import codecs
 
 
+def create_preview_map(context, resource):
+    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
+        resource.get('format', '').lower() == 'geojson' and \
+        resource.get('is_preview', False):
+
+        views = tk.get_action('resource_view_list')(context, {
+            'id': resource['id']
+        })
+
+        for v in views:
+            if v['view_type'] == 'recline_map_view':
+                return
+
+        tk.get_action('resource_view_create')(context, {
+            'resource_id': resource['id'],
+            'title': 'Map',
+            'view_type': 'recline_map_view',
+            'auto_zoom': True,
+            'cluster_markers': False,
+            'map_field_type': 'geojson',
+            'limit': 500
+            # 'geojson_field': 'geometry'
+        })
+
+def is_geospatial():
+    info = tk.get_action('datastore_info')(None, { 'id': resource_id })
+
+    return 'geometry' in info['schema']
+
+# def is_hex(s):
+#     try:
+#         int(s, 16)
+#         return True
+#     except ValueError:
+#         return False
+
+def default_to_none(value):
+    # TODO: CHECK IF STRING
+    if not value or not value.strip():
+        return None
+
+def default_to_false(value):
+    # TODO: WHAT IF VALUE IS BOOLEAN ALREADY?
+    if not value or not value.strip():
+        return False
+
 def string_to_hex(s):
     return codecs.encode(s.encode('utf-8'), 'hex')
 
 def hex_to_string(s):
     return codecs.decode(s, 'hex').decode('utf-8')
 
-def get_hex_tags(vocabulary_id):
+def list_hex_tags(vocabulary_id):
     return map(hex_to_string, tk.get_action('tag_list')(
         data_dict={'vocabulary_id': vocabulary_id}
     ))
 
-def validate_hex_tag(key, data, errors, context):
-    tag = data[key] if is_hex(data[key]) else string_to_hex(s)
-
-    validate_vocabulary(key[0], tag, context)
-
-    return hex_to_string(tag)
+# TODO: REDO THE HEXT TO STRING CONVERTERS FOR SCHEMA..
 
 def convert_string_to_tags(key, data, errors, context):
     if data[key]:
@@ -52,42 +93,6 @@ def convert_tags_to_string(key, data, errors, context):
 
     return ','.join(tags)
 
-def create_preview_map(context, resource):
-    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
-        'format' in resource and resource['format'].lower() == 'geojson' and \
-        'is_preview' in resource and resource['is_preview']:
-
-        views = tk.get_action('resource_view_list')(context, {
-            'id': resource['id']
-        })
-
-        for v in views:
-            if v['view_type'] == 'recline_map_view':
-                return
-
-        tk.get_action('resource_view_create')(context, {
-            'resource_id': resource['id'],
-            'title': 'Map',
-            'view_type': 'recline_map_view',
-            'auto_zoom': True,
-            'cluster_markers': False,
-            'map_field_type': 'geojson',
-            'limit': 500
-            # 'geojson_field': 'geometry'
-        })
-
-def default_to_none(key, data, errors, context):
-    if key not in data or not data[key] or not data[key].strip():
-        data[key] = None
-
-    return data[key]
-
-def default_to_false(key, data, errors, context):
-    if key not in data or not data[key] or not data[key].strip():
-        data[key] = False
-
-    return data[key]
-
 def validate_length(key, data, errors, context):
     if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
         raise tk.ValidationError({
@@ -100,9 +105,10 @@ def validate_length(key, data, errors, context):
 
     return data[key]
 
+# Built-in vocabulary validation requires context update
 def validate_vocabulary(vocab_name, tags, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = [t['name'] for t in vocab['tags']]
+    vocab_tags = [ t['name'] for t in vocab['tags'] ]
 
     if not isinstance(tags, list):
         tags = tags.split(',')
@@ -110,19 +116,9 @@ def validate_vocabulary(vocab_name, tags, context):
     for t in tags:
         if not t in vocab_tags:
             raise tk.ValidationError({
-                'constraints': ['Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)]
+                'constraints': [
+                    'Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)
+                ]
             })
 
     return vocab
-
-def is_geospatial():
-    info = tk.get_action('datastore_info')(None, { 'id': resource_id })
-
-    return 'geometry' in info['schema']
-
-def is_hex(s):
-    try:
-        int(s, 16)
-        return True
-    except ValueError:
-        return False

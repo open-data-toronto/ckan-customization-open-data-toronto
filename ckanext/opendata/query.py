@@ -48,7 +48,7 @@ def _build_query(query):
     q = []
 
     for k, v in query.items():
-        if k == 'search' and len(v) > 0:
+        if k == 'search' and len(v):
             v = v.lower()
 
             q.append(

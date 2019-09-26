@@ -96,7 +96,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {
-            'get_hex_tags': get_hex_tags
+            'list_hex_tags': list_hex_tags
         }
 
     # ==============================
