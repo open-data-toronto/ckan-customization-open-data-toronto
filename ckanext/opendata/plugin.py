@@ -1,9 +1,10 @@
-from .catalogue import search
-from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, MAX_FIELD_LENGTH, REMOVED_FIELDS
+from .query import search_catalogue, search_facet
 
 from ckan.common import config
 
 from urlparse import urlsplit, urlunsplit
+
+import constants
 
 import ckan.lib.helpers as h
 
@@ -15,205 +16,6 @@ import datetime as dt
 import re
 
 
-def convert_hex_to_string(key, data, errors, context):
-    tag = data[key] if _is_hex(data[key]) else codecs.encode(data[key].encode('utf-8'), 'hex')
-
-    validate_vocabulary(key[0], tag, context)
-
-    return codecs.decode(tag, 'hex').decode('utf-8')
-
-def convert_string_to_tags(key, data, errors, context):
-    if data[key]:
-        tags = [t.strip() for t in data[key].split(',') if t.strip()]
-        vocab = validate_vocabulary(key, tags, context)
-
-        n = 0
-        for k in data.keys():
-            if k[0] == 'tags':
-                n = max(n, k[1] + 1)
-
-        for num, tag in enumerate(tags):
-            data[('tags', num + n, 'name')] = tag
-            data[('tags', num + n, 'vocabulary_id')] = vocab['id']
-
-    return data[key]
-
-def convert_tags_to_string(key, data, errors, context):
-    tags = []
-    vocab = tk.get_action('vocabulary_show')(context, {
-        'id': key
-    })
-
-    for k in data.keys():
-        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
-            name = data[k].get('display_name', data[k]['name'])
-            tags.append(name)
-
-    return ','.join(tags)
-
-def create_preview_map(context, resource):
-    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
-        'format' in resource and resource['format'].lower() == 'geojson' and \
-        'is_preview' in resource and resource['is_preview']:
-
-        found = False
-        views = tk.get_action('resource_view_list')(context, {
-            'id': resource['id']
-        })
-
-        for v in views:
-            if v['view_type'] == 'recline_map_view':
-                found = True
-                break
-
-        if not found:
-            tk.get_action('resource_view_create')(context, {
-                'resource_id': resource['id'],
-                'title': 'Map',
-                'view_type': 'recline_map_view',
-                'auto_zoom': True,
-                'cluster_markers': False,
-                'map_field_type': 'geojson',
-                'limit': 500
-                # 'geojson_field': 'geometry'
-            })
-
-def get_hex_tags(vocabulary_id):
-    try:
-        return [
-            codecs.decode(x, 'hex').decode('utf-8')
-                for x in tk.get_action('tag_list')(
-                    data_dict={'vocabulary_id': vocabulary_id}
-                )
-        ]
-    except tk.ObjectNotFound:
-        return None
-
-def modify_package_schema(schema, convert_method):
-    '''
-        Update the package schema on package read or write.
-
-        Args:
-            schema: Original CKAN schema
-            convert_method: Determines if the schema is for reading or writing
-                            and affects the validators for certain fields
-
-        Returns:
-            Updated schema with customization
-    '''
-
-    modifications = {
-        # General dataset info (inputs)
-        'collection_method': [tk.get_validator('ignore_missing'), validate_string],
-        'excerpt': [tk.get_validator('ignore_missing'), validate_string, validate_length],
-        'limitations': [tk.get_validator('ignore_missing'), validate_string],
-        'information_url': [tk.get_validator('ignore_missing'), validate_string],
-        # General dataset info (dropdowns)
-        'dataset_category': [tk.get_validator('ignore_missing'), convert_hex_to_string],
-        'is_retired': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')],
-        'refresh_rate': [tk.get_validator('ignore_missing'), convert_hex_to_string],
-        # Filters
-        'civic_issues': [tk.get_validator('ignore_missing'), validate_string],
-        'formats': [tk.get_validator('ignore_missing'), validate_string],
-        'topics': [tk.get_validator('ignore_missing'), validate_string],
-        # Dataset division info
-        'owner_division': [tk.get_validator('ignore_missing'), convert_hex_to_string],
-        'owner_section': [tk.get_validator('ignore_missing'), validate_string],
-        'owner_unit': [tk.get_validator('ignore_missing'), validate_string],
-        'owner_email': [tk.get_validator('ignore_missing'), validate_string],
-        # Internal CKAN/WP fields
-        'image_url': [tk.get_validator('ignore_missing'), validate_string],
-        'last_refreshed': [tk.get_validator('ignore_missing')]
-    }
-
-    for key, value in modifications.items():
-        if convert_method == 'input':
-            if key in ('civic_issues', 'formats', 'topics'):
-                modifications[key].append(convert_string_to_tags)
-
-            modifications[key].insert(1, tk.get_converter('convert_to_extras'))
-        elif convert_method == 'output':
-            if key in ('civic_issues', 'formats', 'topics'):
-                modifications[key].append(convert_tags_to_string)
-
-            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
-
-    schema.update(modifications)
-    schema['resources'].update({
-        'extract_job': [tk.get_validator('ignore_missing'), validate_string],
-        'is_preview': [tk.get_validator('ignore_missing'), tk.get_validator('boolean_validator')]
-    })
-
-    for key in schema.keys():
-        if any([x in key for x in REMOVED_FIELDS]):
-            schema.pop(key, None)
-
-    return schema
-
-def update_package(context):
-    package = context['package']
-    resources = [
-        r for r in package.resources_all if r.state == 'active'
-    ]
-
-    formats = []
-    for r in resources:
-        if ('datastore_active' in r.extras and r.extras['datastore_active']) or r.url_type == 'datastore':
-            if r.format.lower() == 'csv':
-                formats += DATASTORE_TABULAR_FORMATS
-            elif r.format.lower() == 'geojson':
-                formats += DATASTORE_GEOSPATIAL_FORMATS
-        else:
-            formats.append(r.format)
-
-    formats = sorted(list(set([ f.upper() for f in formats ])))
-
-    last_refreshed = [
-        r.created if r.last_modified is None else r.last_modified for r in resources
-    ]
-
-    tk.get_action('package_patch')(context, {
-        'id': package.id,
-        'formats': ','.join(formats) if len(formats) > 0 else None,
-        'last_refreshed': max(last_refreshed) if len(last_refreshed) > 0 else None
-    })
-
-def validate_length(key, data, errors, context):
-    if data[key] and len(data[key]) > MAX_FIELD_LENGTH:
-        raise tk.ValidationError({
-            'constraints': ['Input exceed {0} character limit'.format(MAX_FIELD_LENGTH)]
-        })
-
-    return data[key]
-
-def validate_string(key, data, errors, context):
-    if not data[key] or not data[key].strip():
-        data[key] = None
-
-    return data[key]
-
-def validate_vocabulary(vocab_name, tags, context):
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = [t['name'] for t in vocab['tags']]
-
-    if not isinstance(tags, list):
-        tags = tags.split(',')
-
-    for t in tags:
-        if not t in vocab_tags:
-            raise tk.ValidationError({
-                'constraints': ['Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)]
-            })
-
-    return vocab
-
-def _is_hex(s):
-    try:
-        int(s, 16)
-        return True
-    except ValueError:
-        return False
-
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
 
@@ -223,7 +25,8 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'catalogue_search': search
+            'search_catalogue': search_catalogue,
+            'search_facet': search_facet
         }
 
 class ExtendedURLPlugin(p.SingletonPlugin):

@@ -5,7 +5,7 @@ import ckan.plugins.toolkit as tk
 import json
 
 
-def similarity(a, b):
+def _get_similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 class TagsController(BaseController):
@@ -14,7 +14,7 @@ class TagsController(BaseController):
         query = tk.request.GET.get('incomplete', '')
 
         tags = tk.get_action('tag_list')(None, { 'vocabulary_id': vocabulary_id })
-        scores = [similarity(query, t.lower()) for t in tags]
+        scores = [_get_similarity(query, t.lower()) for t in tags]
 
         tags = [{ 'Name': x } for _, x in sorted(zip(scores, tags), reverse=True)]
 
