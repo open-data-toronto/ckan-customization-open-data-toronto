@@ -10,17 +10,18 @@ def _get_similarity(a, b):
 
 class TagsController(BaseController):
     def get_tag_list(self):
-        vocabulary_id = tk.request.GET.get('vocabulary_id', '')
-        query = tk.request.GET.get('incomplete', '')
+        vid = tk.request.GET.get('vocabulary_id', '')
+        q = tk.request.GET.get('incomplete', '')
 
-        tags = tk.get_action('tag_list')(None, { 'vocabulary_id': vocabulary_id })
-        scores = [_get_similarity(query, t.lower()) for t in tags]
-
-        tags = [{ 'Name': x } for _, x in sorted(zip(scores, tags), reverse=True)]
+        tags = tk.get_action('tag_list')(None, { 'vocabulary_id': vid })
+        scores = [ _get_similarity(q, t.lower()) for t in tags ]
 
         tk.response.headers['Content-Type'] = 'application/json;'
         tk.response.body = json.dumps({
             'ResultSet': {
-                'Result': tags
+                'Result': [
+                    { 'Name': x }
+                        for _, x in sorted(zip(scores, tags), reverse=True)
+                ]
             }
         })
