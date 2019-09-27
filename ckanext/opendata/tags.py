@@ -9,7 +9,7 @@ def _get_similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 class TagsController(BaseController):
-    def get_tag_list(self):
+    def match_tags(self):
         vid = tk.request.GET.get('vocabulary_id', '')
         q = tk.request.GET.get('incomplete', '')
 

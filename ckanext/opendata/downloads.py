@@ -82,7 +82,7 @@ def _write_datastore(params, resource):
     )
 
 class DownloadsController(BaseController):
-    def download_resource(self, resource_id):
+    def download_data(self, resource_id):
         resource = tk.get_action('resource_show')(None, { 'id':resource_id })
 
         if not resource['datastore_active']:

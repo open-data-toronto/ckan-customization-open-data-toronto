@@ -29,10 +29,16 @@ def create_preview_map(context, resource):
             # 'geojson_field': 'geometry'
         })
 
-def is_geospatial():
+def is_geospatial(resource_id):
     info = tk.get_action('datastore_info')(None, { 'id': resource_id })
 
     return 'geometry' in info['schema']
+
+def to_list(l):
+    if not isinstance(l, list):
+        return [l]
+
+    return l
 
 # def is_hex(s):
 #     try:

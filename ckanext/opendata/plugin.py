@@ -25,7 +25,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'search_catalogue': search_catalogue,
+            'search_packages': search_packages,
             'search_facet': search_facet
         }
 
@@ -40,12 +40,13 @@ class ExtendedURLPlugin(p.SingletonPlugin):
         m.connect(
             '/download_resource/{resource_id}',
             controller='ckanext.opendata.downloads:DownloadsController',
-            action='download_resource')
+            action='download_data'
+        )
 
         m.connect(
             '/tags_autocomplete',
             controller='ckanext.opendata.tags:TagsController',
-            action='get_tag_list'
+            action='match_tags'
         )
 
         return m
@@ -70,13 +71,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        schema = modify_package_schema(schema, 'input')
+        schema = modify_schema(schema, 'input')
 
         return schema
 
     def update_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        schema = modify_package_schema(schema, 'input')
+        schema = modify_schema(schema, 'input')
 
         return schema
 
@@ -84,7 +85,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
         schema['tags']['__extras'].append(tk.get_converter('free_tags_only'))
 
-        schema = modify_package_schema(schema, 'output')
+        schema = modify_schema(schema, 'output')
 
         return schema
 
