@@ -1,49 +1,25 @@
-def modify_package_schema(schema, convert_method):
-    modifications = {
-        # General dataset info (inputs)
-        'collection_method': [utils.default_to_none],
-        'excerpt': [utils.default_to_none, validate_length],
-        'limitations': [utils.default_to_none],
-        'information_url': [utils.default_to_none],
-        # General dataset info (dropdowns)
-        'dataset_category': [utils.default_to_none, convert_hex_to_string],
-        'is_retired': [utils.default_to_false],
-        'refresh_rate': [utils.default_to_none, convert_hex_to_string],
-        # Filters
-        'civic_issues': [utils.default_to_none],
-        'formats': [utils.default_to_none],
-        'topics': [utils.default_to_none],
-        # Dataset division info
-        'owner_division': [utils.default_to_none, convert_hex_to_string],
-        'owner_section': [utils.default_to_none],
-        'owner_unit': [utils.default_to_none],
-        'owner_email': [utils.default_to_none],
-        # Internal CKAN/WP fields
-        'image_url': [utils.default_to_none],
-        'last_refreshed': [utils.default_to_none]
-    }
+import utils
 
-    for key, value in modifications.items():
-        if convert_method == 'input':
-            if key in ('civic_issues', 'formats', 'topics'):
-                modifications[key].append(convert_string_to_tags)
-
-            modifications[key].insert(1, tk.get_converter('convert_to_extras'))
-        elif convert_method == 'output':
-            if key in ('civic_issues', 'formats', 'topics'):
-                modifications[key].append(convert_tags_to_string)
-
-            modifications[key].insert(0, tk.get_converter('convert_from_extras'))
-
-    schema.update(modifications)
-    schema['resources'].update({
-        'extract_job': [utils.default_to_none],
-        'is_preview': [utils.default_to_false]
-    })
-
+def modify_schema(schema, show=False):
     for key in schema.keys():
         if any([x in key for x in constants.REMOVED_FIELDS]):
             schema.pop(key, None)
+
+    modifications = utils.get_package_schema()
+
+    for key, value in modifications.items():
+        if show:
+            modifications[key].insert(
+                0, tk.get_converter('convert_from_extras')
+            )
+        else:
+            modifications[key].insert(
+                1, tk.get_converter('convert_to_extras')
+            )
+
+    schema.update(modifications)
+
+    schema['resources'].update( utils.get_resource_schema() )
 
     return schema
 
@@ -55,7 +31,9 @@ def update_package(context):
 
     formats = []
     for r in resources:
-        if ('datastore_active' in r.extras and r.extras['datastore_active']) or r.url_type == 'datastore':
+        if ('datastore_active' in r.extras and r.extras['datastore_active']) \
+            or r.url_type == 'datastore':
+
             if r.format.lower() == 'csv':
                 formats += constants.TABULAR_FORMATS
             elif r.format.lower() == 'geojson':

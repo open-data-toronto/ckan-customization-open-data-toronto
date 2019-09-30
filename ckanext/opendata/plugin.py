@@ -71,21 +71,21 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        schema = modify_schema(schema, 'input')
+        schema = modify_schema(schema)
 
         return schema
 
     def update_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        schema = modify_schema(schema, 'input')
+        schema = modify_schema(schema)
 
         return schema
 
     def show_package_schema(self):
         schema = super(UpdateSchemaPlugin, self).show_package_schema()
-        schema['tags']['__extras'].append(tk.get_converter('free_tags_only'))
+        schema['tags']['__extras'].append( tk.get_converter('free_tags_only') )
 
-        schema = modify_schema(schema, 'output')
+        schema = modify_schema(schema, show=True)
 
         return schema
 
@@ -105,7 +105,10 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
 
     def before_create(self, context, resource):
-        package = tk.get_action('package_show')(context, { 'id': resource['package_id'] })
+        package = tk.get_action('package_show')(
+            context, { 'id': resource['package_id'] }
+        )
+
         for idx, r in enumerate(package['resources']):
             if r['name'] == resource['name']:
                 raise tk.ValidationError({
