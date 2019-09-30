@@ -18,6 +18,15 @@ import tempfile
 import constants
 
 
+def _get_mimetype(fn):
+    mimetype, encoding = mimetypes.guess_type(fn)
+
+    # TODO: MAP THIS CORRECTLY
+    if mimetype is None and filename.endswith('gpkg'):
+        return constants.CUSTOM_MIMETYPES['gpkg']
+
+    return mimetype
+
 def _write_datastore(params, resource):
     format = params.get('format', constants.DOWNLOAD_FORMAT).lower()
     projection = params.get('projection', constants.DOWNLOAD_PROJECTION)
@@ -65,7 +74,7 @@ def _write_datastore(params, resource):
         df,
         path,
         projection=projection,
-        zip_content=(format=='shp')
+        zip_content=(format.lower() in constants.ZIPPED_FORMATS)
     )
 
     del df
@@ -76,24 +85,21 @@ def _write_datastore(params, resource):
     iotrans.utils.prune(tmp_dir)
     gc.collect()
 
-    return '{fn}.{fmt}'.format(
-        fn=metadata['name'],
-        fmt=output.split('.')[-1]
-    )
+    fn = '{0}.{1}'.format(metadata['name'], output.split('.')[-1])
+    mt = _get_mimetype(fn)
+
+    return fn, mt
 
 class DownloadsController(BaseController):
     def download_data(self, resource_id):
-        resource = tk.get_action('resource_show')(None, { 'id':resource_id })
+        resource = tk.get_action('resource_show')(None, { 'id': resource_id })
 
         if not resource['datastore_active']:
             tk.redirect_to(resource['url'])
         else:
-            filename = _write_datastore(tk.request.GET, resource)
-            mimetype, encoding = mimetypes.guess_type(filename)
-
-            if mimetype is None and filename.endswith('gpkg'):
-                mimetype = 'application/geopackage+vnd.sqlite3'
+            filename, mimetype = _write_datastore(tk.request.GET, resource)
 
             tk.response.headers['Content-Type'] = mimetype
-            tk.response.headers['Content-Disposition'] = \
-                (b'attachment; filename="{fn}"'.format(fn=filename))
+            tk.response.headers['Content-Disposition'] = (
+                b'attachment; filename="{0}"'.format(filename)
+            )

@@ -1,3 +1,8 @@
+CUSTOM_MIMETYPES = {
+    'gpkg': 'application/geopackage+vnd.sqlite3'
+}
+
+ZIPPED_FORMATS = ['shp']
 
 CATALOGUE_SEARCH = {
     'rows': 10,
