@@ -5,6 +5,8 @@ from ckan.common import config
 from urlparse import urlsplit, urlunsplit
 
 import constants
+import schema
+import search
 
 import ckan.lib.helpers as h
 
@@ -25,8 +27,8 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'search_packages': search_packages,
-            'search_facet': search_facet
+            'search_packages': search.query_packages,
+            'search_facet': search.query_facet
         }
 
 class ExtendedURLPlugin(p.SingletonPlugin):
@@ -70,24 +72,24 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
 
     def create_package_schema(self):
-        schema = super(UpdateSchemaPlugin, self).create_package_schema()
-        schema = modify_schema(schema)
+        struc = super(UpdateSchemaPlugin, self).create_package_schema()
+        struc = schema.show_schema(struc)
 
-        return schema
+        return struc
 
     def update_package_schema(self):
-        schema = super(UpdateSchemaPlugin, self).update_package_schema()
-        schema = modify_schema(schema)
+        struc = super(UpdateSchemaPlugin, self).update_package_schema()
+        struc = schema.show_schema(struc)
 
-        return schema
+        return struc
 
     def show_package_schema(self):
-        schema = super(UpdateSchemaPlugin, self).show_package_schema()
-        schema['tags']['__extras'].append( tk.get_converter('free_tags_only') )
+        struc = super(UpdateSchemaPlugin, self).show_package_schema()
+        struc['tags']['__extras'].append(tk.get_converter('free_tags_only'))
 
-        schema = modify_schema(schema, show=True)
+        struc = schema.show_schema(struc, show=True)
 
-        return schema
+        return struc
 
     def is_fallback(self):
         return True
@@ -97,7 +99,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {
-            'list_hex_tags': list_hex_tags
+            'show_tags': schema.show_tags
         }
 
     # ==============================

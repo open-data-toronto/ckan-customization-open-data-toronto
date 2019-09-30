@@ -3,33 +3,7 @@ import constants
 import ckan.plugins.toolkit as tk
 
 
-@tk.side_effect_free
-def search_packages(context, data_dict):
-    q = _build_query(data_dict)
-
-    params = constants.CATALOGUE_SEARCH.copy()
-    params.update(data_dict)
-
-    return tk.get_action('package_search')(context, {
-        'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-        'rows': params['rows'],
-        'sort': params['sort'],
-        'start': params['start']
-    })
-
-@tk.side_effect_free
-def search_facet(context, data_dict):
-    q = _build_query(data_dict)
-
-    return tk.get_action('package_search')(context, {
-        'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
-        'rows': 0,
-        'facet': 'on',
-        'facet.limit': -1,
-        'facet.field': utils.to_list(data_dict['facet_field[]'])
-    })
-
-def _build_query(query):
+def build_query(query):
     '''
         Parses parameters from frontend search inputs to respective CKAN fields
         and SOLR queries with logic.
@@ -72,3 +46,29 @@ def _build_query(query):
             )
 
     return q
+
+@tk.side_effect_free
+def query_facet(context, data_dict):
+    q = build_query(data_dict)
+
+    return tk.get_action('package_search')(context, {
+        'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
+        'rows': 0,
+        'facet': 'on',
+        'facet.limit': -1,
+        'facet.field': utils.to_list(data_dict['facet_field[]'])
+    })
+
+@tk.side_effect_free
+def query_packages(context, data_dict):
+    q = build_query(data_dict)
+
+    params = constants.CATALOGUE_SEARCH.copy()
+    params.update(data_dict)
+
+    return tk.get_action('package_search')(context, {
+        'q': ' AND '.join(['({x})'.format(x=x) for x in q]),
+        'rows': params['rows'],
+        'sort': params['sort'],
+        'start': params['start']
+    })

@@ -5,29 +5,11 @@ import ckan.plugins.toolkit as tk
 import codecs
 
 
-def create_preview_map(context, resource):
-    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
-        resource.get('format', '').lower() == 'geojson' and \
-        resource.get('is_preview', False):
+def string_to_hex(s):
+    return codecs.encode(s.encode('utf-8'), 'hex')
 
-        views = tk.get_action('resource_view_list')(context, {
-            'id': resource['id']
-        })
-
-        for v in views:
-            if v['view_type'] == 'recline_map_view':
-                return
-
-        tk.get_action('resource_view_create')(context, {
-            'resource_id': resource['id'],
-            'title': 'Map',
-            'view_type': 'recline_map_view',
-            'auto_zoom': True,
-            'cluster_markers': False,
-            'map_field_type': 'geojson',
-            'limit': 500
-            # 'geojson_field': 'geometry'
-        })
+def hex_to_string(s):
+    return codecs.decode(s, 'hex').decode('utf-8')
 
 def is_geospatial(resource_id):
     info = tk.get_action('datastore_info')(None, { 'id': resource_id })
@@ -46,109 +28,6 @@ def to_list(l):
 #         return True
 #     except ValueError:
 #         return False
-
-def default_to_none(value):
-    # TODO: CHECK IF STRING
-    if not value or not value.strip():
-        return None
-
-def default_to_false(value):
-    # TODO: WHAT IF VALUE IS BOOLEAN ALREADY?
-    if not value or not value.strip():
-        return False
-
-def string_to_hex(s):
-    return codecs.encode(s.encode('utf-8'), 'hex')
-
-def hex_to_string(s):
-    return codecs.decode(s, 'hex').decode('utf-8')
-
-def list_hex_tags(vocabulary_id):
-    return map(hex_to_string, tk.get_action('tag_list')(
-        data_dict={'vocabulary_id': vocabulary_id}
-    ))
-
-def get_package_schema():
-    return {
-        # General dataset info (inputs)
-        'collection_method': [ default_to_none ],
-        'excerpt': [ default_to_none, validate_length ],
-        'limitations': [ default_to_none ],
-        'information_url': [ default_to_none ],
-        # General dataset info (dropdowns)
-        'dataset_category': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        'is_retired': [ default_to_false ],
-        'refresh_rate': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        # Filters
-        'civic_issues': [
-            default_to_none, manage_tag_list_fields
-        ],
-        'formats': [ default_to_none, manage_tag_list_fields ],
-        'topics': [ default_to_none, manage_tag_list_fields ],
-        # Dataset division info
-        'owner_division': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        'owner_section': [ default_to_none ],
-        'owner_unit': [ default_to_none ],
-        'owner_email': [ default_to_none ],
-        # Internal CKAN/WP fields
-        'image_url': [ default_to_none ],
-        'last_refreshed': [ default_to_none ]
-    }
-
-def get_resource_schema():
-    return {
-        'extract_job': [ default_to_none ],
-        'is_preview': [ default_to_false ]
-    }
-
-# TODO: REDO THE HEXT TO STRING CONVERTERS FOR SCHEMA..
-
-def convert_string_to_tags(key, data, errors, context):
-    if data[key]:
-        tags = [t.strip() for t in data[key].split(',') if t.strip()]
-        vocab = validate_vocabulary(key, tags, context)
-
-        n = 0
-        for k in data.keys():
-            if k[0] == 'tags':
-                n = max(n, k[1] + 1)
-
-        for num, tag in enumerate(tags):
-            data[('tags', num + n, 'name')] = tag
-            data[('tags', num + n, 'vocabulary_id')] = vocab['id']
-
-    return data[key]
-
-def convert_tags_to_string(key, data, errors, context):
-    tags = []
-    vocab = tk.get_action('vocabulary_show')(context, {
-        'id': key
-    })
-
-    for k in data.keys():
-        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
-            name = data[k].get('display_name', data[k]['name'])
-            tags.append(name)
-
-    return ','.join(tags)
-
-def validate_length(key, data, errors, context):
-    if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
-        raise tk.ValidationError({
-            'constraints': [
-                'Input exceed {0} character limit'.format(
-                    constants.MAX_FIELD_LENGTH
-                )
-            ]
-        })
-
-    return data[key]
 
 # Built-in vocabulary validation requires context update
 def validate_vocabulary(vocab_name, tags, context):
