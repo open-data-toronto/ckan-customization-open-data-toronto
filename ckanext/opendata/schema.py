@@ -8,40 +8,63 @@ def default_to_none(value):
 
 def default_to_false(value):
     # TODO: WHAT IF VALUE IS BOOLEAN ALREADY?
-    if not value or not value.strip():
+    if not value or (instance(value, str) and not value.strip()):
         return False
 
-# Convert structure for custom fields
-# TODO: REDO THE HEXT TO STRING CONVERTERS FOR SCHEMA..
+def get_package_schema():
+    return {
+        # General dataset info (inputs)
+        'collection_method': [ default_to_none ],
+        'excerpt': [ default_to_none, validate_length ],
+        'limitations': [ default_to_none ],
+        'information_url': [ default_to_none ],
+        # General dataset info (dropdowns)
+        'dataset_category': [
+            default_to_none, manage_tag_hexed_fields
+        ],
+        'is_retired': [ default_to_false ],
+        'refresh_rate': [
+            default_to_none, manage_tag_hexed_fields
+        ],
+        # Filters
+        'civic_issues': [
+            default_to_none, manage_tag_list_fields
+        ],
+        'formats': [ default_to_none, manage_tag_list_fields ],
+        'topics': [ default_to_none, manage_tag_list_fields ],
+        # Dataset division info
+        'owner_division': [
+            default_to_none, manage_tag_hexed_fields
+        ],
+        'owner_section': [ default_to_none ],
+        'owner_unit': [ default_to_none ],
+        'owner_email': [ default_to_none ],
+        # Internal CKAN/WP fields
+        'image_url': [ default_to_none ],
+        'last_refreshed': [ default_to_none ]
+    }
 
-def convert_string_to_tags(key, data, errors, context):
-    if data[key]:
-        tags = [t.strip() for t in data[key].split(',') if t.strip()]
-        vocab = validate_vocabulary(key, tags, context)
+def get_resource_schema():
+    return {
+        'extract_job': [ default_to_none ],
+        'is_preview': [ default_to_false ]
+    }
 
-        n = 0
-        for k in data.keys():
-            if k[0] == 'tags':
-                n = max(n, k[1] + 1)
+def manage_tag_hexed_fields(key, data, errors, context):
+    tag = util.string_to_hex(data[key])
+    vocab = key[0]
 
-        for num, tag in enumerate(tags):
-            data[('tags', num + n, 'name')] = tag
-            data[('tags', num + n, 'vocabulary_id')] = vocab['id']
+    validate_tag_in_vocab(tag, vocab)
 
-    return data[key]
+def manage_tag_list_fields(key, data, errors, context):
+    for t in data[key].split(', '):
+        tag = t.strip()
+        vocab = key[0]
 
-def convert_tags_to_string(key, data, errors, context):
-    tags = []
-    vocab = tk.get_action('vocabulary_show')(context, {
-        'id': key
-    })
+        if not tag:
+            continue
 
-    for k in data.keys():
-        if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
-            name = data[k].get('display_name', data[k]['name'])
-            tags.append(name)
-
-    return ','.join(tags)
+        validate_tag_in_vocab(tag, vocab)
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
@@ -52,7 +75,6 @@ def show_tags(vocabulary_id, hexed=False):
         return map(utils.hex_to_string, tags)
 
     return tags
-
 
 def show_schema(schema, show=False):
     for key in schema.keys():
@@ -107,45 +129,6 @@ def update_package(context):
         'last_refreshed': max(last_refreshed) if len(last_refreshed) > 0 else None
     })
 
-def get_package_schema():
-    return {
-        # General dataset info (inputs)
-        'collection_method': [ default_to_none ],
-        'excerpt': [ default_to_none, validate_length ],
-        'limitations': [ default_to_none ],
-        'information_url': [ default_to_none ],
-        # General dataset info (dropdowns)
-        'dataset_category': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        'is_retired': [ default_to_false ],
-        'refresh_rate': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        # Filters
-        'civic_issues': [
-            default_to_none, manage_tag_list_fields
-        ],
-        'formats': [ default_to_none, manage_tag_list_fields ],
-        'topics': [ default_to_none, manage_tag_list_fields ],
-        # Dataset division info
-        'owner_division': [
-            default_to_none, manage_tag_hexed_fields
-        ],
-        'owner_section': [ default_to_none ],
-        'owner_unit': [ default_to_none ],
-        'owner_email': [ default_to_none ],
-        # Internal CKAN/WP fields
-        'image_url': [ default_to_none ],
-        'last_refreshed': [ default_to_none ]
-    }
-
-def get_resource_schema():
-    return {
-        'extract_job': [ default_to_none ],
-        'is_preview': [ default_to_false ]
-    }
-
 def create_preview_map(context, resource):
     if (resource['datastore_active'] or 'datastore' in resource['url']) and \
         resource.get('format', '').lower() == 'geojson' and \
@@ -170,8 +153,6 @@ def create_preview_map(context, resource):
             # 'geojson_field': 'geometry'
         })
 
-
-
 def validate_length(key, data, errors, context):
     if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
         raise tk.ValidationError({
@@ -183,3 +164,13 @@ def validate_length(key, data, errors, context):
         })
 
     return data[key]
+
+def validate_tag_in_vocab(tag, vocab):
+    try:
+        tk.get_action('tag_show')(id=tag, vocabulary_id=vocabulary)
+    except:
+        raise tk.ValidationError({
+            'constraints': [
+                'Tag {0} is not in the vocabulary {1}'.format(tag, vocab)
+            ]
+        })

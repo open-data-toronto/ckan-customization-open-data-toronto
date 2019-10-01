@@ -25,6 +25,7 @@ def build_query(query):
             f = k[:-2]
             v = utils.to_list(v)
 
+            # TODO: WHY?
             if f in ['dataset_category', 'vocab_formats']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
             elif f in ['owner_division', 'vocab_topics']:
