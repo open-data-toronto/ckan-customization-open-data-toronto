@@ -6,11 +6,10 @@ import ckan.plugins.toolkit as tk
 # Default behaviours for custom fields
 def default_to_none(value):
     # TODO: CHECK IF STRING
-    if not value or not value.strip():
+    if not value or (isinstance(value, str) and not value.strip()):
         return None
 
 def default_to_false(value):
-    # TODO: WHAT IF VALUE IS BOOLEAN ALREADY?
     if not value or (isinstance(value, str) and not value.strip()):
         return False
 
