@@ -60,7 +60,7 @@ def manage_tag_hexed_fields(key, data, errors, context):
     tag = util.string_to_hex(data[key])
     vocab = key[0]
 
-    validate_tag_in_vocab(tag, vocab)
+    utils.validate_tag_in_vocab(tag, vocab)
 
 def manage_tag_list_fields(key, data, errors, context):
     if data[key] is None:
@@ -73,7 +73,7 @@ def manage_tag_list_fields(key, data, errors, context):
         if not tag:
             continue
 
-        validate_tag_in_vocab(tag, vocab)
+        utils.validate_tag_in_vocab(tag, vocab)
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
@@ -173,13 +173,3 @@ def validate_length(key, data, errors, context):
         })
 
     return data[key]
-
-def validate_tag_in_vocab(tag, vocab):
-    try:
-        tk.get_action('tag_show')(id=tag, vocabulary_id=vocabulary)
-    except:
-        raise tk.ValidationError({
-            'constraints': [
-                'Tag {0} is not in the vocabulary {1}'.format(tag, vocab)
-            ]
-        })

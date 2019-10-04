@@ -22,27 +22,13 @@ def to_list(l):
 
     return l
 
-# def is_hex(s):
-#     try:
-#         int(s, 16)
-#         return True
-#     except ValueError:
-#         return False
-
 # Built-in vocabulary validation requires context update
-def validate_vocabulary(vocab_name, tags, context):
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': vocab_name })
-    vocab_tags = [ t['name'] for t in vocab['tags'] ]
-
-    if not isinstance(tags, list):
-        tags = tags.split(',')
-
-    for t in tags:
-        if not t in vocab_tags:
-            raise tk.ValidationError({
-                'constraints': [
-                    'Tag {0} is not in the vocabulary {1}'.format(t, vocab_name)
-                ]
-            })
-
-    return vocab
+def validate_tag_in_vocab(tag, vocab):
+    try:
+        tk.get_action('tag_show')(id=tag, vocabulary_id=vocabulary)
+    except:
+        raise tk.ValidationError({
+            'constraints': [
+                'Tag {0} is not in the vocabulary {1}'.format(tag, vocab)
+            ]
+        })

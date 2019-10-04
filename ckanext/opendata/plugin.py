@@ -5,6 +5,7 @@ from urlparse import urlsplit, urlunsplit
 import constants
 import query
 import schema
+import utils
 
 import ckan.lib.helpers as h
 
@@ -120,7 +121,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         resource['format'] = resource['format'].upper()
 
-        validate_vocabulary('formats', [resource['format']], context)
+        utils.validate_tag_in_vocab(resource['format'], 'formats')
 
     def after_create(self, context, resource):
         create_preview_map(context, resource)
