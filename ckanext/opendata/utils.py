@@ -25,7 +25,7 @@ def to_list(l):
 # Built-in vocabulary validation requires context update
 def validate_tag_in_vocab(tag, vocab):
     try:
-        tk.get_action('tag_show')(id=tag, vocabulary_id=vocabulary)
+        tk.get_action('tag_show')(id=tag, vocabulary_id=vocab)
     except:
         raise tk.ValidationError({
             'constraints': [
