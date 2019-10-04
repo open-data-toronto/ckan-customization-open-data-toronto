@@ -5,7 +5,6 @@ from urlparse import urlsplit, urlunsplit
 import constants
 import query
 import schema
-import search
 
 import ckan.lib.helpers as h
 
