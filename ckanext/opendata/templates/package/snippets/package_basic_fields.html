@@ -9,7 +9,15 @@
     <div class="controls">
       <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
         {% for dataset_category in h.show_tags('dataset_category', True) %}
-          <option value="{{ dataset_category }}" {% if dataset_category in data.get('dataset_category', []) %}selected="selected"{% endif %}>{{ dataset_category }}</option>
+          <option
+            value="{{ dataset_category }}"
+
+            {% if dataset_category in data.get('dataset_category', []) and not data.get('dataset_category', []) is None %}
+              selected="selected"
+            {% endif %}>
+
+            {{ dataset_category }}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -20,7 +28,15 @@
     <div class="controls">
       <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
         {% for refresh_rate in h.show_tags('refresh_rate', True) %}
-          <option value="{{ refresh_rate }}" {% if refresh_rate in data.get('refresh_rate', []) %}selected="selected"{% endif %}>{{ refresh_rate }}</option>
+          <option
+            value="{{ refresh_rate }}"
+
+            {% if refresh_rate in data.get('refresh_rate', []) and not data.get('refresh_rate', []) is None %}
+              selected="selected"
+            {% endif %}>
+
+            {{ refresh_rate }}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -65,7 +81,15 @@
     <div class="controls">
       <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
         {% for owner_division in h.show_tags('owner_division', True) %}
-          <option value="{{ owner_division }}" {% if owner_division in data.get('owner_division', []) %}selected="selected"{% endif %}>{{ owner_division }}</option>
+          <option
+            value="{{ owner_division }}"
+
+            {% if owner_division in data.get('owner_division', []) and not data.get('dataset_category', []) is None %}
+              selected="selected"
+            {% endif %}>
+
+            {{ owner_division }}
+          </option>
         {% endfor %}
       </select>
     </div>
