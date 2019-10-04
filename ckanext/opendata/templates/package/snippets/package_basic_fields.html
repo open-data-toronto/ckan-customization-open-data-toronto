@@ -12,7 +12,7 @@
           <option
             value="{{ dataset_category }}"
 
-            {% if dataset_category in data.get('dataset_category', []) and not data.get('dataset_category', []) is none %}
+            {% if not data.get('dataset_category', []) is none dataset_category in data.get('dataset_category', []) %}
               selected="selected"
             {% endif %}>
 
@@ -31,7 +31,7 @@
           <option
             value="{{ refresh_rate }}"
 
-            {% if refresh_rate in data.get('refresh_rate', []) and not data.get('refresh_rate', []) is none %}
+            {% if not data.get('refresh_rate', []) is none and refresh_rate in data.get('refresh_rate', []) %}
               selected="selected"
             {% endif %}>
 
@@ -84,7 +84,7 @@
           <option
             value="{{ owner_division }}"
 
-            {% if owner_division in data.get('owner_division', []) and not data.get('dataset_category', []) is none %}
+            {% if not data.get('owner_division', []) is none and owner_division in data.get('owner_division', []) %}
               selected="selected"
             {% endif %}>
 
