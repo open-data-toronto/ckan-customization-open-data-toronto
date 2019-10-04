@@ -11,7 +11,7 @@ def default_to_none(value):
 
 def default_to_false(value):
     # TODO: WHAT IF VALUE IS BOOLEAN ALREADY?
-    if not value or (instance(value, str) and not value.strip()):
+    if not value or (isinstance(value, str) and not value.strip()):
         return False
 
 def get_package_schema():
