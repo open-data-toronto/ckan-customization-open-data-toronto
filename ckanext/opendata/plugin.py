@@ -125,13 +125,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_create(self, context, resource):
         utils.create_preview_map(context, resource)
-        update_package(context)
+        schema.update_package(context)
 
     def after_update(self, context, resource):
-        update_package(context)
+        schema.update_package(context)
 
     def after_delete(self, context, resources):
-        update_package(context)
+        schema.update_package(context)
 
     def before_show(self, resource_dict):
         if (not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active')) and \
