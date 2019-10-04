@@ -1,5 +1,7 @@
 import utils
 
+import ckan.plugins.toolkit as tk
+
 # Default behaviours for custom fields
 def default_to_none(value):
     # TODO: CHECK IF STRING
