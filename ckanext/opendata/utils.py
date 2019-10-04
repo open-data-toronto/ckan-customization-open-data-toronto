@@ -32,3 +32,27 @@ def validate_tag_in_vocab(tag, vocab):
                 'Tag {0} is not in the vocabulary {1}'.format(tag, vocab)
             ]
         })
+
+def create_preview_map(context, resource):
+    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
+        resource.get('format', '').lower() == 'geojson' and \
+        resource.get('is_preview', False):
+
+        views = tk.get_action('resource_view_list')(context, {
+            'id': resource['id']
+        })
+
+        for v in views:
+            if v['view_type'] == 'recline_map_view':
+                return
+
+        tk.get_action('resource_view_create')(context, {
+            'resource_id': resource['id'],
+            'title': 'Map',
+            'view_type': 'recline_map_view',
+            'auto_zoom': True,
+            'cluster_markers': False,
+            'map_field_type': 'geojson',
+            'limit': 500
+            # 'geojson_field': 'geometry'
+        })
