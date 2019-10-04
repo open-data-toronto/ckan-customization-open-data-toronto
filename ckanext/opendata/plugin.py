@@ -1,10 +1,9 @@
-from .query import search_catalogue, search_facet
-
 from ckan.common import config
 
 from urlparse import urlsplit, urlunsplit
 
 import constants
+import query
 import schema
 import search
 
@@ -27,8 +26,8 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'search_packages': search.query_packages,
-            'search_facet': search.query_facet
+            'search_packages': query.query_packages,
+            'search_facet': query.query_facet
         }
 
 class ExtendedURLPlugin(p.SingletonPlugin):
