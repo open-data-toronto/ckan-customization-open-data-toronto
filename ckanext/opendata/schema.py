@@ -84,7 +84,7 @@ def show_schema(schema, show=False):
         if any([ x in key for x in constants.REMOVED_FIELDS ]):
             schema.pop(key, None)
 
-    modifications = utils.get_package_schema()
+    modifications = get_package_schema()
 
     for key, value in modifications.items():
         if show:
@@ -98,7 +98,7 @@ def show_schema(schema, show=False):
 
     schema.update(modifications)
 
-    schema['resources'].update(utils.get_resource_schema())
+    schema['resources'].update(get_resource_schema())
 
     return schema
 
