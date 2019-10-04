@@ -54,12 +54,18 @@ def get_resource_schema():
     }
 
 def manage_tag_hexed_fields(key, data, errors, context):
+    if data[key] is None:
+        return
+
     tag = util.string_to_hex(data[key])
     vocab = key[0]
 
     validate_tag_in_vocab(tag, vocab)
 
 def manage_tag_list_fields(key, data, errors, context):
+    if data[key] is None:
+        return
+
     for t in data[key].split(', '):
         tag = t.strip()
         vocab = key[0]
