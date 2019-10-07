@@ -63,9 +63,9 @@ def extract_info(context, data_dict):
     d = datetime.strptime(last_modified, '%Y-%m-%dT%H:%M:%S.%f').date()
 
     return {
-        'rows': record_count,
-        'updated_at': last_modified,
-        'updated_today':  == datetime.today().date()
+        'rows': count,
+        'updated_at': dt,
+        'updated_today': d == datetime.today().date()
     }
 
 @tk.side_effect_free
