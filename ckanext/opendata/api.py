@@ -49,6 +49,26 @@ def build_query(query):
     return q
 
 @tk.side_effect_free
+def extract_info(context, data_dict):
+    resource_id = data_dict['resource_id']
+
+    count = tk.get_action('datastore_info')(context, {
+        'id': resource_id
+    })['meta']['count']
+
+    dt = tk.get_action('resource_show')(context, {
+        'id': resource_id
+    })['last_modified']
+
+    d = datetime.strptime(last_modified, '%Y-%m-%dT%H:%M:%S.%f').date()
+
+    return {
+        'rows': record_count,
+        'updated_at': last_modified,
+        'updated_today':  == datetime.today().date()
+    }
+
+@tk.side_effect_free
 def query_facet(context, data_dict):
     q = build_query(data_dict)
 

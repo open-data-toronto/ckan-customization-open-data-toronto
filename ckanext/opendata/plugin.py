@@ -2,8 +2,8 @@ from ckan.common import config
 
 from urlparse import urlsplit, urlunsplit
 
+import api
 import constants
-import query
 import schema
 import utils
 
@@ -26,8 +26,9 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'search_packages': query.query_packages,
-            'search_facet': query.query_facet
+            'extract_info': api.extract_info,
+            'search_packages': api.query_packages,
+            'search_facet': api.query_facet
         }
 
 class ExtendedURLPlugin(p.SingletonPlugin):
