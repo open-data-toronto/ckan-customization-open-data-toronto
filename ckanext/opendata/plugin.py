@@ -116,7 +116,6 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     'constraints': ['A resource with {name} already exists for this package'.format(name=r['name'])]
                 })
 
-        # TODO: guess format
         if not ('format' in resource and resource['format']):
             resource['format'] = resource['url'].split('.')[-1]
 
