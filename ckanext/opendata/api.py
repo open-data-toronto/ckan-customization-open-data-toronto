@@ -62,7 +62,7 @@ def extract_info(context, data_dict):
         'id': resource_id
     })['last_modified']
 
-    d = datetime.strptime(last_modified, '%Y-%m-%dT%H:%M:%S.%f').date()
+    d = datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f').date()
 
     return {
         'rows': count,
