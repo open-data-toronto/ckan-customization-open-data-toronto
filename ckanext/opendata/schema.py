@@ -156,7 +156,7 @@ def update_package(context):
             r.created if r.last_modified is None else r.last_modified
         )
 
-    formats = ','.join(list(formats)) if len(set) else None
+    formats = ','.join(list(formats)) if len(formats) else None
     last_refreshed = max(last_refreshed) if len(last_refreshed) else None
 
     if formats != package.formats or last_refreshed != package.last_refreshed:
