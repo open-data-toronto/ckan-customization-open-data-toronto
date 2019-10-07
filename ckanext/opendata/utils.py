@@ -11,6 +11,17 @@ def string_to_hex(s):
 def hex_to_string(s):
     return codecs.decode(s, 'hex').decode('utf-8')
 
+def get_mimetype(path):
+    mimetype, encoding = mimetypes.guess_type(path)
+
+    if mimetype is None:
+        ext = path.split('.')[-1]
+
+        if ext in constants.CUSTOM_MIMETYPES:
+            return constants.CUSTOM_MIMETYPES[ext]
+
+    return mimetype
+
 def is_geospatial(resource_id):
     info = tk.get_action('datastore_info')(None, { 'id': resource_id })
 

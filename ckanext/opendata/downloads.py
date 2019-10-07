@@ -19,15 +19,6 @@ import constants
 import utils
 
 
-def _get_mimetype(fn):
-    mimetype, encoding = mimetypes.guess_type(fn)
-
-    # TODO: MAP THIS CORRECTLY
-    if mimetype is None and filename.endswith('gpkg'):
-        return constants.CUSTOM_MIMETYPES['gpkg']
-
-    return mimetype
-
 def _write_datastore(params, resource):
     format = params.get('format', constants.DOWNLOAD_FORMAT).upper()
     projection = params.get('projection', constants.DOWNLOAD_PROJECTION)
@@ -64,6 +55,8 @@ def _write_datastore(params, resource):
             { 'init': 'epsg:{0}'.format(projection) }
         )
 
+    # TODO: validate that the resource name doesn't already contain format
+
     # WISHLIST: store conversion in memory instead of write to disk
     tmp_dir = tempfile.mkdtemp()
     path = os.path.join(
@@ -88,7 +81,7 @@ def _write_datastore(params, resource):
 
     # TODO: What's wrong with the default file name? (ie. first half of output)
     fn = '{0}.{1}'.format(resource['name'], output.split('.')[-1])
-    mt = _get_mimetype(fn)
+    mt = utils.get_mimetype(fn)
 
     return fn, mt
 
