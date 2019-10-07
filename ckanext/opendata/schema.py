@@ -152,7 +152,7 @@ def update_package(context):
         else:
             formats.add(resource_format)
 
-        last_modified.append(
+        last_refreshed.append(
             r.created if r.last_modified is None else r.last_modified
         )
 
