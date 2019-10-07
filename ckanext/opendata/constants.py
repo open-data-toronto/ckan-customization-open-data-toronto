@@ -2,7 +2,7 @@ CUSTOM_MIMETYPES = {
     'gpkg': 'application/geopackage+vnd.sqlite3'
 }
 
-ZIPPED_FORMATS = ['shp']
+ZIPPED_FORMATS = ['SHP']
 
 CATALOGUE_SEARCH = {
     'rows': 10,
@@ -10,8 +10,8 @@ CATALOGUE_SEARCH = {
     'start': 0
 }
 
-GEOSPATIAL_FORMATS = ['csv', 'geojson', 'gpkg', 'shp']
-TABULAR_FORMATS = ['csv', 'json', 'xml']
+GEOSPATIAL_FORMATS = {'CSV', 'GEOJSON', 'GPKG', 'SHP'}
+TABULAR_FORMATS = {'CSV', 'JSON', 'XML'}
 
 DOWNLOAD_FORMAT = 'csv'
 DOWNLOAD_PROJECTION = '4326'

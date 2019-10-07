@@ -5,7 +5,6 @@ import ckan.plugins.toolkit as tk
 
 # Default behaviours for custom fields
 def default_to_none(value):
-    # TODO: CHECK IF STRING
     if not value or (isinstance(value, str) and not value.strip()):
         return None
 
@@ -17,7 +16,7 @@ def get_package_schema():
     return {
         # General dataset info (inputs)
         'collection_method': [ default_to_none ],
-        'excerpt': [ default_to_none, validate_length ],
+        'excerpt': [ default_to_none, utils.validate_length ],
         'limitations': [ default_to_none ],
         'information_url': [ default_to_none ],
         # General dataset info (dropdowns)
@@ -107,44 +106,62 @@ def show_schema(schema, show=False):
 
     return schema
 
+def create_preview_map(context, resource):
+    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
+        resource.get('format', '').lower() == 'geojson' and \
+        resource.get('is_preview', False):
+
+        views = tk.get_action('resource_view_list')(context, {
+            'id': resource['id']
+        })
+
+        for v in views:
+            if v['view_type'] == 'recline_map_view':
+                return
+
+        tk.get_action('resource_view_create')(context, {
+            'resource_id': resource['id'],
+            'title': 'Map',
+            'view_type': 'recline_map_view',
+            'auto_zoom': True,
+            'cluster_markers': False,
+            'map_field_type': 'geojson',
+            'limit': 500
+            # 'geojson_field': 'geometry'
+        })
+
 def update_package(context):
     package = context['package']
     resources = [
         r for r in package.resources_all if r.state == 'active'
     ]
 
-    formats = []
+    formats = set()
+    last_refreshed = []
+
     for r in resources:
+        resource_format = r.format.upper()
+
         if ('datastore_active' in r.extras and r.extras['datastore_active']) \
             or r.url_type == 'datastore':
 
-            if r.format.lower() == 'csv':
-                formats += constants.TABULAR_FORMATS
-            elif r.format.lower() == 'geojson':
-                formats += constants.GEOSPATIAL_FORMATS
+            if resource_format == 'CSV':
+                formats = formats.union(constants.TABULAR_FORMATS)
+            elif resource_format == 'GEOJSON':
+                formats = formats.union(constants.GEOSPATIAL_FORMATS)
         else:
-            formats.append(r.format)
+            formats.add(resource_format)
 
-    formats = sorted(list(set([ f.upper() for f in formats ])))
+        last_modified.append(
+            r.created if r.last_modified is None else r.last_modified
+        )
 
-    last_refreshed = [
-        r.created if r.last_modified is None else r.last_modified for r in resources
-    ]
+    formats = ','.join(list(formats)) if len(set) else None
+    last_refreshed = max(last_refreshed) if len(last_refreshed) else None
 
-    tk.get_action('package_patch')(context, {
-        'id': package.id,
-        'formats': ','.join(formats) if len(formats) > 0 else None,
-        'last_refreshed': max(last_refreshed) if len(last_refreshed) > 0 else None
-    })
-
-def validate_length(key, data, errors, context):
-    if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
-        raise tk.ValidationError({
-            'constraints': [
-                'Input exceed {0} character limit'.format(
-                    constants.MAX_FIELD_LENGTH
-                )
-            ]
+    if formats != package.formats or last_refreshed != package.last_refreshed:
+        tk.get_action('package_patch')(context, {
+            'id': package.id,
+            'formats': formats,
+            'last_refreshed': last_refreshed
         })
-
-    return data[key]

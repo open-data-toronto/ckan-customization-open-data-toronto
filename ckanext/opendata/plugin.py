@@ -116,7 +116,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                     'constraints': ['A resource with {name} already exists for this package'.format(name=r['name'])]
                 })
 
-        if 'format' not in resource or not resource['format']:
+        # TODO: guess format
+        if not ('format' in resource and resource['format']):
             resource['format'] = resource['url'].split('.')[-1]
 
         resource['format'] = resource['format'].upper()
@@ -124,7 +125,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         utils.validate_tag_in_vocab(resource['format'], 'formats')
 
     def after_create(self, context, resource):
-        utils.create_preview_map(context, resource)
+        schema.create_preview_map(context, resource)
         schema.update_package(context)
 
     def after_update(self, context, resource):

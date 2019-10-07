@@ -22,7 +22,18 @@ def to_list(l):
 
     return l
 
-# Built-in vocabulary validation requires context update
+def validate_length(key, data, errors, context):
+    if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
+        raise tk.ValidationError({
+            'constraints': [
+                'Input exceed {0} character limit'.format(
+                    constants.MAX_FIELD_LENGTH
+                )
+            ]
+        })
+
+    return data[key]
+
 def validate_tag_in_vocab(tag, vocab):
     try:
         tk.get_action('tag_show')(None, { 'id': tag, 'vocabulary_id': vocab })
@@ -31,28 +42,4 @@ def validate_tag_in_vocab(tag, vocab):
             'constraints': [
                 'Tag {0} is not in the vocabulary {1}'.format(tag, vocab)
             ]
-        })
-
-def create_preview_map(context, resource):
-    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
-        resource.get('format', '').lower() == 'geojson' and \
-        resource.get('is_preview', False):
-
-        views = tk.get_action('resource_view_list')(context, {
-            'id': resource['id']
-        })
-
-        for v in views:
-            if v['view_type'] == 'recline_map_view':
-                return
-
-        tk.get_action('resource_view_create')(context, {
-            'resource_id': resource['id'],
-            'title': 'Map',
-            'view_type': 'recline_map_view',
-            'auto_zoom': True,
-            'cluster_markers': False,
-            'map_field_type': 'geojson',
-            'limit': 500
-            # 'geojson_field': 'geometry'
         })

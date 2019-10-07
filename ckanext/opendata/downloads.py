@@ -28,7 +28,7 @@ def _get_mimetype(fn):
     return mimetype
 
 def _write_datastore(params, resource):
-    format = params.get('format', constants.DOWNLOAD_FORMAT).lower()
+    format = params.get('format', constants.DOWNLOAD_FORMAT).upper()
     projection = params.get('projection', constants.DOWNLOAD_PROJECTION)
 
     is_geospatial = utils.is_geospatial(resource['id'])
@@ -41,7 +41,7 @@ def _write_datastore(params, resource):
     # Is this the best way to fetch data from datastore tables?
     raw = requests.get('{host}/datastore/dump/{resource_id}'.format(
         host=tk.config['ckan.site_url'],
-        resource_id=metadata['id']
+        resource_id=resource['id']
     )).content.decode('utf-8')
 
     # WISHLIST: remove dependency on pandas/geopandas
@@ -51,30 +51,30 @@ def _write_datastore(params, resource):
 
     if is_geospatial:
         df['geometry'] = df['geometry'].apply(
-            lambda x: shape(x)
-                if isinstance(x, dict)
-                else shape(json.loads(x))
+            lambda x: \
+                shape(x) if isinstance(x, dict) else shape(json.loads(x))
         )
 
         df = gpd.GeoDataFrame(
             df,
-            crs={
-                'init': 'epsg:{0}'.format(constants.DOWNLOAD_PROJECTION)
-            },
+            crs={ 'init': 'epsg:{0}'.format(constants.DOWNLOAD_PROJECTION) },
             geometry='geometry'
-        ).to_crs({
-            'init': 'epsg:{0}'.format(projection)
-        })
+        ).to_crs(
+            { 'init': 'epsg:{0}'.format(projection) }
+        )
 
     # WISHLIST: store conversion in memory instead of write to disk
     tmp_dir = tempfile.mkdtemp()
-    path = os.path.join(tmp_dir, '{0}.{1}'.format(metadata['name'], format))
+    path = os.path.join(
+        tmp_dir,
+        '{0}.{1}'.format(resource['name'], format.lower())
+    )
 
     output = iotrans.to_file(
         df,
         path,
         projection=projection,
-        zip_content=(format.lower() in constants.ZIPPED_FORMATS)
+        zip_content=(format in constants.ZIPPED_FORMATS)
     )
 
     del df
@@ -85,7 +85,8 @@ def _write_datastore(params, resource):
     iotrans.utils.prune(tmp_dir)
     gc.collect()
 
-    fn = '{0}.{1}'.format(metadata['name'], output.split('.')[-1])
+    # TODO: What's wrong with the default file name? (ie. first half of output)
+    fn = '{0}.{1}'.format(resource['name'], output.split('.')[-1])
     mt = _get_mimetype(fn)
 
     return fn, mt
