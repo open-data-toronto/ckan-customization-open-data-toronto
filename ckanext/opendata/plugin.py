@@ -1,4 +1,4 @@
-from .catalogue import search, extract_info
+from .catalogue import search
 from .config import DATASTORE_GEOSPATIAL_FORMATS, DATASTORE_TABULAR_FORMATS, MAX_FIELD_LENGTH, REMOVED_FIELDS
 
 from ckan.common import config
@@ -223,8 +223,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'catalogue_search': search,
-            'extract_info': extract_info
+            'catalogue_search': search
         }
 
 class ExtendedURLPlugin(p.SingletonPlugin):
