@@ -1,6 +1,28 @@
 import ckan.plugins.toolkit as tk
 
+from datetime import datetime
+
 from .config import CATALOGUE_ROWS, CATALOGUE_SORT, CATALOGUE_START
+
+@tk.side_effect_free
+def extract_info(context, data_dict):
+    resource_id = data_dict['resource_id']
+
+    count = tk.get_action('datastore_info')(context, {
+        'id': resource_id
+    })['meta']['count']
+
+    dt = tk.get_action('resource_show')(context, {
+        'id': resource_id
+    })['last_modified']
+
+    d = datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f').date()
+
+    return {
+        'rows': count,
+        'updated_at': dt,
+        'updated_today': d == datetime.today().date()
+    }
 
 
 @tk.side_effect_free
