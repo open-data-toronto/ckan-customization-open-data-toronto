@@ -9,13 +9,13 @@ def extract_info(context, data_dict):
     resource_id = data_dict['resource_id']
 
     try:
-        dt = tk.get_action('resource_show')(context, {
+        r = tk.get_action('resource_show')(context, {
             'id': resource_id
-        })['last_modified']
+        })
     except:
         raise Exception('Resource ID not found')
 
-    d = datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f').date()
+    d = datetime.strptime(r['last_modified'], '%Y-%m-%dT%H:%M:%S.%f').date()
 
     try:
         count = tk.get_action('datastore_info')(context, {
@@ -25,8 +25,9 @@ def extract_info(context, data_dict):
         count = 0
 
     return {
+        'name': r['name'],
         'rows': count,
-        'updated_at': dt,
+        'updated_at': r['last_modified'],
         'updated_today': d == datetime.today().date()
     }
 
