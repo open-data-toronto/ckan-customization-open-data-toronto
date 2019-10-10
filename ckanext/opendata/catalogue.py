@@ -13,7 +13,9 @@ def extract_info(context, data_dict):
             'id': resource_id
         })
     except:
-        raise Exception('Resource ID not found')
+        return {
+            'error': 'Resource {0} not found'.format(resource_id)
+        }
 
     d = datetime.strptime(r['last_modified'], '%Y-%m-%dT%H:%M:%S.%f').date()
 
