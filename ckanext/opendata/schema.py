@@ -48,7 +48,8 @@ def get_package_schema():
 def get_resource_schema():
     return {
         'extract_job': [ default_to_none ],
-        'is_preview': [ default_to_false ]
+        'is_preview': [ default_to_false ],
+        'is_zipped': [ default_to_false ]
     }
 
 def manage_tag_hexed_fields(key, data, errors, context):

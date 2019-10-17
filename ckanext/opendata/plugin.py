@@ -114,13 +114,19 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         for idx, r in enumerate(package['resources']):
             if r['name'] == resource['name']:
                 raise tk.ValidationError({
-                    'constraints': ['A resource with {name} already exists for this package'.format(name=r['name'])]
+                    'constraints': [
+                        'A resource with {name} already exists \
+                            for this package'.format(name=r['name'])
+                    ]
                 })
 
         if not ('format' in resource and resource['format']):
             resource['format'] = resource['url'].split('.')[-1]
 
         resource['format'] = resource['format'].upper()
+
+        resource['is_zipped'] = resource['is_zipped'] or \
+            resource['format'] in constants.ZIPPED_FORMATS
 
         utils.validate_tag_in_vocab(resource['format'], 'formats')
 
@@ -135,7 +141,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         schema.update_package(context)
 
     def before_show(self, resource_dict):
-        if (not 'datastore_active' in resource_dict or not resource_dict.get('datastore_active')) and \
+        if (not 'datastore_active' in resource_dict or \
+            not resource_dict.get('datastore_active')) and \
             resource_dict.get('url_type', '') == 'upload':
             link = list(urlsplit(resource_dict.get('url')))
             site = list(urlsplit(config.get('ckan.site_url')))
