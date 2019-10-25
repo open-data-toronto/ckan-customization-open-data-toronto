@@ -55,7 +55,7 @@ def manage_tag_hexed_fields(key, data, errors, context):
     if data[key] is None:
         return
 
-    tag = util.string_to_hex(data[key])
+    tag = utils.string_to_hex(data[key])
     vocab = key[0]
 
     utils.validate_tag_in_vocab(tag, vocab)
