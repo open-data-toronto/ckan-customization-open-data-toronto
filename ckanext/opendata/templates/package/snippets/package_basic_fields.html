@@ -115,8 +115,6 @@
   {% set civic_issues_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'} %}
   {{ form.input('civic_issues', id='field-civic_issues', label=_('Civic Issues'), placeholder=_('eg. Climate change'), value=data.civic_issues, error=errors.civic_issues, classes=['control-full'], attrs=civic_issues_attrs) }}
 
-  {{ form.hidden('formats', value=data.formats) }}
-
   {% set topics_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
   {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topics_attrs) }}
 
@@ -129,6 +127,11 @@
   {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('eg. /wp-content/image/1.png'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
 
   <hr/>
+
+  <!-- Hidden fields so that content are not deleted when updating package from UI -->
+
+  {{ form.hidden('formats', value=data.formats) }}
+  {{ form.hidden('last_refreshed', value=data.last_refreshed) }}
 
   <h2 class="text-info">Built-In Fields</h2>
 
