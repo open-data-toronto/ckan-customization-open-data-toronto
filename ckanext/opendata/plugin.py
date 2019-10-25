@@ -144,6 +144,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         if (not 'datastore_active' in resource_dict or \
             not resource_dict.get('datastore_active')) and \
             resource_dict.get('url_type', '') == 'upload':
+
             link = list(urlsplit(resource_dict.get('url')))
             site = list(urlsplit(config.get('ckan.site_url')))
 

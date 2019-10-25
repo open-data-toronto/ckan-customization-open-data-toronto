@@ -5,12 +5,11 @@ import ckan.plugins.toolkit as tk
 
 # Default behaviours for custom fields
 def default_to_none(value):
-    if not value or (isinstance(value, str) and not value.strip()):
-        return None
+    if value:
+        return value
 
 def default_to_false(value):
-    if not value or (isinstance(value, str) and not value.strip()):
-        return False
+    return bool(value)
 
 def get_package_schema():
     return {
