@@ -63,27 +63,27 @@ def manage_tag_hexed_fields(key, data, errors, context):
 
     utils.validate_tag_in_vocab(tag, vocab)
 
-# def convert_string_to_tags(key, data, errors, context):
-#     if data[key]:
-#         tags = [t.strip() for t in data[key].split(',') if t.strip()]
-#         vocab = validate_vocabulary(key, tags, context)
-#
-#         n = 0
-#         for k in data.keys():
-#             if k[0] == 'tags':
-#                 n = max(n, k[1] + 1)
-#
-#         for num, tag in enumerate(tags):
-#             data[('tags', num + n, 'name')] = tag
-#             data[('tags', num + n, 'vocabulary_id')] = vocab['id']
-#
-#     return data[key]
+    # STUFF
+    # tags = []
+    # vocab = tk.get_action('vocabulary_show')(context, {
+    #     'id': key
+    # })
+    #
+    # for k in data.keys():
+    #     if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
+    #         name = data[k].get('display_name', data[k]['name'])
+    #         tags.append(name)
+    #
+    # return ','.join(tags)
 
 def manage_tag_list_fields(key, data, errors, context):
     if data[key] is None:
         return
 
-    vocab = key[0]
+    vocab = tk.get_action('vocabulary_show')(
+        data_dict={'vocabulary_id': vocab}
+    )
+
     tags = {}
 
     n = data.get(('num_tags',), 0)
@@ -92,10 +92,10 @@ def manage_tag_list_fields(key, data, errors, context):
         t = tag.strip()
 
         if len(t):
-            utils.validate_tag_in_vocab(t, vocab)
+            utils.validate_tag_in_vocab(t, vocab['name'])
 
             tags[('tags', n + i, 'name')] = t
-            tags[('tags', n + i, 'vocabulary_id')] = vocab
+            tags[('tags', n + i, 'vocabulary_id')] = vocab['id']
 
     data.update(tags)
 
