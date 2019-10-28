@@ -65,7 +65,7 @@ def manage_tag_hexed_fields(key, data, errors, context):
 
 def manage_tag_list_fields(key, data, errors, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
-    num_tags = max([ k[1] for k in data.keys() if k[0] == 'tags' ])
+    num_tags = max([0] + [ k[1] for k in data.keys() if k[0] == 'tags' ])
 
     if data[key] is None:
         discard = []
