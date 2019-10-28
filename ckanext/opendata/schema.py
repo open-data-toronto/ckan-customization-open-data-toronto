@@ -78,7 +78,7 @@ def manage_tag_list_fields(key, data, errors, context):
 
         for k in list(data.keys()):
             if k[0] == 'tags' and k[1] in discard:
-                data[key].pop(k)
+                data.pop(k)
     else:
         tags = []
 
