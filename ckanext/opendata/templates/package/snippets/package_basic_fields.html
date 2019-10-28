@@ -115,6 +115,9 @@
   {% set civic_issues_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'} %}
   {{ form.input('civic_issues', id='field-civic_issues', label=_('Civic Issues'), placeholder=_('eg. Climate change'), value=data.civic_issues, error=errors.civic_issues, classes=['control-full'], attrs=civic_issues_attrs) }}
 
+  {% set formats_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=formats&incomplete=?'} %}
+  {{ form.input('formats', id='field-formats', label=_('Formats'), placeholder=_('eg. CSV, XLSX'), value=data.formats, error=errors.formats, classes=['control-full'], attrs=formats_attrs) }}
+
   {% set topics_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
   {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topics_attrs) }}
 
@@ -130,7 +133,6 @@
 
   <!-- Hidden fields so that content are not deleted when updating package from UI -->
 
-  {{ form.hidden('formats', value=data.formats) }}
   {{ form.hidden('last_refreshed', value=data.last_refreshed) }}
 
   <h2 class="text-info">Built-In Fields</h2>
