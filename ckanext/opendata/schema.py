@@ -84,7 +84,7 @@ def manage_tag_list_fields(key, data, errors, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
     tags = {}
 
-    n = data.get(('num_tags',), 0)
+    num_tags = data.get(('num_tags',), 0)
 
     for tag in data[key].split(','):
         t = tag.strip()
@@ -92,8 +92,10 @@ def manage_tag_list_fields(key, data, errors, context):
         if len(t):
             utils.validate_tag_in_vocab(t, vocab['name'])
 
-            tags[('tags', n + len(tags), 'name')] = t
-            tags[('tags', n + len(tags), 'vocabulary_id')] = vocab['id']
+            size = len(tags) / 2
+
+            tags[('tags', num_tags + size, 'name')] = t
+            tags[('tags', num_tags + size, 'vocabulary_id')] = vocab['id']
 
     data.update(tags)
 
