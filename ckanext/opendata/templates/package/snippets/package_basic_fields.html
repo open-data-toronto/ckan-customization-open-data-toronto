@@ -186,32 +186,6 @@
 
   <h2 class="text-info">WordPress Filters</h2>
 
-  {%
-    set civic_issues_attrs = {
-      'data-module': 'autocomplete',
-      'data-module-tags': '',
-      'data-module-source':
-      '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'
-    }
-  %}
-
-  {%
-    set formats_attrs = {
-      'data-module': 'autocomplete',
-      'data-module-tags': '',
-      'data-module-source':
-      '/tags_autocomplete?vocabulary_id=formats&incomplete=?'
-    }
-  %}
-
-  {%
-    set topics_attrs = {
-      'data-module': 'autocomplete',
-      'data-module-tags': '',
-      'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'
-    }
-  %}
-
   {{
     form.input(
       'civic_issues',
@@ -221,7 +195,12 @@
       value=data.civic_issues,
       error=errors.civic_issues,
       classes=['control-full'],
-      attrs=civic_issues_attrs
+      attrs={
+        'data-module': 'autocomplete',
+        'data-module-tags': '',
+        'data-module-source':
+          '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'
+      }
     )
   }}
 
@@ -234,7 +213,12 @@
       value=data.formats,
       error=errors.formats,
       classes=['control-full'],
-      attrs=formats_attrs
+      attrs={
+        'data-module': 'autocomplete',
+        'data-module-tags': '',
+        'data-module-source':
+          '/tags_autocomplete?vocabulary_id=formats&incomplete=?'
+      }
     )
   }}
 
@@ -247,7 +231,12 @@
       value=data.topics,
       error=errors.topics,
       classes=['control-full'],
-      attrs=topics_attrs
+      attrs={
+        'data-module': 'autocomplete',
+        'data-module-tags': '',
+        'data-module-source':
+          '/tags_autocomplete?vocabulary_id=topics&incomplete=?'
+      }
     )
   }}
 

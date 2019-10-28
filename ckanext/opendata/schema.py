@@ -63,21 +63,41 @@ def manage_tag_hexed_fields(key, data, errors, context):
 
     utils.validate_tag_in_vocab(tag, vocab)
 
-def manage_tag_list_fields(key, data, errors, context):
-    # Note: tag fields are stored as comma-separated string for compatibility
-    # with the built-in default multi-select on CKAN UI
+# def convert_string_to_tags(key, data, errors, context):
+#     if data[key]:
+#         tags = [t.strip() for t in data[key].split(',') if t.strip()]
+#         vocab = validate_vocabulary(key, tags, context)
+#
+#         n = 0
+#         for k in data.keys():
+#             if k[0] == 'tags':
+#                 n = max(n, k[1] + 1)
+#
+#         for num, tag in enumerate(tags):
+#             data[('tags', num + n, 'name')] = tag
+#             data[('tags', num + n, 'vocabulary_id')] = vocab['id']
+#
+#     return data[key]
 
+def manage_tag_list_fields(key, data, errors, context):
     if data[key] is None:
         return
 
-    for t in data[key].split(','):
-        tag = t.strip()
-        vocab = key[0]
+    vocab = key[0]
+    tags = {}
 
-        if not tag:
-            continue
+    n = data[('num_tags',)]
 
-        utils.validate_tag_in_vocab(tag, vocab)
+    for i, tag in enumerate(data[key].split(',')):
+        t = tag.strip()
+
+        if len(t):
+            utils.validate_tag_in_vocab(t, vocab)
+
+            tags[('tags', n + i, 'name')] = t
+            tags[('tags', n + i, 'vocabulary_id')] = vocab
+
+    data.update(tags)
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
