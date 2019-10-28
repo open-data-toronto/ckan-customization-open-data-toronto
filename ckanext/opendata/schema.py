@@ -86,7 +86,7 @@ def manage_tag_list_fields(key, data, errors, context):
     vocab = key[0]
     tags = {}
 
-    n = data[('num_tags',)]
+    n = data.get(('num_tags',), 0)
 
     for i, tag in enumerate(data[key].split(',')):
         t = tag.strip()
