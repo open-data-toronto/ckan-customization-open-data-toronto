@@ -1,7 +1,10 @@
+from six import string_types
+
 import constants
 import utils
 
 import ckan.plugins.toolkit as tk
+
 
 # Default behaviours for custom fields
 def default_to_none(value):
@@ -64,14 +67,23 @@ def manage_tag_list_fields(key, data, errors, context):
     if data[key] is None:
         return
 
-    for t in data[key].split(', '):
-        tag = t.strip()
-        vocab = key[0]
+    tag_list = data[key]
 
-        if not tag:
-            continue
+    if isinstance(data[key], string_types):
+        tag_list = tag_list.split(',')
 
-        utils.validate_tag_in_vocab(tag, vocab)
+        for t in tag_list:
+            tag = t.strip()
+            vocab = key[0]
+
+            if not tag:
+                continue
+
+            utils.validate_tag_in_vocab(tag, vocab)
+
+        data[key] = tag_list
+    else:
+        data[key] = ','.join(tag_list)
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
