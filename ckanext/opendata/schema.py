@@ -63,41 +63,35 @@ def manage_tag_hexed_fields(key, data, errors, context):
 
     utils.validate_tag_in_vocab(tag, vocab)
 
-    # STUFF
-    # tags = []
-    # vocab = tk.get_action('vocabulary_show')(context, {
-    #     'id': key
-    # })
-    #
-    # for k in data.keys():
-    #     if k[0] == 'tags'and data[k].get('vocabulary_id') == vocab['id']:
-    #         name = data[k].get('display_name', data[k]['name'])
-    #         tags.append(name)
-    #
-    # return ','.join(tags)
-
 def manage_tag_list_fields(key, data, errors, context):
-    if data[key] is None:
-        # READ IT FROM EXTRA
-        return
-
     vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
-    tags = {}
+    num_tags = max([ k[1] for k in data.keys() if k[0] == 'tags' ])
 
-    num_tags = data.get(('num_tags',), 0)
+    if data[key] is None:
+        discard = []
+        data[key] = []
 
-    for tag in data[key].split(','):
-        t = tag.strip()
+        for k, v in data.items():
+            if k[0] == 'tags' and k[2] == 'vocabulary_id' and v == vocab['id']:
+                data[key].append(data[('tags', k[1], 'name')])
+                discard.append(k[1])
 
-        if len(t):
-            utils.validate_tag_in_vocab(t, vocab['name'])
+        for k in list(data.keys()):
+            if k[0] == 'tags' and k[1] in discard:
+                data[key].pop(k)
+    else:
+        tags = []
 
-            size = len(tags) / 2
+        for t in data[key].split(','):
+            tag = t.strip()
 
-            tags[('tags', num_tags + size, 'name')] = t
-            tags[('tags', num_tags + size, 'vocabulary_id')] = vocab['id']
+            if len(t):
+                utils.validate_tag_in_vocab(tag, vocab['name'])
+                tags.append(tag)
 
-    data.update(tags)
+        for i, t in enumerate(tags):
+            data[key][('tags', num_tags + i, 'name')] = t
+            data[key][('tags', num_tags + i, 'vocabulary_id')] = vocab['id']
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
@@ -110,10 +104,6 @@ def show_tags(vocabulary_id, hexed=False):
     return tags
 
 def show_schema(schema, show=False):
-    for key in schema.keys():
-        if any([ x in key for x in constants.REMOVED_FIELDS ]):
-            schema.pop(key, None)
-
     modifications = get_package_schema()
 
     for key, value in modifications.items():
@@ -127,6 +117,10 @@ def show_schema(schema, show=False):
             )
 
     schema.update(modifications)
+
+    for key in schema.keys():
+        if any([ x in key for x in constants.REMOVED_FIELDS ]):
+            schema.pop(key, None)
 
     schema['resources'].update(get_resource_schema())
 
