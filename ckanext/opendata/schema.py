@@ -64,6 +64,9 @@ def manage_tag_hexed_fields(key, data, errors, context):
     utils.validate_tag_in_vocab(tag, vocab)
 
 def manage_tag_list_fields(key, data, errors, context):
+    # Note: tag fields are stored as comma-separated string for compatibility
+    # with the built-in default multi-select on CKAN UI
+
     if data[key] is None:
         return
 
