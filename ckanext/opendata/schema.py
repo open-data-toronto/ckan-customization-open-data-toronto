@@ -81,10 +81,7 @@ def manage_tag_list_fields(key, data, errors, context):
         # READ IT FROM EXTRA
         return
 
-    vocab = tk.get_action('vocabulary_show')(context, {
-        'vocabulary_id': key[0]
-    })
-
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
     tags = {}
 
     n = data.get(('num_tags',), 0)
