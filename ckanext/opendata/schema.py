@@ -90,8 +90,8 @@ def manage_tag_list_fields(key, data, errors, context):
                 tags.append(tag)
 
         for i, t in enumerate(tags):
-            data[key][('tags', num_tags + i, 'name')] = t
-            data[key][('tags', num_tags + i, 'vocabulary_id')] = vocab['id']
+            data[('tags', num_tags + i, 'name')] = t
+            data[('tags', num_tags + i, 'vocabulary_id')] = vocab['id']
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
