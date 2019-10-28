@@ -2,15 +2,22 @@
 
 {% block package_basic_fields_custom %}
   <hr/>
-  <h2 class="text-info">General Information</h2>
+
+  <h2 class="text-info">
+    General Information
+  </h2>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-dataset_category"><span class="text-danger">* </span>Dataset Category</label>
+    <label class="control-label" for="field-dataset_category">
+      <span class="text-danger">* </span>Dataset Category
+    </label>
+
     <div class="controls">
-      <select id="field-dataset_category" name="dataset_category" data-module="autocomplete">
+      <select id="field-dataset_category" name="dataset_category"
+        data-module="autocomplete">
+
         {% for dataset_category in h.show_tags('dataset_category', True) %}
-          <option
-            value="{{ dataset_category }}"
+          <option value="{{ dataset_category }}"
 
             {% if dataset_category == data.get('dataset_category', '') %}
               selected="selected"
@@ -19,17 +26,22 @@
             {{ dataset_category }}
           </option>
         {% endfor %}
+
       </select>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-refresh_rate"><span class="text-danger">* </span>Refresh Rate</label>
+    <label class="control-label" for="field-refresh_rate">
+      <span class="text-danger">* </span>Refresh Rate
+    </label>
+
     <div class="controls">
-      <select id="field-refresh_rate" name="refresh_rate" data-module="autocomplete">
+      <select id="field-refresh_rate" name="refresh_rate"
+        data-module="autocomplete">
+
         {% for refresh_rate in h.show_tags('refresh_rate', True) %}
-          <option
-            value="{{ refresh_rate }}"
+          <option value="{{ refresh_rate }}"
 
             {% if refresh_rate == data.get('refresh_rate', '') %}
               selected="selected"
@@ -38,44 +50,71 @@
             {{ refresh_rate }}
           </option>
         {% endfor %}
+
       </select>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-is_retired"><span class="text-danger">* </span>Retired Dataset</label>
+    <label class="control-label" for="field-is_retired">
+      <span class="text-danger">* </span>Retired Dataset
+    </label>
+
     <div class="controls">
-      <select id="field-is_retired" name="is_retired" data-module="autocomplete">
-        <option value="false" {% if not data.get('is_retired', false) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if data.get('is_retired', false) %}selected="selected"{% endif %}>True</option>
+      <select id="field-is_retired" name="is_retired"
+        data-module="autocomplete">
+
+        <option value="false"
+          {% if not data.get('is_retired', false) %}
+            selected="selected"
+          {% endif %}>
+          False
+        </option>
+
+        <option value="true"
+          {% if data.get('is_retired', false) %}
+            selected="selected"
+          {% endif %}>
+          True
+        </option>
+
       </select>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-collection_method">Collection Method</label>
+    <label class="control-label" for="field-collection_method">
+      Collection Method
+    </label>
+
     <div class="controls">
-      <textarea id="field-collection_method" name="collection_method" cols="20" rows="5" placeholder="This dataset was collected by..." class="form-control">
-        {{ data.get('collection_method', '') or '' }}
-      </textarea>
+      <textarea id="field-collection_method" name="collection_method" cols="20"
+        rows="5" placeholder="This dataset was collected by..."
+        class="form-control">{{ data.get('collection_method', '') }}</textarea>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-excerpt">Excerpt</label>
+    <label class="control-label" for="field-excerpt">
+      Excerpt
+    </label>
+
     <div class="controls">
-      <textarea id="field-excerpt" name="excerpt" cols="20" rows="5" placeholder="A short blurb about the dataset..." class="form-control">
-        {{ data.get('excerpt', '') or '' }}
-      </textarea>
+      <textarea id="field-excerpt" name="excerpt" cols="20" rows="5"
+        placeholder="A short blurb about the dataset..."
+        class="form-control">{{ data.get('excerpt', '') }}</textarea>
     </div>
   </div>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-limitations">Limitations</label>
+    <label class="control-label" for="field-limitations">
+      Limitations
+    </label>
+
     <div class="controls">
-      <textarea id="field-limitations" name="limitations" cols="20" rows="5" placeholder="This dataset is missing values from..." class="form-control">
-        {{ data.get('limitations', '') or '' }}
-      </textarea>
+      <textarea id="field-limitations" name="limitations" cols="20" rows="5"
+        placeholder="This dataset is missing values from..."
+        class="form-control">{{ data.get('limitations', '') }}</textarea>
     </div>
   </div>
 
@@ -84,12 +123,16 @@
   <h2 class="text-info">Owner Information</h2>
 
   <div class="form-group control-medium">
-    <label class="control-label" for="field-owner_division"><span class="text-danger">* </span>Owner Division</label>
+    <label class="control-label" for="field-owner_division">
+      <span class="text-danger">* </span>Owner Division
+    </label>
+
     <div class="controls">
-      <select id="field-refresh_rate" name="owner_division" data-module="autocomplete">
+      <select id="field-refresh_rate" name="owner_division"
+        data-module="autocomplete">
+
         {% for owner_division in h.show_tags('owner_division', True) %}
-          <option
-            value="{{ owner_division }}"
+          <option value="{{ owner_division }}"
 
             {% if owner_division == data.get('owner_division', '') %}
               selected="selected"
@@ -98,42 +141,147 @@
             {{ owner_division }}
           </option>
         {% endfor %}
+
       </select>
     </div>
   </div>
 
-  {{ form.input('owner_section', label=_('Owner Section'), id='field-owner_section', placeholder=_('eg. Traffic Management Centre'), value=data.owner_section, error=errors.owner_section, classes=['control-medium']) }}
+  {{
+    form.input(
+      'owner_section',
+      label=_('Owner Section'),
+      id='field-owner_section',
+      placeholder=_('eg. Traffic Management Centre'),
+      value=data.owner_section,
+      error=errors.owner_section,
+      classes=['control-medium']
+    )
+  }}
 
-  {{ form.input('owner_unit', label=_('Owner Unit'), id='field-owner_unit', placeholder=_('eg. Traffic Safety Unit'), value=data.owner_unit, error=errors.owner_unit, classes=['control-medium']) }}
+  {{
+    form.input(
+      'owner_unit',
+      label=_('Owner Unit'),
+      id='field-owner_unit',
+      placeholder=_('eg. Traffic Safety Unit'),
+      value=data.owner_unit,
+      error=errors.owner_unit,
+      classes=['control-medium']
+    )
+  }}
 
-  {{ form.input('owner_email', label=_('Owner Email'), id='field-owner_email', placeholder=_('eg. opendata@toronto.ca'), value=data.owner_email, error=errors.owner_email, classes=['control-medium']) }}
+  {{
+    form.input(
+      'owner_email',
+      label=_('Owner Email'),
+      id='field-owner_email',
+      placeholder=_('eg. opendata@toronto.ca'),
+      value=data.owner_email,
+      error=errors.owner_email,
+      classes=['control-medium']
+    )
+  }}
 
   <hr/>
 
   <h2 class="text-info">WordPress Filters</h2>
 
-  {% set civic_issues_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'} %}
-  {{ form.input('civic_issues', id='field-civic_issues', label=_('Civic Issues'), placeholder=_('eg. Climate change'), value=data.civic_issues, error=errors.civic_issues, classes=['control-full'], attrs=civic_issues_attrs) }}
+  {%
+    set civic_issues_attrs = {
+      'data-module': 'autocomplete',
+      'data-module-tags': '',
+      'data-module-source':
+      '/tags_autocomplete?vocabulary_id=civic_issues&incomplete=?'
+    }
 
-  {% set formats_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=formats&incomplete=?'} %}
-  {{ form.input('formats', id='field-formats', label=_('Formats'), placeholder=_('eg. CSV, XLSX'), value=data.formats, error=errors.formats, classes=['control-full'], attrs=formats_attrs) }}
+    set formats_attrs = {
+      'data-module': 'autocomplete',
+      'data-module-tags': '',
+      'data-module-source':
+      '/tags_autocomplete?vocabulary_id=formats&incomplete=?'
+    }
 
-  {% set topics_attrs = {'data-module': 'autocomplete', 'data-module-tags': '', 'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'} %}
-  {{ form.input('topics', id='field-topics', label=_('Topics'), placeholder=_('eg. Water, City government'), value=data.topics, error=errors.topics, classes=['control-full'], attrs=topics_attrs) }}
+    set topics_attrs = {
+      'data-module': 'autocomplete',
+      'data-module-tags': '',
+      'data-module-source': '/tags_autocomplete?vocabulary_id=topics&incomplete=?'
+    }
+  %}
+
+  {{
+    form.input(
+      'civic_issues',
+      id='field-civic_issues',
+      label=_('Civic Issues'),
+      placeholder=_('eg. Climate change'),
+      value=data.civic_issues,
+      error=errors.civic_issues,
+      classes=['control-full'],
+      attrs=civic_issues_attrs
+    )
+  }}
+
+  {{
+    form.input(
+      'formats',
+      id='field-formats',
+      label=_('Formats'),
+      placeholder=_('eg. CSV, XLSX'),
+      value=data.formats,
+      error=errors.formats,
+      classes=['control-full'],
+      attrs=formats_attrs
+    )
+  }}
+
+  {{
+    form.input(
+      'topics',
+      id='field-topics',
+      label=_('Topics'),
+      placeholder=_('eg. Water, City government'),
+      value=data.topics,
+      error=errors.topics,
+      classes=['control-full'],
+      attrs=topics_attrs
+    )
+  }}
 
   <hr/>
 
   <h2 class="text-info">Others</h2>
 
-  {{ form.input('information_url', label=_('Information URL'), id='field-information_url', placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'), value=data.information_url, error=errors.information_url, classes=['control-medium']) }}
+  {{
+    form.input(
+      'information_url',
+      label=_('Information URL'),
+      id='field-information_url',
+      placeholder=_('eg. http://www.toronto.ca/rescu/index.htm'),
+      value=data.information_url,
+      error=errors.information_url,
+      classes=['control-medium']
+    )
+  }}
 
-  {{ form.input('image_url', label=_('Image URL'), id='field-image_url', placeholder=_('eg. /wp-content/image/1.png'), value=data.image_url, error=errors.image_url, classes=['control-medium']) }}
+  {{
+    form.input(
+      'image_url',
+      label=_('Image URL'),
+      id='field-image_url',
+      placeholder=_('eg. /wp-content/image/1.png'),
+      value=data.image_url,
+      error=errors.image_url,
+      classes=['control-medium']
+    )
+  }}
 
   <hr/>
 
   <!-- Hidden fields so that content are not deleted when updating package from UI -->
 
-  {{ form.hidden('last_refreshed', value=data.last_refreshed) }}
+  {{
+    form.hidden('last_refreshed', value=data.last_refreshed)
+  }}
 
   <h2 class="text-info">Built-In Fields</h2>
 
