@@ -67,23 +67,14 @@ def manage_tag_list_fields(key, data, errors, context):
     if data[key] is None:
         return
 
-    tag_list = data[key]
+    for t in data[key].split(','):
+        tag = t.strip()
+        vocab = key[0]
 
-    if isinstance(data[key], string_types):
-        tag_list = tag_list.split(',')
+        if not tag:
+            continue
 
-        for t in tag_list:
-            tag = t.strip()
-            vocab = key[0]
-
-            if not tag:
-                continue
-
-            utils.validate_tag_in_vocab(tag, vocab)
-
-        data[key] = tag_list
-    else:
-        data[key] = ','.join(tag_list)
+        utils.validate_tag_in_vocab(tag, vocab)
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
