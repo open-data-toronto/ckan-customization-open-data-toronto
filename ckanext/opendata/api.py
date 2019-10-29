@@ -25,18 +25,12 @@ def build_query(query):
             continue
 
         if k.endswith('[]'):
-            f = k[:-2]
-            v = utils.to_list(v)
-
-            # TODO: WHY?
-            if f in ['dataset_category', 'vocab_formats']:
-                terms = ' AND '.join(['{x}'.format(x=term) for term in v])
-            elif f in ['owner_division', 'vocab_topics']:
-                terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
-            else:
-                continue
-
-            q.append('{key}:({value})'.format(key=f, value=terms))
+            q.append(
+                '{key}:({value})'.format(
+                    key=k[:-2],
+                    value=' AND '.join(utils.to_list(v))
+                )
+            )
         elif k == 'search':
             # TODO: TOKENIZE SEARCH TERM
             v = v.lower()
