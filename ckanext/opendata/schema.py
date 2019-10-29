@@ -65,21 +65,30 @@ def manage_tag_hexed_fields(key, data, errors, context):
 
 def manage_tag_list_fields(key, data, errors, context):
     vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
-    num_tags = max([0] + [ k[1] for k in data.keys() if k[0] == 'tags' ])
+    num_tags = max([0] or [ k[1] for k in data.keys() if k[0] == 'tags' ])
 
     if data[key] is None:
+        # data[key] is None when there are no content or when the package is
+        # shown and needs to be converted from tags
+
         discard = []
-        data[key] = []
+        tags = []
 
         for k, v in data.items():
-            if k[0] == 'tags' and k[2] == 'vocabulary_id' and v == vocab['id']:
-                data[key].append(data[('tags', k[1], 'name')])
+            if v == vocab['id'] and k[0] == 'tags' and k[2] == 'vocabulary_id':
+                tags.append(data[('tags', k[1], 'name')])
                 discard.append(k[1])
 
-        for k in list(data.keys()):
-            if k[0] == 'tags' and k[1] in discard:
-                data.pop(k)
+        if len(tags):
+            data[key] = tags
+
+            for k in list(data.keys()):
+                if k[0] == 'tags' and k[1] in discard:
+                    data.pop(k)
     else:
+        # data[key] is populated when the package is being created/updated with
+        # content and needs to be converted to tags
+
         tags = []
 
         for t in data[key].split(','):
