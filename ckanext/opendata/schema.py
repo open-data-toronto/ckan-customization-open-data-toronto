@@ -8,11 +8,13 @@ import ckan.plugins.toolkit as tk
 
 # Default behaviours for custom fields
 def default_to_none(value):
-    if value and\
-        not (isinstance(value, string_types) and value.lower() != 'true'):
+    if value:
         return value
 
 def default_to_false(value):
+    if isinstance(value, string_types):
+        return value.lower() == 'true'
+
     return bool(value)
 
 def get_package_schema():
