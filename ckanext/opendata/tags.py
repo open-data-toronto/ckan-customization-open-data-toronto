@@ -11,7 +11,7 @@ def _get_similarity(a, b):
 class TagsController(BaseController):
     def match_tags(self):
         vid = tk.request.GET.get('vocabulary_id', '')
-        q = tk.request.GET.get('incomplete', '')
+        q = tk.request.GET.get('incomplete', '').lower()
 
         tags = tk.get_action('tag_list')(None, { 'vocabulary_id': vid })
         scores = [ _get_similarity(q, t.lower()) for t in tags ]
