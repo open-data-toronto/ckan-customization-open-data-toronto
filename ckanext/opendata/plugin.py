@@ -125,7 +125,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         resource['format'] = resource['format'].upper()
 
-        resource['is_zipped'] = resource['is_zipped'] or \
+        resource['is_zipped'] = \
+            ('is_zipped' in resource and resource['is_zipped']) or \
             resource['format'] in constants.ZIPPED_FORMATS
 
         utils.validate_tag_in_vocab(resource['format'], 'formats')
