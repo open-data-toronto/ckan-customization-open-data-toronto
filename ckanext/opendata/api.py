@@ -40,6 +40,7 @@ def build_query(query):
             for w in v.lower().split(' '):
                 q.append(
                     '(name:(*{0}*))^5.0 OR '
+                    '(tags:(*{1}*))^5.0 OR'
                     '(notes:("{1}")) OR '
                     '(title:(*{1}*))^10.0'.format(
                         w.replace(' ', '-'), w
