@@ -17,8 +17,8 @@ def default_to_false(value):
 
     return bool(value)
 
-def get_package_schema():
-    return {
+def get_package_schema(schema, show=False):
+    mods = {
         # General dataset info (inputs)
         'collection_method': [ default_to_none ],
         'excerpt': [ default_to_none, utils.validate_length ],
@@ -33,15 +33,11 @@ def get_package_schema():
             default_to_none, manage_tag_hexed_fields
         ],
         # Filters
-        'civic_issues': [
-            default_to_none, manage_tag_list_fields
-        ],
-        'formats': [ default_to_none, manage_tag_list_fields ],
-        'topics': [ default_to_none, manage_tag_list_fields ],
+        'civic_issues': [ default_to_none ],
+        'formats': [ default_to_none ],
+        'topics': [ default_to_none ],
         # Dataset division info
-        'owner_division': [
-            default_to_none, manage_tag_hexed_fields
-        ],
+        'owner_division': [ default_to_none ],
         'owner_section': [ default_to_none ],
         'owner_unit': [ default_to_none ],
         'owner_email': [ default_to_none ],
@@ -50,12 +46,28 @@ def get_package_schema():
         'last_refreshed': [ default_to_none ]
     }
 
-def get_resource_schema():
-    return {
+    if not show:
+        for f in constants.TAG_LIST_FIELDS:
+            mods[f].append(manage_tag_list_fields)
+
+    for key, value in mods.items():
+        if show:
+            mods[key].insert(0, tk.get_converter('convert_from_extras'))
+        else:
+            mods[key].append(tk.get_converter('convert_to_extras'))
+
+    for key in schema.keys():
+        if any([ x in key for x in constants.REMOVED_FIELDS ]):
+            schema.pop(key, None)
+
+    schema.update(mods)
+    schema['resources'].update({
         'extract_job': [ default_to_none ],
         'is_preview': [ default_to_false ],
         'is_zipped': [ default_to_false ]
-    }
+    })
+
+    return schema
 
 def manage_tag_hexed_fields(key, data, errors, context):
     if data[key] is None:
@@ -67,43 +79,27 @@ def manage_tag_hexed_fields(key, data, errors, context):
     utils.validate_tag_in_vocab(tag, vocab)
 
 def manage_tag_list_fields(key, data, errors, context):
-    vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
-    num_tags = max([0] or [ k[1] for k in data.keys() if k[0] == 'tags' ])
-
     if data[key] is None:
-        # data[key] is None when there are no content or when the package is
-        # shown and needs to be converted from tags
+        return
 
-        discard = []
-        tags = []
+    vocab = tk.get_action('vocabulary_show')(context, { 'id': key[0] })
 
-        for k, v in data.items():
-            if v == vocab['id'] and k[0] == 'tags' and k[2] == 'vocabulary_id':
-                tags.append(data[('tags', k[1], 'name')])
-                discard.append(k[1])
+    n = 0
+    for k in data.keys():
+        if k[0] == 'tags':
+            n = max(n, k[1] + 1)
 
-        if len(tags):
-            data[key] = tags
+    tags = []
+    for t in data[key].split(','):
+        tag = t.strip()
 
-            for k in list(data.keys()):
-                if k[0] == 'tags' and k[1] in discard:
-                    data.pop(k)
-    else:
-        # data[key] is populated when the package is being created/updated with
-        # content and needs to be converted to tags
+        if len(t):
+            utils.validate_tag_in_vocab(tag, vocab['name'])
+            tags.append(tag)
 
-        tags = []
-
-        for t in data[key].split(','):
-            tag = t.strip()
-
-            if len(t):
-                utils.validate_tag_in_vocab(tag, vocab['name'])
-                tags.append(tag)
-
-        for i, t in enumerate(tags):
-            data[('tags', num_tags + i, 'name')] = t
-            data[('tags', num_tags + i, 'vocabulary_id')] = vocab['id']
+    for i, t in enumerate(tags):
+        data[('tags', n + i, 'name')] = t
+        data[('tags', n + i, 'vocabulary_id')] = vocab['id']
 
 def show_tags(vocabulary_id, hexed=False):
     tags = tk.get_action('tag_list')(
@@ -114,29 +110,6 @@ def show_tags(vocabulary_id, hexed=False):
         return map(utils.hex_to_string, tags)
 
     return tags
-
-def show_schema(schema, show=False):
-    modifications = get_package_schema()
-
-    for key, value in modifications.items():
-        if show:
-            modifications[key].insert(
-                0, tk.get_converter('convert_from_extras')
-            )
-        else:
-            modifications[key].insert(
-                1, tk.get_converter('convert_to_extras')
-            )
-
-    schema.update(modifications)
-
-    for key in schema.keys():
-        if any([ x in key for x in constants.REMOVED_FIELDS ]):
-            schema.pop(key, None)
-
-    schema['resources'].update(get_resource_schema())
-
-    return schema
 
 def create_preview_map(context, resource):
     if (resource['datastore_active'] or 'datastore' in resource['url']) and \

@@ -73,13 +73,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def create_package_schema(self):
         struc = super(UpdateSchemaPlugin, self).create_package_schema()
-        struc = schema.show_schema(struc)
+        struc = schema.get_package_schema(struc)
 
         return struc
 
     def update_package_schema(self):
         struc = super(UpdateSchemaPlugin, self).update_package_schema()
-        struc = schema.show_schema(struc)
+        struc = schema.get_package_schema(struc)
 
         return struc
 
@@ -87,7 +87,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         struc = super(UpdateSchemaPlugin, self).show_package_schema()
         struc['tags']['__extras'].append(tk.get_converter('free_tags_only'))
 
-        struc = schema.show_schema(struc, show=True)
+        struc = schema.get_package_schema(struc, show=True)
 
         return struc
 
