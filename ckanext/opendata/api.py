@@ -37,16 +37,14 @@ def build_query(query):
 
             q.append('{key}:({value})'.format(key=f, value=terms))
         elif k == 'search':
-            # TODO: TOKENIZE SEARCH TERM
-            v = v.lower()
-
-            q.append(
-                '(name:(*{0}*))^5.0 OR '
-                '(notes:("{1}")) OR '
-                '(title:(*{1}*))^10.0'.format(
-                    v.replace(' ', '-'), v
+            for w in v.lower().split(' '):
+                q.append(
+                    '(name:(*{0}*))^5.0 OR '
+                    '(notes:("{1}")) OR '
+                    '(title:(*{1}*))^10.0'.format(
+                        w.replace(' ', '-'), w
+                    )
                 )
-            )
 
     return q
 
