@@ -54,11 +54,11 @@ def get_quality_score(context, data_dict):
     pid = data_dict['package_id']
     rid = None
 
-    scores = tk.get_action('package_show')(context, {
+    package = tk.get_action('package_show')(context, {
         'id': 'catalogue-quality-scores'
     })
 
-    for r in scores['resources']:
+    for r in package['resources']:
         if r['name'] == 'catalogue-scorecard':
             rid = r['id']
             break
@@ -69,7 +69,7 @@ def get_quality_score(context, data_dict):
             'q': {
                 'package': pid
             }
-        })['records'][0]
+        })['records']
 
     # TODO: Update error handling
 
