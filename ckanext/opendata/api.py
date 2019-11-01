@@ -55,7 +55,7 @@ def get_quality_score(context, data_dict):
     rid = None
 
     scores = tk.get_action('package_show')(context, {
-        'id': 'catalogue-score-scores'
+        'id': 'catalogue-quality-scores'
     })
 
     for r in scores['resources']:
