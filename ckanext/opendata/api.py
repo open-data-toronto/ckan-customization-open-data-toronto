@@ -50,6 +50,30 @@ def build_query(query):
     return q
 
 @tk.side_effect_free
+def get_quality_score(context, data_dict):
+    pid = data_dict['package_id']
+    rid = None
+
+    scores = tk.get_action('package_show')(context, {
+        'id': 'catalogue-score-scores'
+    })
+
+    for r in scores['resources']:
+        if r['name'] == 'catalogue-scorecard':
+            rid = r['id']
+            break
+
+    if not rid is None:
+        return tk.get_action('datastore_search')(context, {
+            'resource_id': rid,
+            'q': {
+                'package': pid
+            }
+        })['records'][0]
+
+    # TODO: Update error handling
+
+@tk.side_effect_free
 def extract_info(context, data_dict):
     resource_id = data_dict['resource_id']
 

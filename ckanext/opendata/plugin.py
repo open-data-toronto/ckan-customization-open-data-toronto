@@ -27,6 +27,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
     def get_actions(self):
         return {
             'extract_info': api.extract_info,
+            'quality_show': api.get_quality_score,
             'search_packages': api.query_packages,
             'search_facet': api.query_facet
         }
