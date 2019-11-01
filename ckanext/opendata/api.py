@@ -68,7 +68,8 @@ def get_quality_score(context, data_dict):
             'resource_id': rid,
             'q': {
                 'package': pid
-            }
+            },
+            'sort': 'recorded_at desc'
         })['records']
 
     # TODO: Update error handling
