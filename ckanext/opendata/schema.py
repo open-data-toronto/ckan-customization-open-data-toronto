@@ -63,8 +63,7 @@ def get_package_schema(schema, show=False):
     schema.update(mods)
     schema['resources'].update({
         'extract_job': [ default_to_none ],
-        'is_preview': [ default_to_false ],
-        'is_zipped': [ default_to_false ]
+        'is_preview': [ default_to_false ]
     })
 
     return schema

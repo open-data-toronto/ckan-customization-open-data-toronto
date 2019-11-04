@@ -16,14 +16,4 @@
     </div>
   </div>
 
-  <div class="form-group control-medium">
-    <label class="control-label" for="field-is_zipped"><span class="text-danger">* </span>Zipped</label>
-    <div class="controls">
-      <select id="field-is_zipped" name="is_zipped" data-module="autocomplete">
-        <option value="false" {% if not data.get('is_zipped', false) %}selected="selected"{% endif %}>False</option>
-        <option value="true" {% if data.get('is_zipped', false) %}selected="selected"{% endif %}>True</option>
-      </select>
-    </div>
-  </div>
-
 {% endblock %}
