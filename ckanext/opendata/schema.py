@@ -161,7 +161,7 @@ def update_package(context):
         )
 
     formats = ','.join(list(formats)) if len(formats) else None
-    last_refreshed = max(last_refreshed) if len(last_refreshed) else None
+    last_refreshed = max(last_refreshed).strftime('%Y-%m-%dT%H:%M:%S.%f') if len(last_refreshed) else None
 
     if formats != package.formats or last_refreshed != package.last_refreshed:
         tk.get_action('package_patch')(context, {
