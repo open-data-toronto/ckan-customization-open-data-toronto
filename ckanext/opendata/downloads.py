@@ -11,7 +11,6 @@ import requests
 import gc
 import io
 import json
-import mimetypes
 import os
 import tempfile
 
