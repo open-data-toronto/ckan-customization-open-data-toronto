@@ -5,11 +5,12 @@
   {{ super() }}
 
   {{ form.input('extract_job', label=_('Extract Job'), id='field-extract_job', placeholder=_('Extract Job'), value=data.extract_job, error=errors.extract_job, classes=['control-medium']) }}
+
   <div class="form-group control-medium">
     <label class="control-label" for="field-is_preview"><span class="text-danger">* </span>Preview</label>
     <div class="controls">
       <select id="field-is_preview" name="is_preview" data-module="autocomplete">
-        <option value="false" {% if data.get('is_preview', false) %}selected="selected"{% endif %}>False</option>
+        <option value="false" {% if not data.get('is_preview', false) %}selected="selected"{% endif %}>False</option>
         <option value="true" {% if data.get('is_preview', false) %}selected="selected"{% endif %}>True</option>
       </select>
     </div>

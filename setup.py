@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='''ckanext-opendatatoronto''',
-    version='2.1.3',
+    version='2.2.0',
     description='''
         This extension contains plugins that modifiy and extend default CKAN features for the City of Toronto Open Data Portal.
     ''',
