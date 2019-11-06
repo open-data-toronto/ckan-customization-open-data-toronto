@@ -137,16 +137,3 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def after_delete(self, context, resources):
         schema.update_package(context)
-
-    def before_show(self, resource_dict):
-        if (not 'datastore_active' in resource_dict or \
-            not resource_dict.get('datastore_active')) and \
-            resource_dict.get('url_type', '') == 'upload':
-
-            link = list(urlsplit(resource_dict.get('url')))
-            site = list(urlsplit(config.get('ckan.site_url')))
-
-            link[1] = site[1]
-            resource_dict['url'] = urlunsplit(link)
-
-        return resource_dict
