@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from ckan.logic import ValidationError
+
 import constants
 import utils
 
@@ -51,15 +53,18 @@ def build_query(query):
 
 @tk.side_effect_free
 def get_quality_score(context, data_dict):
-    pid = data_dict['package_id']
+    pid = data_dict.get('package_id')
     rid = None
 
+    if pid is None:
+        raise ValidationError('Missing package ID')
+
     package = tk.get_action('package_show')(context, {
-        'id': 'catalogue-quality-scores'
+        'id': constants.DQ.get('package')
     })
 
     for r in package['resources']:
-        if r['name'] == 'catalogue-scorecard':
+        if r['name'] == constants.DQ.get('resource'):
             rid = r['id']
             break
 
@@ -72,11 +77,12 @@ def get_quality_score(context, data_dict):
             'sort': 'recorded_at desc'
         })['records']
 
-    # TODO: Update error handling
-
 @tk.side_effect_free
 def extract_info(context, data_dict):
-    resource_id = data_dict['resource_id']
+    resource_id = data_dict.get('resource_id')
+
+    if resource_id is None:
+        raise ValidationError('Missing resource ID')
 
     count = tk.get_action('datastore_info')(context, {
         'id': resource_id
