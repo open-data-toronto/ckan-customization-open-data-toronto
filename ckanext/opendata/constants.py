@@ -22,3 +22,8 @@ MAX_FIELD_LENGTH = 350
 
 REMOVED_FIELDS = ['author', 'maintainer', 'version']
 TAG_LIST_FIELDS = ['civic_issues', 'formats', 'topics']
+
+DQ = {
+    'package': 'catalogue-quality-scores',
+    'resource': 'catalogue-scorecard'
+}
