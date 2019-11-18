@@ -32,7 +32,7 @@ def build_query(query):
 
             if f in ['dataset_category', 'vocab_formats']:
                 terms = ' AND '.join(['{x}'.format(x=term) for term in v])
-            elif f in ['owner_division', 'vocab_topics', 'vocab_civic_issues']:
+            elif f in ['owner_division', 'refresh_rate', 'vocab_topics', 'vocab_civic_issues']:
                 terms = ' AND '.join(['"{x}"'.format(x=term) for term in v])
             else:
                 continue
