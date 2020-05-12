@@ -129,7 +129,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         utils.validate_tag_in_vocab(resource['format'], 'formats')
 
     def after_create(self, context, resource):
-        schema.create_preview_map(context, resource)
+        schema.create_resource_views(context, resource)
         schema.update_package(context)
 
     def after_update(self, context, resource):
