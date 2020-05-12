@@ -126,24 +126,26 @@ def create_resource_views(context, resource):
             }
     }
 
-    r_format = resource.get('format', '').lower()
+    resource_format = resource.get('format', '').lower()
 
     if not (resource['datastore_active'] or 'datastore' in resource['url']) \
         and resource.get('is_preview', False) \
-        and r_format in format_views.keys():
+        and resource_format in format_views.keys():
         return
+    
+    view = format_views.pop(resource_format)
 
     views = tk.get_action('resource_view_list')(context, {
         'id': resource['id']
     })
 
     for v in views:
-        if v['view_type'] == format_views[r_format]['view_type']:
+        if v['view_type'] == view['view_type']:
             return
     
-    format_views[r_format]['resource_id'] = resource['id']
+    view['resource_id'] = resource['id']
     
-    tk.get_action('resource_view_create')(context, format_views[r_format])
+    tk.get_action('resource_view_create')(context, view)
     
 def update_package(context):
     package = context['package']
