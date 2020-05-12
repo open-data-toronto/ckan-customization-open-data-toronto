@@ -144,7 +144,7 @@ def create_resource_views(context, resource):
     format_views[r_format]['resource_id'] = resource['id']
     
     tk.get_action('resource_view_create')(context, format_views[r_format])
-
+    
 def update_package(context):
     package = context['package']
     resources = [
