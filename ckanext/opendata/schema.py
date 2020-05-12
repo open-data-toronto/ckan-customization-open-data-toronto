@@ -110,7 +110,7 @@ def show_tags(vocabulary_id, hexed=False):
 
     return tags
 
-def create_preview_map(context, resource):
+def create_resource_views(context, resource):
     if (resource['datastore_active'] or 'datastore' in resource['url']) and \
         resource.get('format', '').lower() == 'geojson' and \
         resource.get('is_preview', False):
