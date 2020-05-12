@@ -111,28 +111,39 @@ def show_tags(vocabulary_id, hexed=False):
     return tags
 
 def create_resource_views(context, resource):
-    if (resource['datastore_active'] or 'datastore' in resource['url']) and \
-        resource.get('format', '').lower() == 'geojson' and \
-        resource.get('is_preview', False):
-
-        views = tk.get_action('resource_view_list')(context, {
-            'id': resource['id']
-        })
-
-        for v in views:
-            if v['view_type'] == 'recline_map_view':
-                return
-
-        tk.get_action('resource_view_create')(context, {
-            'resource_id': resource['id'],
+    format_views = {
+        'geojson': {
             'title': 'Map',
             'view_type': 'recline_map_view',
             'auto_zoom': True,
             'cluster_markers': False,
             'map_field_type': 'geojson',
             'limit': 500
-            # 'geojson_field': 'geometry'
-        })
+            },
+        'csv':  {
+            'title': 'Visualizer',
+            'view_type': 'visualize'
+            }
+    }
+
+    r_format = resource.get('format', '').lower()
+
+    if not (resource['datastore_active'] or 'datastore' in resource['url']) \
+        and resource.get('is_preview', False) \
+        and r_format in format_views.keys():
+        return
+
+    views = tk.get_action('resource_view_list')(context, {
+        'id': resource['id']
+    })
+
+    for v in views:
+        if v['view_type'] == format_views[r_format]['view_type']:
+            return
+    
+    format_views[r_format]['resource_id'] = resource['id']
+    
+    tk.get_action('resource_view_create')(context, format_views[r_format])
 
 def update_package(context):
     package = context['package']
