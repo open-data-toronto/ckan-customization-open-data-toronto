@@ -123,11 +123,11 @@ def create_resource_views(context, resource):
     }
 
     resource_format = resource.get("format", "").lower()
-
-    if (
-        not (resource["datastore_active"] or "datastore" in resource["url"])
-        and resource.get("is_preview", False)
-        and resource_format in format_views.keys()
+    
+    if not all(
+        (resource["datastore_active"] or "datastore" in resource["url"]),
+        resource_format in format_views.keys(),
+        resource.get("is_preview", False)
     ):
         return
 
