@@ -4,6 +4,7 @@ import constants
 import utils
 
 import ckan.plugins.toolkit as tk
+import logging
 
 
 # Default behaviours for custom fields
@@ -123,12 +124,11 @@ def create_resource_views(context, resource):
     }
 
     resource_format = resource.get("format", "").lower()
-    
-    if not all(
+
+    if not all([
         (resource["datastore_active"] or "datastore" in resource["url"]),
         resource_format in format_views.keys(),
-        resource.get("is_preview", False)
-    ):
+    ]):
         return
 
     view = format_views.pop(resource_format)
