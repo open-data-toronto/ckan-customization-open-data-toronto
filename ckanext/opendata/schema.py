@@ -125,10 +125,12 @@ def create_resource_views(context, resource):
 
     resource_format = resource.get("format", "").lower()
 
-    if not all([
-        (resource["datastore_active"] or "datastore" in resource["url"]),
-        resource_format in format_views.keys(),
-    ]):
+    if not all(
+        [
+            (resource["datastore_active"] or "datastore" in resource["url"]),
+            resource_format in format_views.keys(),
+        ]
+    ):
         return
 
     view = format_views.pop(resource_format)
