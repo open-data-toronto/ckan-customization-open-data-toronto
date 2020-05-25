@@ -26,11 +26,12 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'extract_info': api.extract_info,
-            'quality_show': api.get_quality_score,
-            'search_packages': api.query_packages,
-            'search_facet': api.query_facet
+            "extract_info": api.extract_info,
+            "quality_show": api.get_quality_score,
+            "search_packages": api.query_packages,
+            "search_facet": api.query_facet,
         }
+
 
 class ExtendedURLPlugin(p.SingletonPlugin):
     p.implements(p.IRoutes, inherit=True)
@@ -41,18 +42,19 @@ class ExtendedURLPlugin(p.SingletonPlugin):
 
     def before_map(self, m):
         m.connect(
-            '/download_resource/{resource_id}',
-            controller='ckanext.opendata.downloads:DownloadsController',
-            action='download_data'
+            "/download_resource/{resource_id}",
+            controller="ckanext.opendata.downloads:DownloadsController",
+            action="download_data",
         )
 
         m.connect(
-            '/tags_autocomplete',
-            controller='ckanext.opendata.tags:TagsController',
-            action='match_tags'
+            "/tags_autocomplete",
+            controller="ckanext.opendata.tags:TagsController",
+            action="match_tags",
         )
 
         return m
+
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
@@ -66,7 +68,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     # Add the plugin template's directory to CKAN UI
     def update_config(self, config):
-        tk.add_template_directory(config, 'templates')
+        tk.add_template_directory(config, "templates")
 
     # ==============================
     # IDataset
@@ -86,7 +88,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def show_package_schema(self):
         struc = super(UpdateSchemaPlugin, self).show_package_schema()
-        struc['tags']['__extras'].append(tk.get_converter('free_tags_only'))
+        struc["tags"]["__extras"].append(tk.get_converter("free_tags_only"))
 
         struc = schema.get_package_schema(struc, show=True)
 
@@ -99,34 +101,34 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
         return []
 
     def get_helpers(self):
-        return {
-            'show_tags': schema.show_tags
-        }
+        return {"show_tags": schema.show_tags}
 
     # ==============================
     # IResourceController
     # ==============================
 
     def before_create(self, context, resource):
-        package = tk.get_action('package_show')(
-            context, { 'id': resource['package_id'] }
-        )
+        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
 
-        for idx, r in enumerate(package['resources']):
-            if r['name'] == resource['name']:
-                raise tk.ValidationError({
-                    'constraints': [
-                        'A resource with {name} already exists \
-                            for this package'.format(name=r['name'])
-                    ]
-                })
+        for idx, r in enumerate(package["resources"]):
+            if r["name"] == resource["name"]:
+                raise tk.ValidationError(
+                    {
+                        "constraints": [
+                            "A resource with {name} already exists \
+                            for this package".format(
+                                name=r["name"]
+                            )
+                        ]
+                    }
+                )
 
-        if not ('format' in resource and resource['format']):
-            resource['format'] = resource['url'].split('.')[-1]
+        if not ("format" in resource and resource["format"]):
+            resource["format"] = resource["url"].split(".")[-1]
 
-        resource['format'] = resource['format'].upper()
+        resource["format"] = resource["format"].upper()
 
-        utils.validate_tag_in_vocab(resource['format'], 'formats')
+        utils.validate_tag_in_vocab(resource["format"], "formats")
 
     def after_create(self, context, resource):
         schema.create_resource_views(context, resource)
