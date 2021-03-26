@@ -120,7 +120,6 @@ def create_resource_views(context, resource):
             "map_field_type": "geojson",
             "limit": 500,
         },
-        "csv": {"title": "Visualizer", "view_type": "visualize"},
     }
 
     resource_format = resource.get("format", "").lower()
