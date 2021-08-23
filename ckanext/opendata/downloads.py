@@ -1,4 +1,3 @@
-from ckan.lib.base import BaseController
 from shapely.geometry import shape
 
 import ckan.plugins.toolkit as tk
@@ -16,17 +15,23 @@ import tempfile
 
 from . import constants, utils
 
+def _datastore_dump(resource):
+    # get format of resource
+    format = resource["format"]
 
 def _write_datastore(params, resource):
+    # get format and projection from the request headers - likely the input GET url params
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
     projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
 
+    # make sure these formats make sense together and determine if the resource is geospatial
     is_geospatial = utils.is_geospatial(resource["id"])
 
     assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
         not is_geospatial and format in constants.TABULAR_FORMATS
     ), "Inconsistency between data type and requested file format"
 
+    # Get data from the datastore by using a datastore/dump call
     # Is this the best way to fetch data from datastore tables?
     raw = requests.get(
         "{host}/datastore/dump/{resource_id}".format(
@@ -34,16 +39,19 @@ def _write_datastore(params, resource):
         )
     ).content.decode("utf-8")
 
+    # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas
     df = pd.read_csv(io.StringIO(raw))
 
     del raw
 
+    # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
         df["geometry"] = df["geometry"].apply(
             lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x))
         )
 
+    # make this a geodataframe
         df = gpd.GeoDataFrame(
             df,
             crs={"init": "epsg:{0}".format(constants.DOWNLOAD_PROJECTION)},
@@ -52,10 +60,12 @@ def _write_datastore(params, resource):
 
     # TODO: validate that the resource name doesn't already contain format
 
+    
     # WISHLIST: store conversion in memory instead of write to disk
     tmp_dir = tempfile.mkdtemp()
     path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
+    # turn the geodataframe into a file
     output = iotrans.to_file(
         df,
         path,
@@ -65,9 +75,12 @@ def _write_datastore(params, resource):
 
     del df
 
+    # ... read the file in tk.response.write()
+    # this likely creates the actual response returned by the function
     with open(output, "rb") as f:
         tk.response.write(f.read())
 
+    # delete the tmp dir used above to make the file
     iotrans.utils.prune(tmp_dir)
     gc.collect()
 
@@ -78,16 +91,3 @@ def _write_datastore(params, resource):
     return fn, mt
 
 
-class DownloadsController(BaseController):
-    def download_data(self, resource_id):
-        resource = tk.get_action("resource_show")(None, {"id": resource_id})
-
-        if not resource["datastore_active"]:
-            tk.redirect_to(resource["url"])
-        else:
-            filename, mimetype = _write_datastore(tk.request.GET, resource)
-
-            tk.response.headers["Content-Type"] = mimetype
-            tk.response.headers[
-                "Content-Disposition"
-            ] = b'attachment; filename="{0}"'.format(filename)

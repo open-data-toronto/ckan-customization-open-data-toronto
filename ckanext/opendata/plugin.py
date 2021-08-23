@@ -1,8 +1,9 @@
 from ckan.common import config
 
+from flask import Blueprint
 #from urllib.urlparse import urlsplit, urlunsplit
 
-from . import api, constants, schema, utils
+from . import api, constants, schema, utils, downloads
 
 import ckan.lib.helpers as h
 
@@ -13,6 +14,19 @@ import codecs
 import datetime as dt
 import re
 
+def download_data(resource_id):
+    resource = tk.get_action("resource_show")(None, {"id": resource_id})
+
+    if not resource["datastore_active"]:
+        tk.redirect_to(resource["url"])
+    else:
+        #filename, mimetype = downloads._write_datastore(tk.request.GET, resource)
+        filename, mimetype = downloads._datastore_dump(resource)
+
+        tk.response.headers["Content-Type"] = mimetype
+        tk.response.headers[
+            "Content-Disposition"
+        ] = b'attachment; filename="{0}"'.format(filename)
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
@@ -31,12 +45,39 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
 
 class ExtendedURLPlugin(p.SingletonPlugin):
+
+    print("=====================================================================")
+    print("Extended URL Plugin - Pre Implements")
+    print("=====================================================================")
+    p.implements(p.IBlueprint)
+    print("=====================================================================")
+    print("Extended URL Plugin - Post Implements")
+    print("=====================================================================")
+
+    def get_blueprint(self):
+        print("=====================================================================")
+        print("Extended URL Plugin - get_blueprints()")
+        print("=====================================================================")
+        blueprint = Blueprint('extendedurl', self.__module__)
+        
+        blueprint.add_url_rule("/download_resource/<resource_id>", 
+            methods=["GET", "POST"], 
+            view_func=download_data
+        )
+
+        return blueprint
+
+    '''
+    # pre 2.9 url providing
+
     p.implements(p.IRoutes, inherit=True)
 
     # ==============================
     # IRoutes
     # ==============================
 
+    
+    
     def before_map(self, m):
         m.connect(
             "/download_resource/{resource_id}",
@@ -51,6 +92,8 @@ class ExtendedURLPlugin(p.SingletonPlugin):
         )
 
         return m
+    '''
+    
 
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
