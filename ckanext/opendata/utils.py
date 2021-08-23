@@ -1,6 +1,6 @@
 from ckan.lib.navl.dictization_functions import missing
 
-import constants
+from . import constants
 
 import ckan.plugins.toolkit as tk
 import mimetypes

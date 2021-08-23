@@ -1,11 +1,8 @@
 from ckan.common import config
 
-from urlparse import urlsplit, urlunsplit
+#from urllib.urlparse import urlsplit, urlunsplit
 
-import api
-import constants
-import schema
-import utils
+from . import api, constants, schema, utils
 
 import ckan.lib.helpers as h
 

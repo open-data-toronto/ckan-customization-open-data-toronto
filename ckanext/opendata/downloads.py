@@ -14,8 +14,7 @@ import json
 import os
 import tempfile
 
-import constants
-import utils
+from . import constants, utils
 
 
 def _write_datastore(params, resource):

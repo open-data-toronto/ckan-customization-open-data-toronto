@@ -1,7 +1,6 @@
 from six import string_types
 
-import constants
-import utils
+from . import constants, utils
 
 import ckan.plugins.toolkit as tk
 import logging

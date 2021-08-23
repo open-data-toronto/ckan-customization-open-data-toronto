@@ -2,8 +2,7 @@ from datetime import datetime
 
 from ckan.logic import ValidationError
 
-import constants
-import utils
+from . import constants, utils
 
 import ckan.plugins.toolkit as tk
 
