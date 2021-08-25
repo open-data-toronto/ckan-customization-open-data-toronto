@@ -21,11 +21,19 @@ def _datastore_dump(resource):
 
 def _write_datastore(params, resource):
     # get format and projection from the request headers - likely the input GET url params
+    print("========================================")
+    print(params)
+    print("========================================")
+
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
     projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
 
     # make sure these formats make sense together and determine if the resource is geospatial
     is_geospatial = utils.is_geospatial(resource["id"])
+
+    print("========================================")
+    print(is_geospatial)
+    print("========================================")
 
     assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
         not is_geospatial and format in constants.TABULAR_FORMATS
@@ -38,6 +46,10 @@ def _write_datastore(params, resource):
             host=tk.config["ckan.site_url"], resource_id=resource["id"]
         )
     ).content.decode("utf-8")
+
+    print("========================================")
+    print(len(raw))
+    print("========================================")
 
     # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas

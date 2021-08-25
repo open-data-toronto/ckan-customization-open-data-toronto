@@ -1,6 +1,6 @@
 from ckan.common import config
 
-from flask import Blueprint
+from flask import Blueprint, request
 #from urllib.urlparse import urlsplit, urlunsplit
 
 from . import api, constants, schema, utils, downloads
@@ -21,7 +21,7 @@ def download_data(resource_id):
         tk.redirect_to(resource["url"])
     else:
         #filename, mimetype = downloads._write_datastore(tk.request.GET, resource)
-        filename, mimetype = downloads._datastore_dump(resource)
+        filename, mimetype = downloads._write_datastore(request.args, resource)
 
         tk.response.headers["Content-Type"] = mimetype
         tk.response.headers[
@@ -61,7 +61,7 @@ class ExtendedURLPlugin(p.SingletonPlugin):
         blueprint = Blueprint('extendedurl', self.__module__)
         
         blueprint.add_url_rule("/download_resource/<resource_id>", 
-            methods=["GET", "POST"], 
+            methods=["GET"], 
             view_func=download_data
         )
 
