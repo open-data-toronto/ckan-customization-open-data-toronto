@@ -1,4 +1,5 @@
 from shapely.geometry import shape
+from flask import Response
 
 import ckan.plugins.toolkit as tk
 
@@ -41,19 +42,24 @@ def _write_datastore(params, resource):
 
     # Get data from the datastore by using a datastore/dump call
     # Is this the best way to fetch data from datastore tables?
-    raw = requests.get(
-        "{host}/datastore/dump/{resource_id}".format(
-            host=tk.config["ckan.site_url"], resource_id=resource["id"]
-        )
-    ).content.decode("utf-8")
+    length = tk.get_action("datastore_info")(None, {"id": resource["id"]})["meta"]["count"]
+    raw = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "limit": length})
+    #raw = requests.get(
+    #    "{host}/datastore/dump/{resource_id}".format(
+    #        host=tk.config["ckan.site_url"], resource_id=resource["id"]
+    #    )
+    #).content.decode("utf-8")
 
     print("========================================")
-    print(len(raw))
+    print(raw)
+    print(type(raw["records"]))
+    print(raw["records"][:])
+    print(raw["records"][0])
     print("========================================")
 
     # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas
-    df = pd.read_csv(io.StringIO(raw))
+    df = pd.DataFrame( raw["records"][:] )
 
     del raw
 
@@ -89,8 +95,11 @@ def _write_datastore(params, resource):
 
     # ... read the file in tk.response.write()
     # this likely creates the actual response returned by the function
+    
+    # this is unclear and causes an error so im commenting it out for now
     with open(output, "rb") as f:
-        tk.response.write(f.read())
+        #response_object.set_data( f.read() )
+        response = f.read() 
 
     # delete the tmp dir used above to make the file
     iotrans.utils.prune(tmp_dir)
@@ -100,6 +109,6 @@ def _write_datastore(params, resource):
     fn = "{0}.{1}".format(resource["name"], output.split(".")[-1])
     mt = utils.get_mimetype(fn)
 
-    return fn, mt
+    return fn, mt, response
 
 

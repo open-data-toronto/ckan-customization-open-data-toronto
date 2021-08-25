@@ -1,6 +1,6 @@
 from ckan.common import config
 
-from flask import Blueprint, request
+from flask import Blueprint, request, Response
 #from urllib.urlparse import urlsplit, urlunsplit
 
 from . import api, constants, schema, utils, downloads
@@ -17,16 +17,27 @@ import re
 def download_data(resource_id):
     resource = tk.get_action("resource_show")(None, {"id": resource_id})
 
+    # init flask response
+    #@ resp = flask.Response()
+
     if not resource["datastore_active"]:
         tk.redirect_to(resource["url"])
     else:
         #filename, mimetype = downloads._write_datastore(tk.request.GET, resource)
-        filename, mimetype = downloads._write_datastore(request.args, resource)
+        filename, mimetype, data = downloads._write_datastore(request.args, resource)
 
-        tk.response.headers["Content-Type"] = mimetype
-        tk.response.headers[
-            "Content-Disposition"
-        ] = b'attachment; filename="{0}"'.format(filename)
+        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        print(filename)
+        print(mimetype)
+        print(Response)
+        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+        resp = Response(headers = {"Content-Disposition": 'attachment; filename="{0}"'.format(filename)} )
+        resp.content_type = mimetype
+        resp.set_data( data )
+        #resp.headers["Content-Disposition"] = b'attachment; filename="{0}"'.format(filename)
+
+        return resp
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
