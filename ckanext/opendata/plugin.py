@@ -26,12 +26,6 @@ def download_data(resource_id):
         #filename, mimetype = downloads._write_datastore(tk.request.GET, resource)
         filename, mimetype, data = downloads._write_datastore(request.args, resource)
 
-        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        print(filename)
-        print(mimetype)
-        print(Response)
-        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
         resp = Response(headers = {"Content-Disposition": 'attachment; filename="{0}"'.format(filename)} )
         resp.content_type = mimetype
         resp.set_data( data )
@@ -56,19 +50,10 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
 
 class ExtendedURLPlugin(p.SingletonPlugin):
-
-    print("=====================================================================")
-    print("Extended URL Plugin - Pre Implements")
-    print("=====================================================================")
+    
     p.implements(p.IBlueprint)
-    print("=====================================================================")
-    print("Extended URL Plugin - Post Implements")
-    print("=====================================================================")
 
     def get_blueprint(self):
-        print("=====================================================================")
-        print("Extended URL Plugin - get_blueprints()")
-        print("=====================================================================")
         blueprint = Blueprint('extendedurl', self.__module__)
         
         blueprint.add_url_rule("/download_resource/<resource_id>", 

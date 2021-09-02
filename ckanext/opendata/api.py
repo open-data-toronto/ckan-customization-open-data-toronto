@@ -21,29 +21,30 @@ def build_query(query):
 
     q = []
 
-    for k, v in query.items():
-        if not len(v):
+    for k, v in query.items():                          # For everything in the input API call's parameters...
+        if not len(v):                                      # ignore empty strings and non-strings
             continue
 
-        if k.endswith("[]"):
-            f = k[:-2]
+        if k.endswith("[]"):                                # If a key ends in [] ...
+            f = k[:-2]                                          # remove [] at end of key names and turn the values into a list
             v = utils.to_list(v)
 
-            if f in ["dataset_category", "vocab_formats"]:
+            if f in ["dataset_category", "vocab_formats"]:      # join dataset_category and vocab_formats as vars, not strings, to "terms"
                 terms = " AND ".join(["{x}".format(x=term) for term in v])
-            elif f in [
+            elif f in [                                         # other terms in list below are added as strings to "terms"
                 "owner_division",
                 "refresh_rate",
                 "vocab_topics",
                 "vocab_civic_issues",
             ]:
                 terms = " AND ".join(['"{x}"'.format(x=term) for term in v])
-            else:
+            else:                                               # words not in this list are not added to the "terms"
                 continue
 
-            q.append("{key}:({value})".format(key=f, value=terms))
-        elif k == "search":
-            for w in v.lower().split(" "):
+            q.append("{key}:({value})".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
+        
+        elif k == "search":                                 # When a key is "search" (this is when users enter terms into the opentext search bar) ...
+            for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
                 q.append(
                     "(name:(*{0}*))^5.0 OR "
                     "(tags:(*{1}*))^5.0 OR"
@@ -80,6 +81,8 @@ def get_quality_score(context, data_dict):
 
 @tk.side_effect_free
 def extract_info(context, data_dict):
+    # returns summary statistics regarding a particular CKAN resource
+    # the time this is called from the open.toronto.ca UI is unclear
     resource_id = data_dict.get("resource_id")
 
     if resource_id is None:
@@ -102,33 +105,41 @@ def extract_info(context, data_dict):
 
 @tk.side_effect_free
 def query_facet(context, data_dict):
+    # runs package_search API call with input parameters
+    # this is triggered in the UI when someone clicks on a Dataset Filter
     q = build_query(data_dict)
 
-    return tk.get_action("package_search")(
+    output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["({x})".format(x=x) for x in q]),
-            "rows": 0,
-            "facet": "on",
-            "facet.limit": -1,
-            "facet.field": utils.to_list(data_dict["facet_field[]"]),
+            "q": " AND ".join(["({x})".format(x=x) for x in q]),        # solr query
+            "rows": 0,                                                  # max number of rows shown - presumably 0 is maximum
+            "facet": "on",                                              # whether to enable faceted results
+            "facet.limit": -1,                                          # number of values a facet field can return - negative is infinite
+            "facet.field": utils.to_list(data_dict["facet_field[]"]),   # fields to facet on - this list typically includes a list of all the dataset filter names
         },
     )
+
+    print("=======================================================================")
+    print(output)
+    print("=======================================================================")
+
+    return output
 
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
     q = build_query(data_dict)
 
-    params = constants.CATALOGUE_SEARCH.copy()
+    params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
 
     return tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["({x})".format(x=x) for x in q]),
-            "rows": params["rows"],
-            "sort": params["sort"],
-            "start": params["start"],
+            "q": " AND ".join(["({x})".format(x=x) for x in q]),        # solr query
+            "rows": params["rows"],                                     
+            "sort": params["sort"],                                     # this is solr specific
+            "start": params["start"],                                   # since its 0: start the returned dataset at the first record
         },
     )
