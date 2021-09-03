@@ -36,6 +36,12 @@ def build_query(query):
                 "refresh_rate",
                 "vocab_topics",
                 "vocab_civic_issues",
+                "custom_attribute_test_id"  # this is a test attribute put in to see if scheming works with this extension - it does
+                                            # to get scheming and extendedapi to work together, add a custom attribute to a datasets schema
+                                            # add that custom attribute to a query_packages call's params, but make sure its name ends in [] in the call
+                                            # add that custom attributes name to the array above, like "custom_attribute_test_id"
+                                            # restart ckan, make the api call, and see only packages w/ a value that matches the one in your api call returned
+                
             ]:
                 terms = " AND ".join(['"{x}"'.format(x=term) for term in v])
             else:                                               # words not in this list are not added to the "terms"
@@ -107,6 +113,8 @@ def extract_info(context, data_dict):
 def query_facet(context, data_dict):
     # runs package_search API call with input parameters
     # this is triggered in the UI when someone clicks on a Dataset Filter
+    # this returns the appearance of the filter panel on the left side of open.toronto.ca intelligently
+    
     q = build_query(data_dict)
 
     output = tk.get_action("package_search")(
@@ -129,10 +137,20 @@ def query_facet(context, data_dict):
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
+    print("=======================================================================")
+    print(data_dict)
+    print("=======================================================================")
     q = build_query(data_dict)
+    print("=======================================================================")
+    print(q)
+    print("=======================================================================")
 
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
+
+    print("=======================================================================")
+    print(" AND ".join(["({x})".format(x=x) for x in q]))
+    print("=======================================================================")
 
     return tk.get_action("package_search")(
         context,
