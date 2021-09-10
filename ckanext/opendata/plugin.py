@@ -110,6 +110,21 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # IDataset
     # ==============================
 
+    # Handles package metadata schemas when theyre created, updated, or shown to a user
+    
+    # In brief, it does the following to the schema:
+    #   dataset_category and refresh_rate are converted into hexes
+    #   excerpt's length is kepy below 350 characters
+    #   empty / errored fields default to None
+    #   author, maintainer, and version are removed
+    #   extract_job and is_preview are added to the resource's schema
+    #   civic_issues, formats, and topics get special treatment:
+    #       theyre saved as references to vocab, instead of the vocab itself
+    #       there is a helper function that translates them back from references to actual vocab strings
+
+    # this is applied to all packages - it is the "fallback" schema
+
+
     def create_package_schema(self):
         struc = super(UpdateSchemaPlugin, self).create_package_schema()
         struc = schema.get_package_schema(struc)
@@ -142,6 +157,14 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     # ==============================
     # IResourceController
     # ==============================
+
+    # Handles resources around their creation, update, and delete times
+    # Specifically:
+    #   makes sure resources that already exist arent created again
+    #   assigns a format tag, based on the filetype of the resource
+    #   makes an error if the format of the file isnt in the vocabulary already
+    #   creates the map preview for geojson data
+    #   updates a package's formats and last_refreshed date based on changes to its resources
 
     def before_create(self, context, resource):
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
