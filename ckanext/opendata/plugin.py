@@ -33,6 +33,7 @@ def download_data(resource_id):
 
         return resp
 
+
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
 
@@ -99,6 +100,23 @@ class ManagePackageSchemaPlugin(p.SingletonPlugin):
     # Hooks to manage package metadata as desired
     # ========================
 
+    def read(self, entity):
+        pass
+    def create(self, entity):
+        pass
+    def edit(self, entity):
+        pass
+    def delete(self, entity):
+        pass
+    def after_create(self, context, pkg_dict):
+        pass
+    def after_update(self, context, pkg_dict):
+        pass
+    def after_delete(self, context, pkg_dict):
+        pass
+    def after_show(self, context, pkg_dict):
+        pass
+
     def before_search(self, search_params):
         # runs before package_search
         print("======================== before search! ===========")
@@ -112,7 +130,10 @@ class ManagePackageSchemaPlugin(p.SingletonPlugin):
         print("======================== after search! ===========")
         print( search_params )
         print( search_results )
-        search_results["search_facets"]["topics"]["items"] = [{ "name": ["LoLoLoLocations and mapping", "Community services"], "display_name": ["Locations and mapping", "Community services"],"count": 1 }]
+        print(search_results.keys())
+        print(search_results["search_facets"].keys())
+        if "topics" in search_results["search_facets"].keys():
+            utils.unstringify( search_results["search_facets"]["topics"]["items"] )
         # TODO - make a function that looks for stringified lists, then:
         #   un-stringifies them into an array
         #   makes them into one array

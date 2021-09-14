@@ -4,6 +4,7 @@ from . import constants
 
 import ckan.plugins.toolkit as tk
 import mimetypes
+import json
 
 import codecs
 
@@ -63,3 +64,28 @@ def validate_tag_in_vocab(tag, vocab):
         raise tk.ValidationError(
             {"constraints": ["Tag {0} is not in the vocabulary {1}".format(tag, vocab)]}
         )
+
+
+def unstringify(input):
+    # inputs "items" dict of a search_facet ...
+    # ... (it will hold arrays that solr turned into a string) ...
+    # outputs a dict for use in /search_facet
+
+    output = []
+    print("!!!!!!!!!!!!!!!! Unstringify !!!!!!!!!!!!!!!!!!")
+    print(input)
+
+    assert isinstance(input, list), "Input to unstringify is not a list, its {}".format(type(input))
+    
+    # for each dict in the input...
+    for item in input:
+        print(item)
+        print(type(item))
+        assert isinstance(item, dict), "Input list to unstringify does not contain dicts"
+        assert "name" in item.keys(), "Input list's dict doesnt have a name attribute"
+        assert "count" in item.keys(), "Input list's dict doesnt have a count attribute"
+
+        
+        print(item["name"] )
+
+

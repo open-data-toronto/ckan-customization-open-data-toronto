@@ -29,13 +29,13 @@ def build_query(query):
             f = k[:-2]                                          # remove [] at end of key names and turn the values into a list
             v = utils.to_list(v)
 
-            if f in ["dataset_category", "vocab_formats"]:      # join dataset_category and vocab_formats as vars, not strings, to "terms"
+            if f in ["dataset_category", "formats"]:      # join dataset_category and vocab_formats as vars, not strings, to "terms"
                 terms = " AND ".join(["{x}".format(x=term) for term in v])
             elif f in [                                         # other terms in list below are added as strings to "terms"
                 "owner_division",
                 "refresh_rate",
-                "vocab_topics",
-                "vocab_civic_issues",
+                "topics",
+                "civic_issues",
                 "custom_attribute_test_id"  # this is a test attribute put in to see if scheming works with this extension - it does
                                             # to get scheming and extendedapi to work together, add a custom attribute to a datasets schema
                                             # add that custom attribute to a query_packages call's params, but make sure its name ends in [] in the call
@@ -137,20 +137,20 @@ def query_facet(context, data_dict):
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
-    print("=======================================================================")
+    print("=======================query_packages_start================================================")
     print(data_dict)
-    print("=======================================================================")
+    print("=======================query_packages================================================")
     q = build_query(data_dict)
-    print("=======================================================================")
+    print("=======================query_packages================================================")
     print(q)
-    print("=======================================================================")
+    print("=======================query_packages================================================")
 
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
 
-    print("=======================================================================")
+    print("========================query_packages===============================================")
     print(" AND ".join(["({x})".format(x=x) for x in q]))
-    print("=======================================================================")
+    print("========================query_packages_end===============================================")
 
     return tk.get_action("package_search")(
         context,
