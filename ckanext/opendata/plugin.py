@@ -91,6 +91,72 @@ class ExtendedURLPlugin(p.SingletonPlugin):
     '''
     
 
+class ManagePackageSchemaPlugin(p.SingletonPlugin):
+    p.implements(p.IPackageController)
+
+    # ========================
+    # IPackageController
+    # Hooks to manage package metadata as desired
+    # ========================
+
+    def before_search(self, search_params):
+        # runs before package_search
+        print("======================== before search! ===========")
+        print( search_params )
+        print("======================== before search! ===========")
+
+        return search_params
+
+    def after_search(self, search_results, search_params):
+        # runs after package_search
+        print("======================== after search! ===========")
+        print( search_params )
+        print( search_results )
+        search_results["search_facets"]["topics"]["items"] = [{ "name": ["LoLoLoLocations and mapping", "Community services"], "display_name": ["Locations and mapping", "Community services"],"count": 1 }]
+        # TODO - make a function that looks for stringified lists, then:
+        #   un-stringifies them into an array
+        #   makes them into one array
+        #   counts distinct values in that array
+        #   returns a dict object like this:
+        """
+        "vocab_topics": {
+                "items": [
+                    {
+                        "count": 9,
+                        "display_name": "Transportation",
+                        "name": "Transportation"
+                    },
+                    {
+                        "count": 1,
+                        "display_name": "Public safety",
+                        "name": "Public safety"
+                    },
+                    {
+                        "count": 1,
+                        "display_name": "Parks and recreation",
+                        "name": "Parks and recreation"
+                    }
+                ],
+                "title": "vocab_topics"
+        """
+        print("======================== after search! ===========")
+
+        return search_results
+
+    def before_index(self, pkg_dict):
+        print("======================== before index! ===========")
+        print(pkg_dict)
+        print("======================== before index! ===========")
+
+        return pkg_dict
+
+    def before_view(self, pkg_dict):
+        # runs before /package_show
+        print("======================== before view! ===========")
+        print(pkg_dict)
+        print("======================== before view! ===========")
+
+        return pkg_dict
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
