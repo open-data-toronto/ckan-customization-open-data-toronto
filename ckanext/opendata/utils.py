@@ -38,8 +38,8 @@ def is_geospatial(resource_id):
 def to_list(l):
     if not isinstance(l, list):
         return [l]
-
-    return l
+    else:
+        return [item.replace("vocab_", "") for item in l]
 
 
 def validate_length(key, data, errors, context):

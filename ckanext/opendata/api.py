@@ -25,8 +25,10 @@ def build_query(query):
         if not len(v):                                      # ignore empty strings and non-strings
             continue
 
-        if k.endswith("[]"):                                # If a key ends in [] ...
+        if k.endswith("[]") and k != "facet_field[]":                                # If a key ends in [] ...
             f = k[:-2]                                          # remove [] at end of key names and turn the values into a list
+            if f.startswith("vocab_"):                          # if there is a vocab_ prefix in the key name, remove that too
+                f = f[6:]    
             v = utils.to_list(v)
 
             """
@@ -48,7 +50,8 @@ def build_query(query):
             else:                                               # words not in this list are not added to the "terms"
                 continue
             """
-            terms = " AND ".join(["{x}".format(x=term) for term in v])
+            
+            terms = " AND ".join(["{x}".format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
             q.append("{key}:*({value})*".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
         
         elif k == "search":                                 # When a key is "search" (this is when users enter terms into the opentext search bar) ...
@@ -120,8 +123,10 @@ def query_facet(context, data_dict):
 
     q = build_query(data_dict)
 
+    print(data_dict)
     print(q)
     print( " AND ".join(["({x})".format(x=x) for x in q]) )
+    print(utils.to_list(data_dict["facet_field[]"]))
     output = tk.get_action("package_search")(
         context,
         {
