@@ -71,6 +71,7 @@ def unstringify(input):
     # ... (it will hold arrays that solr turned into a string) ...
     # outputs a dict for use in /search_facet
 
+    terms = []
     output = []
     print("!!!!!!!!!!!!!!!! Unstringify !!!!!!!!!!!!!!!!!!")
     print(input)
@@ -79,13 +80,28 @@ def unstringify(input):
     
     # for each dict in the input...
     for item in input:
-        print(item)
-        print(type(item))
+        
         assert isinstance(item, dict), "Input list to unstringify does not contain dicts"
         assert "name" in item.keys(), "Input list's dict doesnt have a name attribute"
         assert "count" in item.keys(), "Input list's dict doesnt have a count attribute"
 
+        # take the item out of its list, and put them in one big array
+        terms += json.loads(item["name"]) 
+
+    # get the distinct terms and make an output dict structure for them
+    for term in set(terms):
+        item = {
+            "count": 0,
+            "display_name": term,
+            "name": term
+        }
+        # update the count attribute in the appropriate dict in the output dict
+        for value in terms:
+            if term == value:
+                item["count"] += 1
         
-        print(item["name"] )
+        output.append( item )
+    
+    return output
 
 

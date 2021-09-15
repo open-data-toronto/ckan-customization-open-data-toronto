@@ -29,6 +29,7 @@ def build_query(query):
             f = k[:-2]                                          # remove [] at end of key names and turn the values into a list
             v = utils.to_list(v)
 
+            """
             if f in ["dataset_category", "formats"]:      # join dataset_category and vocab_formats as vars, not strings, to "terms"
                 terms = " AND ".join(["{x}".format(x=term) for term in v])
             elif f in [                                         # other terms in list below are added as strings to "terms"
@@ -46,8 +47,9 @@ def build_query(query):
                 terms = " AND ".join(['"{x}"'.format(x=term) for term in v])
             else:                                               # words not in this list are not added to the "terms"
                 continue
-
-            q.append("{key}:({value})".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
+            """
+            terms = " AND ".join(["{x}".format(x=term) for term in v])
+            q.append("{key}:*({value})*".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
         
         elif k == "search":                                 # When a key is "search" (this is when users enter terms into the opentext search bar) ...
             for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
@@ -114,9 +116,12 @@ def query_facet(context, data_dict):
     # runs package_search API call with input parameters
     # this is triggered in the UI when someone clicks on a Dataset Filter
     # this returns the appearance of the filter panel on the left side of open.toronto.ca intelligently
-    
+    print("======================search_facets start=================================================")
+
     q = build_query(data_dict)
 
+    print(q)
+    print( " AND ".join(["({x})".format(x=x) for x in q]) )
     output = tk.get_action("package_search")(
         context,
         {
@@ -127,10 +132,10 @@ def query_facet(context, data_dict):
             "facet.field": utils.to_list(data_dict["facet_field[]"]),   # fields to facet on - this list typically includes a list of all the dataset filter names
         },
     )
-
-    print("======================search_facets=================================================")
     print(output)
-    print("======================search_facets=================================================")
+
+    
+    print("======================search_facets end=================================================")
 
     return output
 
