@@ -1,7 +1,6 @@
 from ckan.common import config
 
 from flask import Blueprint, request, Response
-#from urllib.urlparse import urlsplit, urlunsplit
 
 from . import api, constants, schema, utils, downloads
 
@@ -178,6 +177,21 @@ class ManagePackageSchemaPlugin(p.SingletonPlugin):
         print("======================== before view! ===========")
 
         return pkg_dict
+
+
+class ExtendedValidatorsPlugin(p.SingletonPlugin):
+    p.implements(p.IValidators)
+
+    # ===============
+    # IValidators
+    # Validates package / resource metadata attributes
+    # ===============
+
+    def get_validators(self):
+        return {
+            'validate_length': utils.validate_length
+        }
+
 
 class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
     p.implements(p.IConfigurer)
