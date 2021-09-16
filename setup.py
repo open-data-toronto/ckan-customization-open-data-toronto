@@ -35,7 +35,6 @@ setup(
     entry_points="""
         [ckan.plugins]
         managepackageschema=ckanext.opendata.plugin:ManagePackageSchemaPlugin
-        extendedvalidators=ckanext.opendata.plugin:ExtendedValidatorsPlugin
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
         extendedurl=ckanext.opendata.plugin:ExtendedURLPlugin
         extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin

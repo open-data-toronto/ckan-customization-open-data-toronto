@@ -145,6 +145,7 @@ def create_resource_views(context, resource):
 
 
 def update_package(context):
+    print("=================== update package start ==============")
     package = context["package"]
     resources = [r for r in package.resources_all if r.state == "active"]
 
@@ -154,6 +155,8 @@ def update_package(context):
     for r in resources:
         resource_format = r.format.upper()
 
+        # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)
+        # the logic below ensures that other formats are tagged to those resources based on whether theyre spatial
         if (
             "datastore_active" in r.extras and r.extras["datastore_active"]
         ) or r.url_type == "datastore":
@@ -165,17 +168,26 @@ def update_package(context):
         else:
             formats.add(resource_format)
 
+        print(r.created)
+        print(type(r.created))
+        print(r.last_modified)
+        print(type(r.last_modified))
+
         last_refreshed.append(r.created if r.last_modified is None else r.last_modified)
 
-    formats = ",".join(list(formats)) if len(formats) else None
+    # make sure the package's last refreshed date is the latest last refreshed date of its resources
+    # formats = ",".join(list(formats)) if len(formats) else None
     last_refreshed = (
         max(last_refreshed).strftime("%Y-%m-%dT%H:%M:%S.%f")
         if len(last_refreshed)
         else None
     )
 
-    if formats != package.formats or last_refreshed != package.last_refreshed:
+    #if formats != package.formats or 
+    print(package)
+    print(last_refreshed)
+    if last_refreshed != tk.get_action("package_show")(context, {"id": package.id})["last_refreshed"]:
         tk.get_action("package_patch")(
             context,
-            {"id": package.id, "formats": formats, "last_refreshed": last_refreshed},
+            {"id": package.id, "last_refreshed": last_refreshed}#, "formats": formats},
         )

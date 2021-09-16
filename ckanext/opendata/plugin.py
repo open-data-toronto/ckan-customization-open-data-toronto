@@ -177,9 +177,13 @@ class ManagePackageSchemaPlugin(p.SingletonPlugin):
         print("======================== before view! ===========")
 
         return pkg_dict
+    
 
-
-class ExtendedValidatorsPlugin(p.SingletonPlugin):
+class UpdateSchemaPlugin(p.SingletonPlugin):
+    #p.implements(p.IConfigurer)
+    #p.implements(p.IDatasetForm)
+    p.implements(p.IResourceController, inherit=True)
+    #p.implements(p.ITemplateHelpers)
     p.implements(p.IValidators)
 
     # ===============
@@ -191,21 +195,13 @@ class ExtendedValidatorsPlugin(p.SingletonPlugin):
         return {
             'validate_length': utils.validate_length
         }
-
-
-class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
-    p.implements(p.IConfigurer)
-    p.implements(p.IDatasetForm)
-    p.implements(p.IResourceController, inherit=True)
-    p.implements(p.ITemplateHelpers)
-
     # ==============================
     # IConfigurer
     # ==============================
 
     # Add the plugin template's directory to CKAN UI
-    def update_config(self, config):
-        tk.add_template_directory(config, "templates")
+    #def update_config(self, config):
+    #    tk.add_template_directory(config, "templates")
 
     # ==============================
     # IDataset
@@ -225,7 +221,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     # this is applied to all packages - it is the "fallback" schema
 
-
+    """
     def create_package_schema(self):
         struc = super(UpdateSchemaPlugin, self).create_package_schema()
         struc = schema.get_package_schema(struc)
@@ -254,7 +250,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
     def get_helpers(self):
         return {"show_tags": schema.show_tags}
-
+    """
     # ==============================
     # IResourceController
     # ==============================
@@ -275,7 +271,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
                 raise tk.ValidationError(
                     {
                         "constraints": [
-                            "A resource with {name} already exists \
+                            "A resource with the name {name} already exists \
                             for this package".format(
                                 name=r["name"]
                             )
@@ -285,10 +281,10 @@ class UpdateSchemaPlugin(p.SingletonPlugin, tk.DefaultDatasetForm):
 
         if not ("format" in resource and resource["format"]):
             resource["format"] = resource["url"].split(".")[-1]
-
+        
         resource["format"] = resource["format"].upper()
-
-        utils.validate_tag_in_vocab(resource["format"], "formats")
+        
+        #utils.validate_tag_in_vocab(resource["format"], "formats")
 
     def after_create(self, context, resource):
         schema.create_resource_views(context, resource)
