@@ -39,7 +39,10 @@ def to_list(l):
     if not isinstance(l, list):
         return [l]
     else:
-        return [item.replace("vocab_", "") for item in l]
+        # If the item is already a list from wordpress, it 
+        # may have "vocab_" as an unnecessary prefix to certain 
+        # values, specifically when running extendedapi's /search_facets
+        return [item.replace("vocab_", "") if item.startswith("vocab_") else item for item in l]
 
 
 def validate_length(key, data, errors, context):
@@ -73,8 +76,6 @@ def unstringify(input):
 
     terms = []
     output = []
-    print("!!!!!!!!!!!!!!!! Unstringify !!!!!!!!!!!!!!!!!!")
-    print(input)
 
     assert isinstance(input, list), "Input to unstringify is not a list, its {}".format(type(input))
     

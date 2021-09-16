@@ -9,8 +9,9 @@ import ckan.plugins.toolkit as tk
 
 def build_query(query):
     """
-        Parses parameters from frontend search inputs to respective CKAN fields
-        and SOLR queries with logic.
+        Takes inputs to api calls 
+        maps those inputs to respective CKAN fields
+        and SOLR queries and returns a valid query
 
         Args:
             query: Content passed from the API call from the frontend
@@ -30,26 +31,6 @@ def build_query(query):
             if f.startswith("vocab_"):                          # if there is a vocab_ prefix in the key name, remove that too
                 f = f[6:]    
             v = utils.to_list(v)
-
-            """
-            if f in ["dataset_category", "formats"]:      # join dataset_category and vocab_formats as vars, not strings, to "terms"
-                terms = " AND ".join(["{x}".format(x=term) for term in v])
-            elif f in [                                         # other terms in list below are added as strings to "terms"
-                "owner_division",
-                "refresh_rate",
-                "topics",
-                "civic_issues",
-                "custom_attribute_test_id"  # this is a test attribute put in to see if scheming works with this extension - it does
-                                            # to get scheming and extendedapi to work together, add a custom attribute to a datasets schema
-                                            # add that custom attribute to a query_packages call's params, but make sure its name ends in [] in the call
-                                            # add that custom attributes name to the array above, like "custom_attribute_test_id"
-                                            # restart ckan, make the api call, and see only packages w/ a value that matches the one in your api call returned
-                
-            ]:
-                terms = " AND ".join(['"{x}"'.format(x=term) for term in v])
-            else:                                               # words not in this list are not added to the "terms"
-                continue
-            """
             
             terms = " AND ".join(["{x}".format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
             q.append("{key}:*({value})*".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
@@ -99,12 +80,9 @@ def extract_info(context, data_dict):
     if resource_id is None:
         raise ValidationError("Missing resource ID")
 
-    count = tk.get_action("datastore_info")(context, {"id": resource_id})["meta"][
-        "count"
-    ]
+    count = tk.get_action("datastore_info")(context, {"id": resource_id})["meta"]["count"]
 
     dt = tk.get_action("resource_show")(context, {"id": resource_id})["last_modified"]
-
     d = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f").date()
 
     return {
@@ -119,14 +97,9 @@ def query_facet(context, data_dict):
     # runs package_search API call with input parameters
     # this is triggered in the UI when someone clicks on a Dataset Filter
     # this returns the appearance of the filter panel on the left side of open.toronto.ca intelligently
-    print("======================search_facets start=================================================")
 
     q = build_query(data_dict)
 
-    print(data_dict)
-    print(q)
-    print( " AND ".join(["({x})".format(x=x) for x in q]) )
-    print(utils.to_list(data_dict["facet_field[]"]))
     output = tk.get_action("package_search")(
         context,
         {
@@ -137,30 +110,20 @@ def query_facet(context, data_dict):
             "facet.field": utils.to_list(data_dict["facet_field[]"]),   # fields to facet on - this list typically includes a list of all the dataset filter names
         },
     )
-    print(output)
 
+    # for the "multiple_" metadata attributes in the package schema, clean their output
+    for facet in "topics", "civic_issues", "formats":
+        output["search_facets"][facet]["items"] = utils.unstringify( output["search_facets"][facet]["items"] )
     
-    print("======================search_facets end=================================================")
-
     return output
 
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
-    print("=======================query_packages_start================================================")
-    print(data_dict)
-    print("=======================query_packages================================================")
-    q = build_query(data_dict)
-    print("=======================query_packages================================================")
-    print(q)
-    print("=======================query_packages================================================")
 
+    q = build_query(data_dict) 
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
-
-    print("========================query_packages===============================================")
-    print(" AND ".join(["({x})".format(x=x) for x in q]))
-    print("========================query_packages_end===============================================")
 
     return tk.get_action("package_search")(
         context,
