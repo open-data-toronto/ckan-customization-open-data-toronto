@@ -193,7 +193,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
     def get_validators(self):
         return {
-            'validate_length': utils.validate_length
+            'validate_length': utils.validate_length,
+            'choices_to_string': utils.choices_to_string,
+            'string_to_choices': utils.string_to_choices,
         }
     # ==============================
     # IConfigurer

@@ -106,3 +106,34 @@ def unstringify(input):
     return output
 
 
+# Useful scheming validator functions
+# ===
+def choices_to_string(value):
+    print("===============================choices_to_string")
+    print(value)
+    print(type(value))
+    if isinstance(value, list):
+        print("converted!")
+        return ", ".join(value)
+    else:
+        print("not converted!")
+        return value.replace('\\', '').replace("[", "").replace("]", "").replace('\"', '').replace("{", "").replace("}", "")
+
+def string_to_choices(value):
+    print("==================================string_to_choices")
+    if isinstance(value, str):
+        print("converted!")
+        return value.split(",")
+    else:
+        print("not converted!")
+        return value
+
+def default_to_none(value):
+    if value:
+        return value
+
+def default_to_false(value):
+    if isinstance(value, string_types):
+        return value.lower() == "true"
+
+    return bool(value)
