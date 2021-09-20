@@ -1,6 +1,6 @@
 from ckan.common import config
 
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, redirect
 
 from . import api, constants, schema, utils, downloads
 
@@ -14,14 +14,20 @@ import datetime as dt
 import re
 
 def download_data(resource_id):
+    print("==================== download_data start")
     resource = tk.get_action("resource_show")(None, {"id": resource_id})
+    print(resource)
 
     # init flask response
     #@ resp = flask.Response()
 
     if not resource["datastore_active"]:
-        tk.redirect_to(resource["url"])
+        print("not datastore!")
+        print(resource["url"])
+        return redirect(resource["url"])
+        
     else:
+        print("datastore!")
         #filename, mimetype = downloads._write_datastore(tk.request.GET, resource)
         filename, mimetype, data = downloads._write_datastore(request.args, resource)
 
