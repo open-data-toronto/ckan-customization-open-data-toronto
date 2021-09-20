@@ -1,5 +1,5 @@
 from ckan.lib.navl.dictization_functions import missing
-
+from datetime import datetime
 from . import constants
 
 import ckan.plugins.toolkit as tk
@@ -137,3 +137,7 @@ def default_to_false(value):
         return value.lower() == "true"
 
     return bool(value)
+
+def default_to_today(value):
+    if type(value) != datetime:
+        return datetime.today()

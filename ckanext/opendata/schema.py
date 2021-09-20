@@ -49,6 +49,7 @@ def update_package(context):
     last_refreshed = []
 
     for r in resources:
+        print(r)
         resource_format = r.format.upper()
 
         # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)

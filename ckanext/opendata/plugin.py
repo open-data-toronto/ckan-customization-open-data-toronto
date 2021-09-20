@@ -196,6 +196,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
             'validate_length': utils.validate_length,
             'choices_to_string': utils.choices_to_string,
             'string_to_choices': utils.string_to_choices,
+            'default_to_today': utils.default_to_today
         }
     # ==============================
     # IConfigurer
