@@ -87,7 +87,12 @@ def unstringify(input):
         assert "count" in item.keys(), "Input list's dict doesnt have a count attribute"
 
         # take the item out of its list, and put them in one big array
-        terms += json.loads(item["name"]) 
+        print(item)
+        print(type(item))
+        if isinstance(item["name"], str):
+            these_items = item["name"].replace("{", "").replace("}", "").replace('"', "").split(",")
+            print(these_items)
+            terms += these_items 
 
     # get the distinct terms and make an output dict structure for them
     for term in set(terms):
