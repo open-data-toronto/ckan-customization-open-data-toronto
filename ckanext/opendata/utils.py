@@ -160,3 +160,8 @@ def datastore_to_csv(resource_id, data):
             writer.writerow(row.values())
     file.close()
     
+def lazyjson_to_dict(lazyjson):
+    output = []
+    for item in lazyjson:
+        output.append( item )
+    return output

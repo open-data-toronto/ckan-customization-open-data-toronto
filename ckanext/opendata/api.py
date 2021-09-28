@@ -6,6 +6,8 @@ from . import constants, utils
 
 import ckan.plugins.toolkit as tk
 
+import json
+
 
 def build_query(query):
     """
@@ -136,29 +138,33 @@ def query_packages(context, data_dict):
     )
 
 @tk.chained_action
-def datastore_cache(original_datastore_create, context, data_dict):
+def datastore_cache(original_api_call, context, data_dict):
     print("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
     print("something!")
     print(data_dict)
     print(context)
-    print(original_datastore_create)
-    # run datastore_create
-    output = original_datastore_create(context, data_dict)
+    print(original_api_call)
+    # run api_call
+    output = original_api_call(context, data_dict)
     print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
     print(output)
-
-    data = tk.get_action("datastore_search")(context, {"id": output["resource_id"]})
+    if "resource_id" in output.keys():
+        resource_id = output["resource_id"]
+    else:
+        resource_id = output["id"]
+    data = tk.get_action("datastore_search")(context, {"id": resource_id})
     print(data.keys())
     print(data["_links"])
     print("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
     # parse that into multiple file types - JSON, CSV, XML
     # JSON
-    #with open( "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/" + output["resource_id"] + ".csv", "w") as csv_file:
-    #    csv_file.write(data["records"]) CANT WRITE LAZYJSON TO A FILE - HAS TO BE STRING - CONVERT IT FIRST
-    #csv_file.close()
+    with open( "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/" + resource_id + ".json", "w") as json_file:
+        print( utils.lazyjson_to_dict(data["records"]) )
+        json_file.write( json.dumps(utils.lazyjson_to_dict(data["records"])) ) # CANT WRITE LAZYJSON TO A FILE - HAS TO BE STRING - CONVERT IT FIRST
+    json_file.close()
 
     # CSV 
-    utils.datastore_to_csv( output["resource_id"], data["records"] )
+    utils.datastore_to_csv( resource_id, data["records"] )
 
     # XML
     xml = "lol"
