@@ -52,6 +52,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "quality_show": api.get_quality_score,
             "search_packages": api.query_packages,
             "search_facet": api.query_facet,
+            "datastore_create": api.datastore_cache
         }
 
 
@@ -298,9 +299,11 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     def after_create(self, context, resource):
         schema.create_resource_views(context, resource)
         schema.update_package(context)
+        #schema.cache_datastore_download(context, resource)
 
     def after_update(self, context, resource):
         schema.update_package(context)
+        #schema.cache_datastore_download(context, resource)
 
     def after_delete(self, context, resources):
         schema.update_package(context)

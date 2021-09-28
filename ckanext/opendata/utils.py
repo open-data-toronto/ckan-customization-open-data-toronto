@@ -5,6 +5,7 @@ from . import constants
 import ckan.plugins.toolkit as tk
 import mimetypes
 import json
+import csv
 
 import codecs
 
@@ -146,3 +147,16 @@ def default_to_false(value):
 def default_to_today(value):
     if type(value) != datetime:
         return datetime.today()
+
+def datastore_to_csv(resource_id, data):
+    # In ckan <2.9.3, the lazyjson object only works as a normal dict when you take its 0th index
+    
+    with open("/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/" + resource_id + ".csv", "w") as file:
+        writer = csv.writer(file)
+        headers = data[0].keys()
+        writer.writerow( headers )
+        for row in data:
+            assert row.keys() == headers
+            writer.writerow(row.values())
+    file.close()
+    
