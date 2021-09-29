@@ -148,7 +148,7 @@ def default_to_today(value):
     if type(value) != datetime:
         return datetime.today()
 
-def datastore_to_csv(resource_id, data):
+def datastore_to_csv(resource_id, data, filepath):
     # In ckan <2.9.3, the lazyjson object only works as a normal dict when you take its 0th index
     
     with open("/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/" + resource_id + ".csv", "w") as file:

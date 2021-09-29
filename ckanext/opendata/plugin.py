@@ -52,7 +52,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "quality_show": api.get_quality_score,
             "search_packages": api.query_packages,
             "search_facet": api.query_facet,
-            "resource_patch": api.datastore_cache
+            "datastore_cache": api.datastore_cache
         }
 
 

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from ckan.logic import ValidationError
 
-from . import constants, utils
+from . import constants, utils, downloads
 
 import ckan.plugins.toolkit as tk
 
@@ -137,38 +137,74 @@ def query_packages(context, data_dict):
         },
     )
 
-@tk.chained_action
-def datastore_cache(original_api_call, context, data_dict):
-    print("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
-    print("something!")
-    print(data_dict)
-    print(context)
-    print(original_api_call)
-    # run api_call
-    output = original_api_call(context, data_dict)
-    print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
-    print(output)
-    if "resource_id" in output.keys():
-        resource_id = output["resource_id"]
-    else:
-        resource_id = output["id"]
-    data = tk.get_action("datastore_search")(context, {"id": resource_id})
-    print(data.keys())
-    print(data["_links"])
-    print("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
-    # parse that into multiple file types - JSON, CSV, XML
-    # JSON
-    with open( "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/" + resource_id + ".json", "w") as json_file:
-        print( utils.lazyjson_to_dict(data["records"]) )
-        json_file.write( json.dumps(utils.lazyjson_to_dict(data["records"])) ) # CANT WRITE LAZYJSON TO A FILE - HAS TO BE STRING - CONVERT IT FIRST
-    json_file.close()
+#@tk.chained_action
+@tk.side_effect_free
+def datastore_cache(context, data_dict):
+    # init some params we'll need later
+    url_base = "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata"
+    output = []
 
-    # CSV 
-    utils.datastore_to_csv( resource_id, data["records"] )
+    # make sure an authorized user is making this call
+    assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
 
-    # XML
-    xml = "lol"
-
-    print("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
-    return "Returned chained action string!"
+    # make sure the call has the necessary inputs
+    assert "resource_id" in data_dict.keys() or "package_id" in data_dict.keys(), "This endpoint requires package_id or resource_id as an input"
     
+    # if input param has package id, get all its resource ids that are datastore resources
+    if "package_id" in data_dict.keys():
+        package = tk.get_action("package_show")(context, {"id": data_dict["package_id"]})
+        package_summary = {
+            "package_id": package["name"], 
+            "resources": [ {"resource_id": resource["id"], "resource_name": resource["name"]} for resource in package["resources"] if resource["datastore_active"] ]
+        }
+
+    # otherwise, use input param has resource id only
+    if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
+        resource = tk.get_action("resource_show")(context, {"id": data_dict["resource_id"]})
+        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
+        resource_id = resource["id"] if resource["datastore_active"] else None
+        resource_name = resource["name"] if resource["datastore_active"] else None
+        resource_dict = {"resource_id": resource_id, "resource_name": resource_name} if resource["datastore_active"] else None
+        package_summary = {
+            "package_id": package["name"],
+            "resources": [ resource_dict ]
+        }
+        
+    # for each resource id in your list...
+    assert len(package_summary["resources"]) > 0, "Your inputs are not associated with any datastore resources"
+    for resource_info in package_summary["resources"]:
+
+        resource = tk.get_action("datastore_search")(context, {"id": resource_info["resource_id"]})
+
+        # is the datastore resource spatial? if it does, we need to create 2 files per type (for each CRS we use)
+        spatial = utils.is_geospatial( resource_info["resource_id"] )
+
+        # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2945 in spatial formats
+        if spatial:
+            for format in constants.GEOSPATIAL_FORMATS:
+                for epsg_code in ["4326", "2945"]:
+                    # init target filepath
+                    filepath = "{url_base}/{package_name}/{resource_name}-{epsg_code}.{format}".format(
+                        url_base = url_base,
+                        package_name = package_summary["package_id"],
+                        resource_name = resource_info["resource_name"],
+                        epsg_code = epsg_code,
+                        format = format
+                    )
+
+                    output.append( filepath )
+
+        # if its not spatial, we'll have different file formats, but no epsg codes to worry about
+        elif not spatial:
+            for format in constants.TABULAR_FORMATS:
+
+                filepath = "{url_base}/{package_name}/{resource_name}.{format}".format(
+                        url_base = url_base,
+                        package_name = package_summary["package_id"],
+                        resource_name = resource_info["resource_name"],
+                        format = format
+                    )
+
+                output.append( filepath )
+    
+    return output
