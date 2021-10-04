@@ -6,7 +6,7 @@ from . import constants, utils, downloads
 
 import ckan.plugins.toolkit as tk
 
-import json
+import json, os
 
 
 def build_query(query):
@@ -155,7 +155,7 @@ def datastore_cache(context, data_dict):
         package = tk.get_action("package_show")(context, {"id": data_dict["package_id"]})
         package_summary = {
             "package_id": package["name"], 
-            "resources": [ {"resource_id": resource["id"], "resource_name": resource["name"]} for resource in package["resources"] if resource["datastore_active"] ]
+            "resources": [ {"id": resource["id"], "name": resource["name"]} for resource in package["resources"] if resource["datastore_active"] ]
         }
 
     # otherwise, use input param has resource id only
@@ -164,7 +164,7 @@ def datastore_cache(context, data_dict):
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
         resource_id = resource["id"] if resource["datastore_active"] else None
         resource_name = resource["name"] if resource["datastore_active"] else None
-        resource_dict = {"resource_id": resource_id, "resource_name": resource_name} if resource["datastore_active"] else None
+        resource_dict = {"id": resource_id, "name": resource_name} if resource["datastore_active"] else None
         package_summary = {
             "package_id": package["name"],
             "resources": [ resource_dict ]
@@ -174,37 +174,70 @@ def datastore_cache(context, data_dict):
     assert len(package_summary["resources"]) > 0, "Your inputs are not associated with any datastore resources"
     for resource_info in package_summary["resources"]:
 
-        resource = tk.get_action("datastore_search")(context, {"id": resource_info["resource_id"]})
+        resource = tk.get_action("datastore_search")(context, {"id": resource_info["id"]})
 
         # is the datastore resource spatial? if it does, we need to create 2 files per type (for each CRS we use)
-        spatial = utils.is_geospatial( resource_info["resource_id"] )
+        spatial = utils.is_geospatial( resource_info["id"] )
 
         # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2945 in spatial formats
         if spatial:
             for format in constants.GEOSPATIAL_FORMATS:
                 for epsg_code in ["4326", "2945"]:
-                    # init target filepath
-                    filepath = "{url_base}/{package_name}/{resource_name}-{epsg_code}.{format}".format(
-                        url_base = url_base,
-                        package_name = package_summary["package_id"],
-                        resource_name = resource_info["resource_name"],
-                        epsg_code = epsg_code,
-                        format = format
-                    )
+                    params = {"format": format, "projection": epsg_code}
+                    filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
-                    output.append( filepath )
+                    # if the folder doesnt exist, make the folder
+                    print(os.listdir(url_base))
+                    if package_summary["package_id"] not in os.listdir(url_base):
+                        os.mkdir(url_base + "/" + package_summary["package_id"])
+
+                    # init target filepath
+                    #filepath = "{url_base}/{package_name}/{filename}".format(
+                    #    url_base = url_base,
+                    #    package_name = package_summary["package_id"],
+                    #    filename = filename
+                    #)
+
+                    # write data into a file
+                    #f = open(filepath, "w")
+                    #f.write(response)
+                    #f.close()                    
+
+                    output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not spatial:
             for format in constants.TABULAR_FORMATS:
 
-                filepath = "{url_base}/{package_name}/{resource_name}.{format}".format(
-                        url_base = url_base,
-                        package_name = package_summary["package_id"],
-                        resource_name = resource_info["resource_name"],
-                        format = format
-                    )
+                params = {"format": format}
+                filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
-                output.append( filepath )
+                # if the folder doesnt exist, make the folder
+                print(os.listdir(url_base))
+                if package_summary["package_id"] not in os.listdir(url_base):
+                    os.mkdir(url_base + "/" + package_summary["package_id"])
+
+                # init target filepath
+                #filepath = "{url_base}/{package_name}/{filename}".format(
+                #    url_base = url_base,
+                #    package_name = package_summary["package_id"],
+                #    filename = filename
+                #)
+
+                # write data into a file
+                #f = open(filepath, "w")
+                #f.write(response)
+                #f.close()                    
+
+                output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
+
+                #filepath = "{url_base}/{package_name}/{resource_name}.{format}".format(
+                #        url_base = url_base,
+                #        package_name = package_summary["package_id"],
+                #        resource_name = resource_info["resource_name"],
+                #        format = format
+                #    )
+#
+                #output.append( filepath )
     
     return output

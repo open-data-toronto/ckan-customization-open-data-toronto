@@ -20,7 +20,7 @@ def _datastore_dump(resource):
     # get format of resource
     format = resource["format"]
 
-def _write_datastore(params, resource):
+def _write_datastore(params, resource, target_dir):
     # get format and projection from the request headers - likely the input GET url params
     print("========================================")
     print(params)
@@ -80,8 +80,13 @@ def _write_datastore(params, resource):
 
     
     # WISHLIST: store conversion in memory instead of write to disk
-    tmp_dir = tempfile.mkdtemp()
-    path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
+    
+    # if the folder doesnt exist, make the folder
+    if not os.path.isdir(target_dir):
+        os.mkdir(target_dir)
+    
+    dir = target_dir # tempfile.mkdtemp()
+    path = os.path.join(dir, "{0}{2}.{1}".format(resource["name"], format.lower(), projection))
 
     # turn the geodataframe into a file
     output = iotrans.to_file(
@@ -91,24 +96,24 @@ def _write_datastore(params, resource):
         zip_content=(format in constants.ZIPPED_FORMATS),
     )
 
-    del df
-
-    # ... read the file in tk.response.write()
-    # this likely creates the actual response returned by the function
-    
-    # this is unclear and causes an error so im commenting it out for now
-    with open(output, "rb") as f:
-        #response_object.set_data( f.read() )
-        response = f.read() 
-
-    # delete the tmp dir used above to make the file
-    iotrans.utils.prune(tmp_dir)
-    gc.collect()
-
-    # TODO: What's wrong with the default file name? (ie. first half of output)
-    fn = "{0}.{1}".format(resource["name"], output.split(".")[-1])
+    #del df
+#
+    ## ... read the file in tk.response.write()
+    ## this likely creates the actual response returned by the function
+    #
+    ## this is unclear and causes an error so im commenting it out for now
+    #with open(output, "rb") as f:
+    #    #response_object.set_data( f.read() )
+    #    response = f.read() 
+#
+    ## delete the tmp dir used above to make the file
+    #iotrans.utils.prune(tmp_dir)
+    #gc.collect()
+#
+    ## TODO: What's wrong with the default file name? (ie. first half of output)
+    fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], projection)
     mt = utils.get_mimetype(fn)
-
-    return fn, mt, response
+#
+    return fn, mt, output
 
 
