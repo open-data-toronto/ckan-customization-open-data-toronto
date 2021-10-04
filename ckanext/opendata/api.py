@@ -189,19 +189,7 @@ def datastore_cache(context, data_dict):
                     # if the folder doesnt exist, make the folder
                     print(os.listdir(url_base))
                     if package_summary["package_id"] not in os.listdir(url_base):
-                        os.mkdir(url_base + "/" + package_summary["package_id"])
-
-                    # init target filepath
-                    #filepath = "{url_base}/{package_name}/{filename}".format(
-                    #    url_base = url_base,
-                    #    package_name = package_summary["package_id"],
-                    #    filename = filename
-                    #)
-
-                    # write data into a file
-                    #f = open(filepath, "w")
-                    #f.write(response)
-                    #f.close()                    
+                        os.mkdir(url_base + "/" + package_summary["package_id"])                    
 
                     output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
 
@@ -215,29 +203,8 @@ def datastore_cache(context, data_dict):
                 # if the folder doesnt exist, make the folder
                 print(os.listdir(url_base))
                 if package_summary["package_id"] not in os.listdir(url_base):
-                    os.mkdir(url_base + "/" + package_summary["package_id"])
-
-                # init target filepath
-                #filepath = "{url_base}/{package_name}/{filename}".format(
-                #    url_base = url_base,
-                #    package_name = package_summary["package_id"],
-                #    filename = filename
-                #)
-
-                # write data into a file
-                #f = open(filepath, "w")
-                #f.write(response)
-                #f.close()                    
+                    os.mkdir(url_base + "/" + package_summary["package_id"])          
 
                 output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
-
-                #filepath = "{url_base}/{package_name}/{resource_name}.{format}".format(
-                #        url_base = url_base,
-                #        package_name = package_summary["package_id"],
-                #        resource_name = resource_info["resource_name"],
-                #        format = format
-                #    )
-#
-                #output.append( filepath )
     
     return output
