@@ -142,7 +142,7 @@ def query_packages(context, data_dict):
 def datastore_cache(context, data_dict):
     # init some params we'll need later
     url_base = "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata"
-    output = []
+    output = {}
 
     # make sure an authorized user is making this call
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
@@ -182,6 +182,7 @@ def datastore_cache(context, data_dict):
         # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2945 in spatial formats
         if spatial:
             for format in constants.GEOSPATIAL_FORMATS:
+                output[format] = {}
                 for epsg_code in ["4326", "2945"]:
                     params = {"format": format, "projection": epsg_code}
                     filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
@@ -191,7 +192,7 @@ def datastore_cache(context, data_dict):
                     if package_summary["package_id"] not in os.listdir(url_base):
                         os.mkdir(url_base + "/" + package_summary["package_id"])                    
 
-                    output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
+                    output[format][epsg_code] = url_base + "/" + package_summary["package_id"] + "/" + filename 
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not spatial:
@@ -205,6 +206,8 @@ def datastore_cache(context, data_dict):
                 if package_summary["package_id"] not in os.listdir(url_base):
                     os.mkdir(url_base + "/" + package_summary["package_id"])          
 
-                output.append( url_base + "/" + package_summary["package_id"] + "/" + filename )
+                output[format] = url_base + "/" + package_summary["package_id"] + "/" + filename 
     
+        # put array of filepaths into resource_patch call
+        tk.get_action("resource_patch")(context, {"id": resource_info["id"], "download_cache": output})
     return output
