@@ -8,6 +8,7 @@ import iotrans
 import pandas as pd
 import requests
 
+import tempfile
 import gc
 import io
 import json
@@ -59,10 +60,12 @@ def _write_datastore(params, resource, target_dir):
     if not is_geospatial:
         filename_suffix = ""
     # if the folder doesnt exist, make the folder
-    if not os.path.isdir(target_dir):
-        os.mkdir(target_dir)
+    #if not os.path.isdir(target_dir):
+    #    os.mkdir(target_dir)
     
-    path = os.path.join(target_dir, "{0}{2}.{1}".format(resource["name"], format.lower(), filename_suffix))
+    #path = os.path.join(target_dir, "{0}{2}.{1}".format(resource["name"], format.lower(), filename_suffix))
+    tmp_dir = tempfile.mkdtemp()
+    path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
     # turn the geodataframe into a file
     output = iotrans.to_file(
@@ -72,10 +75,20 @@ def _write_datastore(params, resource, target_dir):
         zip_content=(format in constants.ZIPPED_FORMATS),
     )
 
+    del df
+
+    # store the bytes of the file
+    with open(output, "rb") as f:
+        response = f.read() 
+
+    # delete the tmp dir used above to make the file
+    iotrans.utils.prune(tmp_dir)
+    gc.collect()
+
     ## TODO: What's wrong with the default file name? (ie. first half of output)
     fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], filename_suffix)
     mt = utils.get_mimetype(fn)
 
-    return fn, mt, output
+    return fn, path, mt, response
 
 

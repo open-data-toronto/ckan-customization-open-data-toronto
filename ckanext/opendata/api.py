@@ -185,28 +185,40 @@ def datastore_cache(context, data_dict):
                 output[format] = {}
                 for epsg_code in ["4326", "2945"]:
                     params = {"format": format, "projection": epsg_code}
-                    filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
+                    filename, path, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
+                    filestore_resource = tk.get_action("resource_create")(context, {
+                        "package_id": package_summary["package_id"], 
+                        "mimetype": mimetype,
+                        "upload": response,
+                        "name": filename
+                    })
                     # if the folder doesnt exist, make the folder
-                    print(os.listdir(url_base))
-                    if package_summary["package_id"] not in os.listdir(url_base):
-                        os.mkdir(url_base + "/" + package_summary["package_id"])                    
+                    #print(os.listdir(url_base))
+                    #if package_summary["package_id"] not in os.listdir(url_base):
+                    #    os.mkdir(url_base + "/" + package_summary["package_id"])                    
 
-                    output[format][epsg_code] = url_base + "/" + package_summary["package_id"] + "/" + filename 
+                    output[format][epsg_code] = filename# put filestore resource_id #url_base + "/" + package_summary["package_id"] + "/" + filename 
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not spatial:
             for format in constants.TABULAR_FORMATS:
 
                 params = {"format": format}
-                filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
+                filename, path, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
+                filestore_resource = tk.get_action("resource_create")(context, {
+                    "package_id": package_summary["package_id"], 
+                    "mimetype": mimetype,
+                    "upload": response,
+                    "name": filename
+                })
                 # if the folder doesnt exist, make the folder
-                print(os.listdir(url_base))
-                if package_summary["package_id"] not in os.listdir(url_base):
-                    os.mkdir(url_base + "/" + package_summary["package_id"])          
+                #print(os.listdir(url_base))
+                #if package_summary["package_id"] not in os.listdir(url_base):
+                #    os.mkdir(url_base + "/" + package_summary["package_id"])          
 
-                output[format] = url_base + "/" + package_summary["package_id"] + "/" + filename 
+                output[format] = filename # put resource id for filestore resource#url_base + "/" + package_summary["package_id"] + "/" + filename 
     
         # put array of filepaths into resource_patch call
         tk.get_action("resource_patch")(context, {"id": resource_info["id"], "download_cache": output, "download_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
