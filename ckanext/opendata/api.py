@@ -6,7 +6,9 @@ from . import constants, utils, downloads
 
 import ckan.plugins.toolkit as tk
 
-import json, os
+import json, os, io
+
+from werkzeug.datastructures import FileStorage
 
 
 def build_query(query):
@@ -191,7 +193,8 @@ def datastore_cache(context, data_dict):
                         "package_id": package_summary["package_id"], 
                         "mimetype": mimetype,
                         "upload": response,
-                        "name": filename
+                        "name": filename,
+                        "format": format
                     })
                     # if the folder doesnt exist, make the folder
                     #print(os.listdir(url_base))
@@ -207,12 +210,23 @@ def datastore_cache(context, data_dict):
                 params = {"format": format}
                 filename, path, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
+                print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+                print(path)
+                print(context)
+                print(open(path, "rb"))
+                print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+                
+                with open(path, 'rb') as f:
+                    stream = io.BytesIO(f.read())
+                
                 filestore_resource = tk.get_action("resource_create")(context, {
                     "package_id": package_summary["package_id"], 
                     "mimetype": mimetype,
-                    "upload": response,
-                    "name": filename
+                    "upload": FileStorage(stream=stream, filename=filename),
+                    "name": filename,
+                    "format": format
                 })
+                
                 # if the folder doesnt exist, make the folder
                 #print(os.listdir(url_base))
                 #if package_summary["package_id"] not in os.listdir(url_base):

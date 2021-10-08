@@ -6,7 +6,7 @@ import ckan.plugins.toolkit as tk
 import logging
 
 def create_resource_views(context, resource):
-    print("=================== create resource views ====================================")
+    #print("=================== create resource views ====================================")
     format_views = {
         "geojson": {
             "title": "Map",
@@ -26,32 +26,32 @@ def create_resource_views(context, resource):
             resource_format in format_views.keys(),
         ]
     ):
-        print("We're not makign a view for this resource")
+        #print("We're not makign a view for this resource")
         return
 
     view = format_views.pop(resource_format)
 
     views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
-    print(" ####################### views ###############")
-    print(views)
-    print(" ####################### views ###############")
+    #print(" ####################### views ###############")
+    #print(views)
+    #print(" ####################### views ###############")
     
     for v in views:
         if v["view_type"] == view["view_type"]:
-            print("We found a view type in our list")
+            #print("We found a view type in our list")
             return
 
     view["resource_id"] = resource["id"]
 
-    print("===================== resource view create view:")
-    print(view)
-    print("===================== resource view create view.")
+    #print("===================== resource view create view:")
+    #print(view)
+    #print("===================== resource view create view.")
 
     tk.get_action("resource_view_create")(context, view)
 
 
 def update_package(context):
-    print("=================== update package start ==============")
+    #print("=================== update package start ==============")
     package = context["package"]
     resources = [r for r in package.resources_all if r.state == "active"]
 
@@ -59,7 +59,7 @@ def update_package(context):
     last_refreshed = []
 
     for r in resources:
-        print(r)
+        #print(r)
         resource_format = r.format.upper()
 
         # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)
@@ -75,10 +75,10 @@ def update_package(context):
         else:
             formats.add(resource_format)
 
-        print(r.created)
-        print(type(r.created))
-        print(r.last_modified)
-        print(type(r.last_modified))
+        #print(r.created)
+        #print(type(r.created))
+        #print(r.last_modified)
+        #print(type(r.last_modified))
 
         last_refreshed.append(r.created if r.last_modified is None else r.last_modified)
 
@@ -92,10 +92,10 @@ def update_package(context):
     )
 
     #if formats != package.formats or 
-    print(package)
-    print(last_refreshed)
-    print("================================== here! ===========")
-    print(tk.get_action("package_show")(context, {"id": package.id}))
+    #print(package)
+    #print(last_refreshed)
+    #print("================================== here! ===========")
+    #print(tk.get_action("package_show")(context, {"id": package.id}))
     if last_refreshed != tk.get_action("package_show")(context, {"id": package.id})["last_refreshed"]:
         tk.get_action("package_patch")(
             context,

@@ -63,9 +63,9 @@ def _write_datastore(params, resource, target_dir):
     #if not os.path.isdir(target_dir):
     #    os.mkdir(target_dir)
     
-    #path = os.path.join(target_dir, "{0}{2}.{1}".format(resource["name"], format.lower(), filename_suffix))
-    tmp_dir = tempfile.mkdtemp()
-    path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
+    path = os.path.join(target_dir, "{0}{2}.{1}".format(resource["name"], format.lower(), filename_suffix))
+    #tmp_dir = tempfile.mkdtemp()
+    #path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
     # turn the geodataframe into a file
     output = iotrans.to_file(
@@ -77,12 +77,17 @@ def _write_datastore(params, resource, target_dir):
 
     del df
 
+    print("xxxxx")
+    print(output)
+    print(path)
+    print("xxxxx")
+
     # store the bytes of the file
-    with open(output, "rb") as f:
+    with open(output, "r") as f:
         response = f.read() 
 
     # delete the tmp dir used above to make the file
-    iotrans.utils.prune(tmp_dir)
+    #iotrans.utils.prune(tmp_dir)
     gc.collect()
 
     ## TODO: What's wrong with the default file name? (ie. first half of output)
