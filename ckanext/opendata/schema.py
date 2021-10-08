@@ -51,7 +51,6 @@ def create_resource_views(context, resource):
 
 
 def update_package(context):
-    #print("=================== update package start ==============")
     package = context["package"]
     resources = [r for r in package.resources_all if r.state == "active"]
 
@@ -59,7 +58,6 @@ def update_package(context):
     last_refreshed = []
 
     for r in resources:
-        #print(r)
         resource_format = r.format.upper()
 
         # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)
@@ -82,7 +80,7 @@ def update_package(context):
 
         last_refreshed.append(r.created if r.last_modified is None else r.last_modified)
 
-    
+
     # make sure the package's last refreshed date is the latest last refreshed date of its resources
     formats = ",".join(list(formats)) if len(formats) else None
     last_refreshed = (
@@ -91,13 +89,9 @@ def update_package(context):
         else None
     )
 
-    #if formats != package.formats or 
-    #print(package)
-    #print(last_refreshed)
-    #print("================================== here! ===========")
-    #print(tk.get_action("package_show")(context, {"id": package.id}))
+    # If the last refreshed date isnt what it already is in the CKAN package, update the package
     if last_refreshed != tk.get_action("package_show")(context, {"id": package.id})["last_refreshed"]:
-        tk.get_action("package_patch")(
+        package_patch = tk.get_action("package_patch")(
             context,
             {"id": package.id, "last_refreshed": last_refreshed, "formats": formats},
         )

@@ -145,8 +145,16 @@ def default_to_false(value):
     return bool(value)
 
 def default_to_today(value):
-    if type(value) != datetime:
-        return datetime.today()
+    # if we receive a valid datetime IS format string, parse it into an ISO format datetime object
+    # if we receive a datetime, return it as is
+    # if we return something else, return today as a datetime object
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+    except ValueError:
+        if isinstance(value, datetime):
+            return value
+        else:
+            return datetime.today()
 
 def datastore_to_csv(resource_id, data, filepath):
     # In ckan <2.9.3, the lazyjson object only works as a normal dict when you take its 0th index
