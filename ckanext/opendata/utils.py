@@ -74,7 +74,10 @@ def unstringify(input):
     # inputs "items" dict of a search_facet ...
     # ... (it will hold arrays that solr turned into a string) ...
     # outputs a dict for use in /search_facet
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("input: {}".format( input ))
 
+    names = []
     terms = []
     output = []
 
@@ -88,26 +91,27 @@ def unstringify(input):
         assert "count" in item.keys(), "Input list's dict doesnt have a count attribute"
 
         # take the item out of its list, and put them in one big array
-        print(item)
-        print(type(item))
+        
         if isinstance(item["name"], str):
-            these_items = item["name"].replace("{", "").replace("}", "").replace('"', "").split(",")
-            print(these_items)
-            terms += these_items 
+            these_names = item["name"].replace("{", "").replace("}", "").replace('"', "").split(",") 
+            names += these_names
+            terms.append( {"names": these_names, "count": item["count"]} )
 
     # get the distinct terms and make an output dict structure for them
-    for term in set(terms):
+    print("Unstringify Terms: {}".format( terms ))
+    for name in set(names):
         item = {
             "count": 0,
-            "display_name": term,
-            "name": term
+            "display_name": name,
+            "name": name
         }
         # update the count attribute in the appropriate dict in the output dict
         for value in terms:
-            if term == value:
-                item["count"] += 1
+            if name in value["names"]:
+                item["count"] += value["count"]
         
         output.append( item )
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify end !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     
     return output
 
@@ -153,7 +157,10 @@ def default_to_today(value):
         try:
             return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
         except ValueError:
-            return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
+            try:
+                return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
+            except:
+                return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
     elif isinstance(value, datetime):
         return value
     else:

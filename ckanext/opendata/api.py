@@ -103,6 +103,7 @@ def query_facet(context, data_dict):
     # this returns the appearance of the filter panel on the left side of open.toronto.ca intelligently
 
     q = build_query(data_dict)
+    print("Query Facet Query: {}".format( q ))
 
     output = tk.get_action("package_search")(
         context,
@@ -115,10 +116,16 @@ def query_facet(context, data_dict):
         },
     )
 
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ query facets @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(q)
+    print(" AND ".join(["({x})".format(x=x) for x in q]))
+    print(output)
+
     # for the "multiple_" metadata attributes in the package schema, clean their output
     for facet in "topics", "civic_issues", "formats":
         output["search_facets"][facet]["items"] = utils.unstringify( output["search_facets"][facet]["items"] )
-    
+    print(output)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ query facets @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     return output
 
 
@@ -128,7 +135,7 @@ def query_packages(context, data_dict):
     q = build_query(data_dict) 
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
-
+    print("Query Packages Query: {}".format( q ))
     return tk.get_action("package_search")(
         context,
         {
