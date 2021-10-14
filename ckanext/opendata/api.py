@@ -23,7 +23,7 @@ def build_query(query):
         Returns:
             list: SOLR search params
     """
-
+    print("======= Query entering build_query is {}".format(query))
     q = []
 
     for k, v in query.items():                          # For everything in the input API call's parameters...
@@ -36,8 +36,8 @@ def build_query(query):
                 f = f[6:]    
             v = utils.to_list(v)
             
-            terms = " AND ".join(["{x}".format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
-            q.append("{key}:*({value})*".format(key=f, value=terms)) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
+            terms = " AND ".join(['*"{x}"*'.format(x=term.replace("vocab_", "")) if " " in term else '*{x}*'.format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
+            q.append( "{f}: {terms}".format(f=f, terms=terms) ) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
         
         elif k == "search":                                 # When a key is "search" (this is when users enter terms into the opentext search bar) ...
             for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
@@ -48,6 +48,7 @@ def build_query(query):
                     "(title:(*{1}*))^10.0".format(w.replace(" ", "-"), w)
                 )
 
+    print("Q exiting build_query() is {}".format(q))
     return q
 
 
@@ -116,16 +117,12 @@ def query_facet(context, data_dict):
         },
     )
 
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ query facets @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    print(q)
-    print(" AND ".join(["({x})".format(x=x) for x in q]))
-    print(output)
+    
 
     # for the "multiple_" metadata attributes in the package schema, clean their output
     for facet in "topics", "civic_issues", "formats":
         output["search_facets"][facet]["items"] = utils.unstringify( output["search_facets"][facet]["items"] )
-    print(output)
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ query facets @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("Post unstringify query_facets output: {}".format(output))
     return output
 
 
@@ -136,15 +133,20 @@ def query_packages(context, data_dict):
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
     print("Query Packages Query: {}".format( q ))
-    return tk.get_action("package_search")(
+    print(" AND ".join(["{x}".format(x=x) for x in q]))
+    output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["({x})".format(x=x) for x in q]),        # solr query
+            "q": " AND ".join(["{x}".format(x=x) for x in q]),        # solr query
             "rows": params["rows"],                                     
             "sort": params["sort"],                                     # this is solr specific
             "start": params["start"],                                   # since its 0: start the returned dataset at the first record
         },
     )
+
+    print("Query Packages is returning: {}".format(output))
+    print("It used this query: ".format( " AND ".join(["({x})".format(x=x) for x in q]) ))
+    return output
 
 #@tk.chained_action
 @tk.side_effect_free

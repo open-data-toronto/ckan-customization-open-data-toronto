@@ -74,8 +74,8 @@ def unstringify(input):
     # inputs "items" dict of a search_facet ...
     # ... (it will hold arrays that solr turned into a string) ...
     # outputs a dict for use in /search_facet
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print("input: {}".format( input ))
+    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    #print("input: {}".format( input ))
 
     names = []
     terms = []
@@ -98,7 +98,7 @@ def unstringify(input):
             terms.append( {"names": these_names, "count": item["count"]} )
 
     # get the distinct terms and make an output dict structure for them
-    print("Unstringify Terms: {}".format( terms ))
+    #print("Unstringify Terms: {}".format( terms ))
     for name in set(names):
         item = {
             "count": 0,
@@ -111,7 +111,7 @@ def unstringify(input):
                 item["count"] += value["count"]
         
         output.append( item )
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify end !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify end !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     
     return output
 
@@ -160,7 +160,10 @@ def default_to_today(value):
             try:
                 return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
             except:
-                return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                try:
+                    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                except:
+                    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
     elif isinstance(value, datetime):
         return value
     else:
