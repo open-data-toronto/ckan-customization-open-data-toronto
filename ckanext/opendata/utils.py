@@ -152,21 +152,19 @@ def default_to_today(value):
     # if we receive a valid datetime IS format string, parse it into an ISO format datetime object
     # if we receive a datetime, return it as is
     # if we return something else, return today as a datetime object
-
+    print("=============DEFAULT_TO_TODAY==========")
+    print( value )
+    print(type(value))
     if isinstance(value, str):
-        try:
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-        except ValueError:
-            try:
-                return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
-            except:
-                try:
-                    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-                except:
-                    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        print("Converted!")
+        print(str_to_datetime(value))
+        return str_to_datetime(value)
+        
     elif isinstance(value, datetime):
+        print("Received datetime as input")
         return value
     else:
+        print("Defaulted to today")
         return datetime.today()
 
 def datastore_to_csv(resource_id, data, filepath):
@@ -186,3 +184,20 @@ def lazyjson_to_dict(lazyjson):
     for item in lazyjson:
         output.append( item )
     return output
+
+def str_to_datetime(input):
+    # loops through the list of formats and tries to return an input string into a datetime of one of those formats
+    assert isinstance(input, str), "Utils str_to_datetime() function can only receive strings - it instead received {}".format(type(input))
+    for format in [
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d"
+    ]:
+        try:
+            output = datetime.strptime(input, format)
+            return output
+        except ValueError:
+            pass
+    logging.error("No valid datetime format in utils.str_to_datetime() for input string {}".format(input))
