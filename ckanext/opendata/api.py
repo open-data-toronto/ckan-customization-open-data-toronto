@@ -6,7 +6,7 @@ from . import constants, utils, downloads
 
 import ckan.plugins.toolkit as tk
 
-import json, os, io
+import json, os, io, traceback
 
 from werkzeug.datastructures import FileStorage
 
@@ -196,53 +196,87 @@ def datastore_cache(context, data_dict):
                 output[format] = {}
                 for epsg_code in ["4326", "2945"]:
                     params = {"format": format, "projection": epsg_code}
-                    filename, path, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
+                    filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
-                    filestore_resource = tk.get_action("resource_create")(context, {
-                        "package_id": package_summary["package_id"], 
-                        "mimetype": mimetype,
-                        "upload": response,
-                        "name": filename,
-                        "format": format
-                    })
-                    # if the folder doesnt exist, make the folder
-                    #print(os.listdir(url_base))
-                    #if package_summary["package_id"] not in os.listdir(url_base):
-                    #    os.mkdir(url_base + "/" + package_summary["package_id"])                    
+                    try:
+                        filestore_resource = tk.get_action("resource_create")(context, {
+                            "package_id": package_summary["package_id"], 
+                            "mimetype": mimetype,
+                            "upload": FileStorage(stream=response, filename=filename),
+                            "name": filename,
+                            "format": format
+                        })
+                    
+                    except:
+                        existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
+                        print(existing_resource)
+                        resource_id = existing_resource["results"][0]["id"]
+                        filestore_resource = tk.get_action("resource_patch")(context, {
+                            "id": resource_id, 
+                            "mimetype": mimetype,
+                            "upload": FileStorage(stream=response, filename=filename),
+                            "name": filename,
+                            "format": format
+                        })
+                                       
 
-                    output[format][epsg_code] = filename# put filestore resource_id #url_base + "/" + package_summary["package_id"] + "/" + filename 
+                    output[format][epsg_code] = filename
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not spatial:
             for format in constants.TABULAR_FORMATS:
 
                 params = {"format": format}
-                filename, path, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
+                filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
-                print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
-                print(path)
-                print(context)
-                print(open(path, "rb"))
-                print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+                try:
+                    filestore_resource = tk.get_action("resource_create")(context, {
+                        "package_id": package_summary["package_id"], 
+                        "mimetype": mimetype,
+                        "upload": FileStorage(stream=response, filename=filename),
+                        "name": filename,
+                        "format": format
+                    })
+                except:
+                    existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
+                    print(existing_resource)
+                    resource_id = existing_resource["results"][0]["id"]
+                    filestore_resource = tk.get_action("resource_patch")(context, {
+                        "id": resource_id, 
+                        "mimetype": mimetype,
+                        "upload": FileStorage(stream=response, filename=filename),
+                        "name": filename,
+                        "format": format
+                    })
                 
-                with open(path, 'rb') as f:
-                    stream = io.BytesIO(f.read())
-                
-                filestore_resource = tk.get_action("resource_create")(context, {
-                    "package_id": package_summary["package_id"], 
-                    "mimetype": mimetype,
-                    "upload": FileStorage(stream=stream, filename=filename),
-                    "name": filename,
-                    "format": format
-                })
-                
-                # if the folder doesnt exist, make the folder
-                #print(os.listdir(url_base))
-                #if package_summary["package_id"] not in os.listdir(url_base):
-                #    os.mkdir(url_base + "/" + package_summary["package_id"])          
-
                 output[format] = filename # put resource id for filestore resource#url_base + "/" + package_summary["package_id"] + "/" + filename 
     
         # put array of filepaths into resource_patch call
-        tk.get_action("resource_patch")(context, {"id": resource_info["id"], "download_cache": output, "download_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
+        tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
     return output
+
+@tk.chained_action
+def datastore_create_hook(original_datastore_create, context, data_dict):
+    # make sure an authorized user is making this call
+    assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
+
+    print(">>>>>>>>>>>>>>>>>>>> datastore create hook <<<<<<<<<<<<<<<<<<<<<")
+    print(context)
+    print(data_dict.keys())
+    print( "Is records in data_dict?")
+    print("records" in data_dict.keys())
+    numrecords = len(data_dict["records"])
+    print("Records: {}".format( numrecords ))
+
+    output = original_datastore_create(context, data_dict)
+    try:
+        if numrecords not in [2000, 20000]:
+            print("running datastore cache...")
+            print(tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]}))
+
+    except Exception:
+        print("Exception!")
+        print(traceback.format_exc())
+    print(output)
+    print(">>>>>>>>>>>>>>>>>>>> datastore create hook end <<<<<<<<<<<<<<<<<<<<<")
+    

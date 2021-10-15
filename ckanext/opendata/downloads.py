@@ -16,18 +16,15 @@ import os
 
 from . import constants, utils
 
-def _datastore_dump(resource):
-    # get format of resource
-    format = resource["format"]
-
 def _write_datastore(params, resource, target_dir):
     # get format and projection from the request headers - likely the input GET url params
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
     projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
 
-    # make sure these formats make sense together and determine if the resource is geospatial
+    # determine if the resource is geospatial
     is_geospatial = utils.is_geospatial(resource["id"])
 
+    # make sure these formats make sense together
     assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
         not is_geospatial and format in constants.TABULAR_FORMATS
     ), "Inconsistency between data type and requested file format"
@@ -47,6 +44,7 @@ def _write_datastore(params, resource, target_dir):
         df["geometry"] = df["geometry"].apply(
             lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x))
         )
+        # we'll add the EPSG code to the output filename
         filename_suffix = " - {}".format( projection )
 
     # make this a geodataframe
@@ -57,15 +55,13 @@ def _write_datastore(params, resource, target_dir):
         ).to_crs({"init": "epsg:{0}".format(projection)})
 
     # TODO: validate that the resource name doesn't already contain format
+
+    # if the file isnt geospatial, we wont need to add an EPSG code to its filename
     if not is_geospatial:
         filename_suffix = ""
-    # if the folder doesnt exist, make the folder
-    #if not os.path.isdir(target_dir):
-    #    os.mkdir(target_dir)
     
-    path = os.path.join(target_dir, "{0}{2}.{1}".format(resource["name"], format.lower(), filename_suffix))
-    #tmp_dir = tempfile.mkdtemp()
-    #path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
+    tmp_dir = tempfile.mkdtemp()
+    path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
     # turn the geodataframe into a file
     output = iotrans.to_file(
@@ -77,23 +73,18 @@ def _write_datastore(params, resource, target_dir):
 
     del df
 
-    print("xxxxx")
-    print(output)
-    print(path)
-    print("xxxxx")
-
     # store the bytes of the file
-    with open(output, "r") as f:
-        response = f.read() 
+    with open(output, 'rb') as f:
+        response = io.BytesIO(f.read())
 
     # delete the tmp dir used above to make the file
-    #iotrans.utils.prune(tmp_dir)
+    iotrans.utils.prune(tmp_dir)
     gc.collect()
 
-    ## TODO: What's wrong with the default file name? (ie. first half of output)
+    ## assign filename and mimetype
     fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], filename_suffix)
     mt = utils.get_mimetype(fn)
 
-    return fn, path, mt, response
+    return fn, mt, response
 
 

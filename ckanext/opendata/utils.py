@@ -152,19 +152,19 @@ def default_to_today(value):
     # if we receive a valid datetime IS format string, parse it into an ISO format datetime object
     # if we receive a datetime, return it as is
     # if we return something else, return today as a datetime object
-    print("=============DEFAULT_TO_TODAY==========")
-    print( value )
-    print(type(value))
+    #print("=============DEFAULT_TO_TODAY==========")
+    #print( value )
+    #print(type(value))
     if isinstance(value, str):
-        print("Converted!")
-        print(str_to_datetime(value))
+        #print("Converted!")
+        #print(str_to_datetime(value))
         return str_to_datetime(value)
         
     elif isinstance(value, datetime):
-        print("Received datetime as input")
+        #print("Received datetime as input")
         return value
     else:
-        print("Defaulted to today")
+        #print("Defaulted to today")
         return datetime.today()
 
 def datastore_to_csv(resource_id, data, filepath):
