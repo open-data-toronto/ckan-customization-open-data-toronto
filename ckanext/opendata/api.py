@@ -204,7 +204,8 @@ def datastore_cache(context, data_dict):
                             "mimetype": mimetype,
                             "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
-                            "format": format
+                            "format": format,
+                            "is_datastore_cache_file": True, 
                         })
                     
                     except:
@@ -216,7 +217,8 @@ def datastore_cache(context, data_dict):
                             "mimetype": mimetype,
                             "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
-                            "format": format
+                            "format": format,
+                            "is_datastore_cache_file": True, 
                         })
                                        
 
@@ -235,7 +237,8 @@ def datastore_cache(context, data_dict):
                         "mimetype": mimetype,
                         "upload": FileStorage(stream=response, filename=filename),
                         "name": filename,
-                        "format": format
+                        "format": format,
+                        "is_datastore_cache_file": True
                     })
                 except:
                     existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
@@ -246,13 +249,16 @@ def datastore_cache(context, data_dict):
                         "mimetype": mimetype,
                         "upload": FileStorage(stream=response, filename=filename),
                         "name": filename,
-                        "format": format
+                        "format": format,
+                        "is_datastore_cache_file": True, 
                     })
                 
                 output[format] = filename # put resource id for filestore resource#url_base + "/" + package_summary["package_id"] + "/" + filename 
-    
-        # put array of filepaths into resource_patch call
-        tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
+                
+        # put array of filepaths into package_patch call and current date into resource_patch call
+        #tk.get_action("package_patch")(context, {"id": package_summary["package_id"], "datastore_cache": output })
+        print("RESOURCE PATCH!!!!!!!!!!!!!!!!!!")
+        print(tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") }))
     return output
 
 @tk.chained_action
