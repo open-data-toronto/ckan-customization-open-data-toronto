@@ -119,17 +119,17 @@ def unstringify(input):
 # Useful scheming validator functions
 # ===
 def choices_to_string(value):
-    print("===============================choices_to_string")
-    print(value)
-    print(type(value))
+    #print("===============================choices_to_string")
+    #print(value)
+    #print(type(value))
     if isinstance(value, list):
-        print("list!")
+        #print("list!")
         return ", ".join(value)
     elif isinstance(value, dict):
-        print("dict!")
+        #print("dict!")
         return json.dumps(value)
     elif isinstance(value, str):
-        print("string!")
+        #print("string!")
         return value.replace('\\', '').replace("[", "").replace("]", "").replace('\"', '').replace("{", "").replace("}", "")
 
 def string_to_choices(value):
@@ -206,11 +206,11 @@ def str_to_datetime(input):
     logging.error("No valid datetime format in utils.str_to_datetime() for input string {}".format(input))
 
 def default_to_false(value):
-    print("=============DEFAULT TO FALSE")
-    print(value)
+    #print("=============DEFAULT TO FALSE")
+    #print(value)
     if value in [True, "true", "True", "TRUE"]:
-        print("Returned True!")
+        #print("Returned True!")
         return True
     else:
-        print("Returned False!")
+        #print("Returned False!")
         return False
