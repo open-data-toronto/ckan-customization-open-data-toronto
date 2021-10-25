@@ -90,7 +90,12 @@ def update_package(context):
     )
 
     # If the last refreshed date isnt what it already is in the CKAN package, update the package
-    if last_refreshed != tk.get_action("package_show")(context, {"id": package.id})["last_refreshed"]:
+    if "last_refreshed" in tk.get_action("package_show")(context, {"id": package.id}).keys():
+        old_last_refreshed = tk.get_action("package_show")(context, {"id": package.id})["last_refreshed"]
+    else:
+        old_last_refreshed = None
+        
+    if last_refreshed != old_last_refreshed:
         package_patch = tk.get_action("package_patch")(
             context,
             {"id": package.id, "last_refreshed": last_refreshed, "formats": formats},
