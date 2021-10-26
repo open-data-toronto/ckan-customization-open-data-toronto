@@ -1,5 +1,5 @@
-from ckan.lib.base import BaseController
 from shapely.geometry import shape
+from flask import Response
 
 import ckan.plugins.toolkit as tk
 
@@ -8,43 +8,46 @@ import iotrans
 import pandas as pd
 import requests
 
+import tempfile
 import gc
 import io
 import json
 import os
-import tempfile
 
-import constants
-import utils
+from . import constants, utils
 
-
-def _write_datastore(params, resource):
+def _write_datastore(params, resource, target_dir):
+    # get format and projection from the request headers - likely the input GET url params
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
     projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
 
+    # determine if the resource is geospatial
     is_geospatial = utils.is_geospatial(resource["id"])
 
+    # make sure these formats make sense together
     assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
         not is_geospatial and format in constants.TABULAR_FORMATS
     ), "Inconsistency between data type and requested file format"
 
+    # Get data from the datastore by using a datastore/dump call
     # Is this the best way to fetch data from datastore tables?
-    raw = requests.get(
-        "{host}/datastore/dump/{resource_id}".format(
-            host=tk.config["ckan.site_url"], resource_id=resource["id"]
-        )
-    ).content.decode("utf-8")
+    length = tk.get_action("datastore_info")(None, {"id": resource["id"]})["meta"]["count"]
+    raw = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "limit": length})
 
+    # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas
-    df = pd.read_csv(io.StringIO(raw))
-
+    df = pd.DataFrame( raw["records"][:] )
     del raw
 
+    # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
         df["geometry"] = df["geometry"].apply(
             lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x))
         )
+        # we'll add the EPSG code to the output filename
+        filename_suffix = " - {}".format( projection )
 
+    # make this a geodataframe
         df = gpd.GeoDataFrame(
             df,
             crs={"init": "epsg:{0}".format(constants.DOWNLOAD_PROJECTION)},
@@ -53,10 +56,14 @@ def _write_datastore(params, resource):
 
     # TODO: validate that the resource name doesn't already contain format
 
-    # WISHLIST: store conversion in memory instead of write to disk
+    # if the file isnt geospatial, we wont need to add an EPSG code to its filename
+    if not is_geospatial:
+        filename_suffix = ""
+    
     tmp_dir = tempfile.mkdtemp()
     path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
+    # turn the geodataframe into a file
     output = iotrans.to_file(
         df,
         path,
@@ -66,29 +73,18 @@ def _write_datastore(params, resource):
 
     del df
 
-    with open(output, "rb") as f:
-        tk.response.write(f.read())
+    # store the bytes of the file
+    with open(output, 'rb') as f:
+        response = io.BytesIO(f.read())
 
+    # delete the tmp dir used above to make the file
     iotrans.utils.prune(tmp_dir)
     gc.collect()
 
-    # TODO: What's wrong with the default file name? (ie. first half of output)
-    fn = "{0}.{1}".format(resource["name"], output.split(".")[-1])
+    ## assign filename and mimetype
+    fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], filename_suffix)
     mt = utils.get_mimetype(fn)
 
-    return fn, mt
+    return fn, mt, response
 
 
-class DownloadsController(BaseController):
-    def download_data(self, resource_id):
-        resource = tk.get_action("resource_show")(None, {"id": resource_id})
-
-        if not resource["datastore_active"]:
-            tk.redirect_to(resource["url"])
-        else:
-            filename, mimetype = _write_datastore(tk.request.GET, resource)
-
-            tk.response.headers["Content-Type"] = mimetype
-            tk.response.headers[
-                "Content-Disposition"
-            ] = b'attachment; filename="{0}"'.format(filename)
