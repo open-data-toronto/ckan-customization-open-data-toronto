@@ -6,7 +6,7 @@ from . import constants, utils, downloads
 
 import ckan.plugins.toolkit as tk
 
-import json, os, io, traceback
+import json, os, io, traceback, subprocess
 
 from werkzeug.datastructures import FileStorage
 
@@ -23,7 +23,6 @@ def build_query(query):
         Returns:
             list: SOLR search params
     """
-    print("======= Query entering build_query is {}".format(query))
     q = []
 
     for k, v in query.items():                          # For everything in the input API call's parameters...
@@ -48,7 +47,6 @@ def build_query(query):
                     "(title:(*{1}*))^10.0".format(w.replace(" ", "-"), w)
                 )
 
-    print("Q exiting build_query() is {}".format(q))
     return q
 
 
@@ -104,7 +102,6 @@ def query_facet(context, data_dict):
     # this returns the appearance of the filter panel on the left side of open.toronto.ca intelligently
 
     q = build_query(data_dict)
-    print("Query Facet Query: {}".format( q ))
 
     output = tk.get_action("package_search")(
         context,
@@ -122,7 +119,6 @@ def query_facet(context, data_dict):
     # for the "multiple_" metadata attributes in the package schema, clean their output
     for facet in "topics", "civic_issues", "formats":
         output["search_facets"][facet]["items"] = utils.unstringify( output["search_facets"][facet]["items"] )
-    print("Post unstringify query_facets output: {}".format(output))
     return output
 
 
@@ -144,8 +140,6 @@ def query_packages(context, data_dict):
         },
     )
 
-    print("Query Packages is returning: {}".format(output))
-    print("It used this query: ".format( " AND ".join(["({x})".format(x=x) for x in q]) ))
     return output
 
 #@tk.chained_action
@@ -199,7 +193,7 @@ def datastore_cache(context, data_dict):
                     filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
                     try:
-                        print("Trying to make a new resource for {} {}".format(epsg_code, format))
+                        
                         filestore_resource = tk.get_action("resource_create")(context, {
                             "package_id": package_summary["package_id"], 
                             "mimetype": mimetype,
@@ -209,12 +203,9 @@ def datastore_cache(context, data_dict):
                             "is_datastore_cache_file": True, 
                             "datastore_resource_id": resource_info["id"]
                         })
-                        print("Filestore resource: {}".format( filestore_resource ))
                     
                     except:
-                        print("Trying to get an existing resource")
                         existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
-                        print(existing_resource)
                         resource_id = existing_resource["results"][0]["id"]
                         filestore_resource = tk.get_action("resource_patch")(context, {
                             "id": resource_id, 
@@ -247,7 +238,6 @@ def datastore_cache(context, data_dict):
                     })
                 except:
                     existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
-                    print(existing_resource)
                     resource_id = existing_resource["results"][0]["id"]
                     filestore_resource = tk.get_action("resource_patch")(context, {
                         "id": resource_id, 
@@ -263,8 +253,7 @@ def datastore_cache(context, data_dict):
                 
         # put array of filepaths into package_patch call and current date into resource_patch call
         #tk.get_action("package_patch")(context, {"id": package_summary["package_id"], "datastore_cache": output })
-        print("RESOURCE PATCH!!!!!!!!!!!!!!!!!!")
-        print(tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") }))
+        tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
     return output
 
 @tk.chained_action
@@ -272,21 +261,22 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # make sure an authorized user is making this call
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
 
-    print(">>>>>>>>>>>>>>>>>>>> datastore create hook <<<<<<<<<<<<<<<<<<<<<")
-    print(context)
-    print(data_dict.keys())
-    print( "Is records in data_dict?")
-    print("records" in data_dict.keys())
     numrecords = len(data_dict["records"])
-    print("Records: {}".format( numrecords ))
 
     output = original_datastore_create(context, data_dict)
     
     if numrecords not in [2000, 20000]:
-        print("running datastore cache...")
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
 
-    
-    print(output)
-    print(">>>>>>>>>>>>>>>>>>>> datastore create hook end <<<<<<<<<<<<<<<<<<<<<")
+
+@tk.side_effect_free
+def reindex_solr(context, data_dict):
+    # make sure an authorized user is making this call
+    assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
+
+    os.system("""
+        . /usr/lib/ckan/default/bin/activate
+        ckan --config=/etc/ckan/default/production.ini search-index rebuild
+    """)
+    return "Complete"
     

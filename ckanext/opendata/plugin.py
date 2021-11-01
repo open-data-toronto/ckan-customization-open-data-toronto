@@ -48,7 +48,8 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "search_packages": api.query_packages,
             "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,
-            "datastore_create": api.datastore_create_hook
+            "datastore_create": api.datastore_create_hook,
+            "reindex_solr": api.reindex_solr
         }
 
 
