@@ -17,6 +17,8 @@ import os
 from . import constants, utils
 
 def _write_datastore(params, resource, target_dir):
+    # converts and returns input file to given format
+
     # get format and projection from the request headers - likely the input GET url params
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
     projection = params.get("projection", constants.DOWNLOAD_PROJECTION)

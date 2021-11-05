@@ -25,20 +25,20 @@ def build_query(query):
     """
     q = []
 
-    for k, v in query.items():                          # For everything in the input API call's parameters...
+    for k, v in query.items():                              # For everything in the input API call's parameters...
         if not len(v):                                      # ignore empty strings and non-strings
             continue
 
-        if k.endswith("[]") and k != "facet_field[]":                                # If a key ends in [] ...
-            f = k[:-2]                                          # remove [] at end of key names and turn the values into a list
-            if f.startswith("vocab_"):                          # if there is a vocab_ prefix in the key name, remove that too
+        if k.endswith("[]") and k != "facet_field[]":       # If a key ends in [] ...
+            f = k[:-2]                                      # remove [] at end of key names and turn the values into a list
+            if f.startswith("vocab_"):                      # if there is a vocab_ prefix in the key name, remove that too
                 f = f[6:]    
             v = utils.to_list(v)
             
             terms = " AND ".join(['*"{x}"*'.format(x=term.replace("vocab_", "")) if " " in term else '*{x}*'.format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
             q.append( "{f}: {terms}".format(f=f, terms=terms) ) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
         
-        elif k == "search":                                 # When a key is "search" (this is when users enter terms into the opentext search bar) ...
+        elif k == "search":                                     # When a key is "search" (this is when users enter terms into the opentext search bar) ...
             for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
                 q.append(
                     "(name:(*{0}*))^5.0 OR "
@@ -133,7 +133,7 @@ def query_packages(context, data_dict):
     output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["{x}".format(x=x) for x in q]),        # solr query
+            "q": " AND ".join(["{x}".format(x=x) for x in q]),          # solr query
             "rows": params["rows"],                                     
             "sort": params["sort"],                                     # this is solr specific
             "start": params["start"],                                   # since its 0: start the returned dataset at the first record
@@ -193,7 +193,7 @@ def datastore_cache(context, data_dict):
                     filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
                     try:
-                        
+                        # try making a resource from scratch
                         filestore_resource = tk.get_action("resource_create")(context, {
                             "package_id": package_summary["package_id"], 
                             "mimetype": mimetype,
@@ -203,7 +203,7 @@ def datastore_cache(context, data_dict):
                             "is_datastore_cache_file": True, 
                             "datastore_resource_id": resource_info["id"]
                         })
-                    
+                        # otherwise, update the existing one
                     except:
                         existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
                         resource_id = existing_resource["results"][0]["id"]
@@ -227,6 +227,7 @@ def datastore_cache(context, data_dict):
                 filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
                 try:
+                    # try creating a resource
                     filestore_resource = tk.get_action("resource_create")(context, {
                         "package_id": package_summary["package_id"], 
                         "mimetype": mimetype,
@@ -237,6 +238,7 @@ def datastore_cache(context, data_dict):
                         "datastore_resource_id": resource_info["id"]
                     })
                 except:
+                    # otherwise edit an existing resource
                     existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
                     resource_id = existing_resource["results"][0]["id"]
                     filestore_resource = tk.get_action("resource_patch")(context, {
@@ -257,25 +259,35 @@ def datastore_cache(context, data_dict):
 
 @tk.chained_action
 def datastore_create_hook(original_datastore_create, context, data_dict):
+    # This logic fires on "/datastore_create" which is called whenever records are inserted into the datastore
+    # When this endpoint is hit, this logic ensures the datastore resource will be cached
+    # In other words, it is put into the datastore *and* copied into multiple formats into the filestore
+
     # make sure an authorized user is making this call
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
 
+    # 2000 and 20000 are hardcoded "chunk" sizes
+    # ETLs from NiFi send data in multiple "chunks" 
+    # We dont want to hit the /datastore_cache for each chunk, just the last one
+    # The last "chunk" wont be 2000 or 20000 records in size
     numrecords = len(data_dict["records"])
-
     output = original_datastore_create(context, data_dict)
-    
     if numrecords not in [2000, 20000]:
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
 
 
 @tk.side_effect_free
 def reindex_solr(context, data_dict):
+    # Endpoint to force a reindex of solr in the target environment
+    # This wont cause a reindex in an associated delivery environment, though
+    # The solr-sqs package is responsible for that 
+
     # make sure an authorized user is making this call
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
 
     os.system("""
         . /usr/lib/ckan/default/bin/activate
-        ckan --config=/etc/ckan/default/production.ini search-index rebuild
+        ckan --config=/etc/ckan/default/production.ini search-index rebuild -r
     """)
     return "Complete"
     

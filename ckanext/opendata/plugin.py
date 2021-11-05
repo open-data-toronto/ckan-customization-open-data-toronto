@@ -13,14 +13,17 @@ import codecs
 import datetime as dt
 import re
 
+# logic used after "Download" button is clicked on Wordpress
 def download_data(resource_id):
+    # get the resource
     resource = tk.get_action("resource_show")(None, {"id": resource_id})
-    # init flask response
+
+    # non datastore resources return the resource url
     if not resource["datastore_active"]:
         return redirect(resource["url"])
         
     else:
-        print("datastore!")
+        # datastore resources convert their records into a file, whose filetype and CRS are based on the request
         filename, mimetype, data = downloads._write_datastore(request.args, resource)
 
         resp = Response(headers = {"Content-Disposition": 'attachment; filename="{0}"'.format(filename)} )
@@ -35,6 +38,9 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     # ==============================
     # IActions
+    # These are custom api endpoints
+    # ex: hitting <ckan_url>/api/action/extract_info will trigger the api.extract_info function
+    # These can also be used with tk.get_action("extract_info"), for example, in this CKAN extension code
     # ==============================
 
     def get_actions(self):
@@ -50,6 +56,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
 
 class ExtendedURLPlugin(p.SingletonPlugin):
+    # Custom url that triggers a specified function when hit
     
     p.implements(p.IBlueprint)
 
@@ -88,8 +95,6 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     # Handles resources around their creation, update, and delete times
     # Specifically:
     #   makes sure resources that already exist arent created again
-    #   assigns a format tag, based on the filetype of the resource
-    #   makes an error if the format of the file isnt in the vocabulary already
     #   creates the map preview for geojson data
     #   updates a package's formats and last_refreshed date based on changes to its resources
 

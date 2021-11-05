@@ -6,6 +6,7 @@ import ckan.plugins.toolkit as tk
 import logging
 
 def create_resource_views(context, resource):
+    # creates the views for resources to be viewed in the CKAN UI
     format_views = {
         "geojson": {
             "title": "Map",
@@ -33,7 +34,6 @@ def create_resource_views(context, resource):
     
     for v in views:
         if v["view_type"] == view["view_type"]:
-            #print("We found a view type in our list")
             return
 
     view["resource_id"] = resource["id"]
@@ -42,6 +42,7 @@ def create_resource_views(context, resource):
 
 
 def update_package(context):
+    # Ensures that changes to a resource in a package also affect the package's metadata
     package = context["package"]
     resources = [r for r in package.resources_all if r.state == "active"]
 
