@@ -252,7 +252,6 @@ def datastore_cache(context, data_dict):
                 output[format] = filestore_resource["id"] # put resource id for filestore resource#url_base + "/" + package_summary["package_id"] + "/" + filename 
                 
         # put array of filepaths into package_patch call and current date into resource_patch call
-        #tk.get_action("package_patch")(context, {"id": package_summary["package_id"], "datastore_cache": output })
         tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
     return output
 

@@ -6,7 +6,6 @@ import ckan.plugins.toolkit as tk
 import logging
 
 def create_resource_views(context, resource):
-    #print("=================== create resource views ====================================")
     format_views = {
         "geojson": {
             "title": "Map",
@@ -26,15 +25,11 @@ def create_resource_views(context, resource):
             resource_format in format_views.keys(),
         ]
     ):
-        #print("We're not makign a view for this resource")
         return
 
     view = format_views.pop(resource_format)
 
     views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
-    #print(" ####################### views ###############")
-    #print(views)
-    #print(" ####################### views ###############")
     
     for v in views:
         if v["view_type"] == view["view_type"]:
@@ -42,10 +37,6 @@ def create_resource_views(context, resource):
             return
 
     view["resource_id"] = resource["id"]
-
-    #print("===================== resource view create view:")
-    #print(view)
-    #print("===================== resource view create view.")
 
     tk.get_action("resource_view_create")(context, view)
 
@@ -72,11 +63,6 @@ def update_package(context):
                 formats = formats.union(constants.GEOSPATIAL_FORMATS)
         else:
             formats.add(resource_format)
-
-        #print(r.created)
-        #print(type(r.created))
-        #print(r.last_modified)
-        #print(type(r.last_modified))
 
         last_refreshed.append(r.created if r.last_modified is None else r.last_modified)
 

@@ -74,8 +74,6 @@ def unstringify(input):
     # inputs "items" dict of a search_facet ...
     # ... (it will hold arrays that solr turned into a string) ...
     # outputs a dict for use in /search_facet
-    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    #print("input: {}".format( input ))
 
     names = []
     terms = []
@@ -98,7 +96,6 @@ def unstringify(input):
             terms.append( {"names": these_names, "count": item["count"]} )
 
     # get the distinct terms and make an output dict structure for them
-    #print("Unstringify Terms: {}".format( terms ))
     for name in set(names):
         item = {
             "count": 0,
@@ -111,7 +108,6 @@ def unstringify(input):
                 item["count"] += value["count"]
         
         output.append( item )
-    #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! unstringify end !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     
     return output
 
@@ -119,26 +115,18 @@ def unstringify(input):
 # Useful scheming validator functions
 # ===
 def choices_to_string(value):
-    #print("===============================choices_to_string")
-    #print(value)
-    #print(type(value))
+
     if isinstance(value, list):
-        #print("list!")
         return ", ".join(value)
     elif isinstance(value, dict):
-        #print("dict!")
         return json.dumps(value)
     elif isinstance(value, str):
-        #print("string!")
         return value.replace('\\', '').replace("[", "").replace("]", "").replace('\"', '').replace("{", "").replace("}", "")
 
 def string_to_choices(value):
-    #print("==================================string_to_choices")
     if isinstance(value, str):
-        #print("converted!")
         return value.split(",")
     else:
-        #print("not converted!")
         return value
 
 def default_to_none(value):
@@ -155,19 +143,13 @@ def default_to_today(value):
     # if we receive a valid datetime IS format string, parse it into an ISO format datetime object
     # if we receive a datetime, return it as is
     # if we return something else, return today as a datetime object
-    #print("=============DEFAULT_TO_TODAY==========")
-    #print( value )
-    #print(type(value))
+    
     if isinstance(value, str):
-        #print("Converted!")
-        #print(str_to_datetime(value))
         return str_to_datetime(value)
         
     elif isinstance(value, datetime):
-        #print("Received datetime as input")
         return value
     else:
-        #print("Defaulted to today")
         return datetime.today()
 
 def datastore_to_csv(resource_id, data, filepath):
@@ -206,11 +188,7 @@ def str_to_datetime(input):
     logging.error("No valid datetime format in utils.str_to_datetime() for input string {}".format(input))
 
 def default_to_false(value):
-    #print("=============DEFAULT TO FALSE")
-    #print(value)
     if value in [True, "true", "True", "TRUE"]:
-        #print("Returned True!")
         return True
     else:
-        #print("Returned False!")
         return False
