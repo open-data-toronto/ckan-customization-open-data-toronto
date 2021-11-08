@@ -77,7 +77,6 @@ def get_quality_score(context, data_dict):
 @tk.side_effect_free
 def extract_info(context, data_dict):
     # returns summary statistics regarding a particular CKAN resource
-    # the time this is called from the open.toronto.ca UI is unclear
     resource_id = data_dict.get("resource_id")
 
     if resource_id is None:
@@ -142,7 +141,6 @@ def query_packages(context, data_dict):
 
     return output
 
-#@tk.chained_action
 @tk.side_effect_free
 def datastore_cache(context, data_dict):
     # init some params we'll need later
@@ -203,8 +201,8 @@ def datastore_cache(context, data_dict):
                             "is_datastore_cache_file": True, 
                             "datastore_resource_id": resource_info["id"]
                         })
-                        # otherwise, update the existing one
                     except:
+                        # otherwise, update the existing one
                         existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
                         resource_id = existing_resource["results"][0]["id"]
                         filestore_resource = tk.get_action("resource_patch")(context, {
@@ -215,14 +213,12 @@ def datastore_cache(context, data_dict):
                             "format": format,
                             "is_datastore_cache_file": True,
                             "datastore_resource_id": resource_info["id"] 
-                        })
-                                       
+                        })            
                     output[format][epsg_code] = filestore_resource["id"]
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not spatial:
             for format in constants.TABULAR_FORMATS:
-
                 params = {"format": format}
                 filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
@@ -251,7 +247,7 @@ def datastore_cache(context, data_dict):
                         "datastore_resource_id": resource_info["id"] 
                     })
                 
-                output[format] = filestore_resource["id"] # put resource id for filestore resource#url_base + "/" + package_summary["package_id"] + "/" + filename 
+                output[format] = filestore_resource["id"] # put resource id for filestore resource
                 
         # put array of filepaths into package_patch call and current date into resource_patch call
         tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
@@ -280,7 +276,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 def reindex_solr(context, data_dict):
     # Endpoint to force a reindex of solr in the target environment
     # This wont cause a reindex in an associated delivery environment, though
-    # The solr-sqs package is responsible for that 
+    # The solr-sqs package is responsible for that   
 
     # make sure an authorized user is making this call
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"

@@ -38,10 +38,10 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     # ==============================
     # IActions
+    # ==============================
     # These are custom api endpoints
     # ex: hitting <ckan_url>/api/action/extract_info will trigger the api.extract_info function
     # These can also be used with tk.get_action("extract_info"), for example, in this CKAN extension code
-    # ==============================
 
     def get_actions(self):
         return {
@@ -76,8 +76,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
     # ===============
     # IValidators
-    # Validates package / resource metadata attributes
     # ===============
+    # Validates package / resource metadata attributes
+    # These validators are referenced in our schema file
 
     def get_validators(self):
         return {
@@ -101,6 +102,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     def before_create(self, context, resource):
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
 
+        # throw an error if we attempt to create 2 packages with the same name
         for idx, r in enumerate(package["resources"]):
             if r["name"] == resource["name"]:
                 raise tk.ValidationError(
@@ -114,6 +116,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
                     }
                 )
 
+        # auto assign a format, if the format isnt assigned yet
         if not ("format" in resource and resource["format"]):
             resource["format"] = resource["url"].split(".")[-1]
         
