@@ -51,13 +51,13 @@ Additional Endpoints and URLs
 ------------
 This extension uses CKAN's IActions plugin interface to add the following api endpoints:
 
-* `/download_resource/{resource_id}`: Fetches and serves filestore and datastore content for resources and enables format and projection conversions for those resources that are in the datastore
-* `/api/action/quality_show?package_id={package_id}`: Returns data quality score for the input package, as calculated by an external function
-* `/api/action/search_packages`: Returns package list based on solr attributes appended to the api call url
-* `/api/action/search_facet`: Returns dataset filters, AKA solr facets, based on solr attributes appended to the api call
-* `/api/action/datastore_cache`: Allows authorized user to create filestore resources (for the purpose of downloading later) for an input datastore resource, in multiple formats
-* `/api/action/datastore_cache`: This extension has an additional hook on the native `datastore_create` endpoint that, under certain circumstances, prompts the firing of the `/datastore_cache` endpoint
-* `/api/action/reindex_solr`: Allows an authorized user to refresh the solr index
+* ``/download_resource/{resource_id}``: Fetches and serves filestore and datastore content for resources and enables format and projection conversions for those resources that are in the datastore
+* ``/api/action/quality_show?package_id={package_id}``: Returns data quality score for the input package, as calculated by an external function
+* ``/api/action/search_packages``: Returns package list based on solr attributes appended to the api call url
+* ``/api/action/search_facet``: Returns dataset filters, AKA solr facets, based on solr attributes appended to the api call
+* ``/api/action/datastore_cache``: Allows authorized user to create filestore resources (for the purpose of downloading later) for an input datastore resource, in multiple formats
+* ``/api/action/datastore_cache``: This extension has an additional hook on the native ``datastore_create`` endpoint that, under certain circumstances, prompts the firing of the ``/datastore_cache`` endpoint
+* ``/api/action/reindex_solr``: Allows an authorized user to refresh the solr index
 
 ------------
 Contribution
