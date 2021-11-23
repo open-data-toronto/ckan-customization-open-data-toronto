@@ -54,22 +54,26 @@ def update_package(context):
 
         # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)
         # the logic below ensures that other formats are tagged to those resources based on whether theyre spatial
-        if (
-            "datastore_active" in r.extras and r.extras["datastore_active"]
-        ) or r.url_type == "datastore":
+        #if (
+        #    "datastore_active" in r.extras and r.extras["datastore_active"]
+        #) or r.url_type == "datastore":
 
-            if resource_format == "CSV":
-                formats = formats.union(constants.TABULAR_FORMATS)
-            elif resource_format == "GEOJSON":
-                formats = formats.union(constants.GEOSPATIAL_FORMATS)
-        else:
-            formats.add(resource_format)
+        #    if resource_format == "CSV":
+        #        formats = formats.union(constants.TABULAR_FORMATS)
+        #    elif resource_format == "GEOJSON":
+        #        formats = formats.union(constants.GEOSPATIAL_FORMATS)
+        #else:
+        
+        # add all resource formats to the package's list of formats
+        formats.add(resource_format)
 
+        # add possible last refreshed dates to array, to be sorted through below
         last_refreshed.append(r.created if r.last_modified is None else r.last_modified)
 
 
-    # make sure the package's last refreshed date is the latest last refreshed date of its resources
     formats = ",".join(list(formats)) if len(formats) else None
+
+    # make sure the package's last refreshed date is the latest last refreshed date of its resources
     last_refreshed = (
         max(last_refreshed).strftime("%Y-%m-%dT%H:%M:%S.%f")
         if len(last_refreshed)

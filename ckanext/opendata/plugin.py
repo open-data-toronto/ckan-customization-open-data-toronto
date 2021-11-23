@@ -86,7 +86,8 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
             'choices_to_string': utils.choices_to_string,
             'string_to_choices': utils.string_to_choices,
             'default_to_today': utils.default_to_today,
-            'default_to_false': utils.default_to_false
+            'default_to_false': utils.default_to_false,
+            'default_to_none': utils.default_to_none
         }
 
     # ==============================
