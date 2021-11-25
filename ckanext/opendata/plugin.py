@@ -128,6 +128,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
         schema.update_package(context)
 
     def after_update(self, context, resource):
+        schema.create_resource_views(context, resource)
         schema.update_package(context)
 
     def after_delete(self, context, resources):
