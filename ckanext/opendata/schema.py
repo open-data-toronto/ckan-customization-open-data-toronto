@@ -8,7 +8,8 @@ import logging
 def create_resource_views(context, resource):
     # creates the views for resources to be viewed in the CKAN UI
     format_views = {
-        "geojson": {
+        "map": {
+            "resource_id": resource["id"],
             "title": "Map",
             "view_type": "recline_map_view",
             "auto_zoom": True,
@@ -16,29 +17,29 @@ def create_resource_views(context, resource):
             "map_field_type": "geojson",
             "limit": 500,
         },
+        "data explorer": {
+            "resource_id": resource["id"],
+            "title": "Data Explorer",
+            "view_type": "recline_view",
+        },
     }
 
-    resource_format = resource.get("format", "").lower()
-
-    if not all(
-        [
-            (resource["datastore_active"] or "datastore" in resource["url"]),
-            resource_format in format_views.keys(),
-        ]
-    ):
+    # only make views for datastore resources
+    if not resource["datastore_active"]:
         return
 
-    view = format_views.pop(resource_format)
-
+    # delete all old views for this resource
     views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
-    
-    for v in views:
-        if v["view_type"] == view["view_type"]:
-            return
+    for view in views:
+        tk.get_action("resource_view_delete")(context, {"id": view["id"] }) 
 
-    view["resource_id"] = resource["id"]
+    # make a map view for a resource with a 'geometry' field
+    if "geometry" in [field["id"] for field in tk.get_action("datastore_search")(context, {"id": resource["id"], "limit":0})["fields"]]:
+        tk.get_action("resource_view_create")(context, format_views["map"])
 
-    tk.get_action("resource_view_create")(context, view)
+    # make a data explorer view for all resources
+    tk.get_action("resource_view_create")(context, format_views["data explorer"])
+
 
 
 def update_package(context):
