@@ -1,4 +1,4 @@
-from shapely.geometry import shape
+from shapely.geometry import shape, GeometryCollection
 from flask import Response
 
 import ckan.plugins.toolkit as tk
@@ -44,7 +44,7 @@ def _write_datastore(params, resource, target_dir):
     # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
         df["geometry"] = df["geometry"].apply(
-            lambda x: shape(x) if isinstance(x, dict) else shape(json.loads(x))
+            lambda x: shape(x) if isinstance(x, dict) else ( shape(json.loads(x)) if x not in ["", None, " "] else GeometryCollection() )
         )
         # we'll add the EPSG code to the output filename
         filename_suffix = " - {}".format( projection )
