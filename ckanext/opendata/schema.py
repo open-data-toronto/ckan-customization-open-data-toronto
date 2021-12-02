@@ -30,17 +30,18 @@ def create_resource_views(context, resource):
 
     # delete all old views for this resource
     views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
+    existing_view_types = []
     for view in views:
-        tk.get_action("resource_view_delete")(context, {"id": view["id"] }) 
-
-    # make a map view for a resource with a 'geometry' field
-    if "geometry" in [field["id"] for field in tk.get_action("datastore_search")(context, {"id": resource["id"], "limit":0})["fields"]]:
-        tk.get_action("resource_view_create")(context, format_views["map"])
+        existing_view_types.append( view["view_type"] )
+        #tk.get_action("resource_view_delete")(context, {"id": view["id"] }) 
 
     # make a data explorer view for all resources
-    tk.get_action("resource_view_create")(context, format_views["data explorer"])
+    if "recline_view" not in existing_view_types:
+        tk.get_action("resource_view_create")(context, format_views["data explorer"])
 
-
+    # make a map view for a resource with a 'geometry' field
+    if "geometry" in [field["id"] for field in tk.get_action("datastore_search")(context, {"id": resource["id"], "limit":0})["fields"]] and "recline_map_view" not in existing_view_types:
+        tk.get_action("resource_view_create")(context, format_views["map"])
 
 def update_package(context):
     # Ensures that changes to a resource in a package also affect the package's metadata
@@ -92,4 +93,4 @@ def update_package(context):
             context,
             {"id": package.id, "last_refreshed": last_refreshed, "formats": formats},
         )
-    
+  
