@@ -16,6 +16,19 @@ import os
 
 from . import constants, utils
 
+def shape_function_wrapper(x):
+    if isinstance(x, dict):
+        return shape(x)
+    elif x not in ["", None, " "]:
+        try:
+            return shape(json.loads(x))
+        except:
+            return GeometryCollection()
+    else:
+        print("Issue dealing with geometry: " + str(x) + " Returning empty GeometryCollection()")
+        return GeometryCollection()
+
+
 def _write_datastore(params, resource, target_dir):
     # converts and returns input file to given format
 
@@ -43,9 +56,8 @@ def _write_datastore(params, resource, target_dir):
 
     # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
-        df["geometry"] = df["geometry"].apply(
-            lambda x: shape(x) if isinstance(x, dict) else ( shape(json.loads(x)) if x not in ["", None, " "] else GeometryCollection() )
-        )
+        df["geometry"] = df["geometry"].apply(shape_function_wrapper)
+        
         # we'll add the EPSG code to the output filename
         filename_suffix = " - {}".format( projection )
 
@@ -88,5 +100,3 @@ def _write_datastore(params, resource, target_dir):
     mt = utils.get_mimetype(fn)
 
     return fn, mt, response
-
-
