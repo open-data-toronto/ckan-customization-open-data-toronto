@@ -266,9 +266,13 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # ETLs from NiFi send data in multiple "chunks" 
     # We dont want to hit the /datastore_cache for each chunk, just the last one
     # The last "chunk" wont be 2000 or 20000 records in size
-    numrecords = len(data_dict["records"])
+
+    if "records" not in data_dict.keys():
+        numrecords = 0
+    else:
+        numrecords = len(data_dict["records"])
     output = original_datastore_create(context, data_dict)
-    if numrecords not in [2000, 20000]:
+    if numrecords not in [2000, 20000, 0]:
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
 
 
