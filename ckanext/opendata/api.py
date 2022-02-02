@@ -42,11 +42,13 @@ def build_query(query):
             for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
                 q.append(
                     "(name:(*{0}*))^5.0 OR "
-                    "(tags:(*{1}*))^5.0 OR"
+                    "(tags:(*{1}*))^5.0 OR "
                     '(notes:("{1}")) OR '
                     "(title:(*{1}*))^10.0".format(w.replace(" ", "-"), w)
                 )
-
+    print("================= BUILD QUERY =================")
+    print(q)
+    print("================= BUILD QUERY =================")
     return q
 
 
@@ -132,13 +134,15 @@ def query_packages(context, data_dict):
     output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["{x}".format(x=x) for x in q]),          # solr query
+            "q": " AND ".join(["({x})".format(x=x) for x in q]),         # solr query
             "rows": params["rows"],                                     
             "sort": params["sort"],                                     # this is solr specific
             "start": params["start"],                                   # since its 0: start the returned dataset at the first record
         },
     )
-
+    print("=======QUERY PACKAGES===========")
+    print(q)
+    print("=======QUERY PACKAGES===========")    
     return output
 
 @tk.side_effect_free
