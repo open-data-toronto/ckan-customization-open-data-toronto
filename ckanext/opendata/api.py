@@ -29,14 +29,14 @@ def build_query(query):
         if not len(v):                                      # ignore empty strings and non-strings
             continue
 
-        if k.endswith("[]") and k != "facet_field[]":       # If a key ends in [] ...
+        if k.endswith("[]") and k != "facet_field[]":       # If a key ends in [], it must be an input filter! So...
             f = k[:-2]                                      # remove [] at end of key names and turn the values into a list
             if f.startswith("vocab_"):                      # if there is a vocab_ prefix in the key name, remove that too
                 f = f[6:]    
-            v = utils.to_list(v)
+            v = utils.list_to_words(v)                      # split the input values by their spaces and return each word in a list
             
-            terms = " AND ".join(['*"{x}"*'.format(x=term.replace("vocab_", "")) if " " in term else '*{x}*'.format(x=term.replace("vocab_", "")) for term in v]) # remove any vocab_ prefix from values
-            q.append( "{f}: {terms}".format(f=f, terms=terms) ) # the cleaned up key, and the AND-delineated "terms" string, are appended to this functions output
+            this = "(" + " AND ".join(['+{f}:*{x}*'.format(x=term.replace("vocab_", ""), f=f) for term in v]) + ")"
+            q.append( this )                                    # remove any vocab_ prefix from values
         
         elif k == "search":                                     # When a key is "search" (this is when users enter terms into the opentext search bar) ...
             for w in v.lower().split(" "):                      # split the input by spaces and add it to the output with some solr query syntax on it
@@ -46,9 +46,7 @@ def build_query(query):
                     '(notes:("{1}")) OR '
                     "(title:(*{1}*))^10.0".format(w.replace(" ", "-"), w)
                 )
-    print("================= BUILD QUERY =================")
-    print(q)
-    print("================= BUILD QUERY =================")
+
     return q
 
 
@@ -114,7 +112,9 @@ def query_facet(context, data_dict):
             "facet.field": utils.to_list(data_dict["facet_field[]"]),   # fields to facet on - this list typically includes a list of all the dataset filter names
         },
     )
-
+    print("========================== query facet ==============")
+    print(" AND ".join(["({x})".format(x=x) for x in q]))
+    print("========================== query facet ==============")
     
 
     # for the "multiple_" metadata attributes in the package schema, clean their output
@@ -129,8 +129,7 @@ def query_packages(context, data_dict):
     q = build_query(data_dict) 
     params = constants.CATALOGUE_SEARCH.copy()                          # {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
-    print("Query Packages Query: {}".format( q ))
-    print(" AND ".join(["{x}".format(x=x) for x in q]))
+    
     output = tk.get_action("package_search")(
         context,
         {
@@ -140,9 +139,7 @@ def query_packages(context, data_dict):
             "start": params["start"],                                   # since its 0: start the returned dataset at the first record
         },
     )
-    print("=======QUERY PACKAGES===========")
-    print(q)
-    print("=======QUERY PACKAGES===========")    
+
     return output
 
 @tk.side_effect_free
