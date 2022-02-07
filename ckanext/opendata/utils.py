@@ -192,3 +192,13 @@ def default_to_false(value):
         return True
     else:
         return False
+
+def list_to_words(input):
+    if isinstance(input,str):
+        return input.split(" ")
+    elif isinstance(input, list):
+        output = []
+        for item in input:
+            for word in item.split(" "):
+                output.append(word)
+        return output
