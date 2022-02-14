@@ -275,6 +275,8 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     output = original_datastore_create(context, data_dict)
     if numrecords not in [2000, 20000, 0]:
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
+        
+    return output
 
 
 @tk.side_effect_free
