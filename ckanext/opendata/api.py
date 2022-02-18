@@ -112,9 +112,9 @@ def query_facet(context, data_dict):
             "facet.field": utils.to_list(data_dict["facet_field[]"]),   # fields to facet on - this list typically includes a list of all the dataset filter names
         },
     )
-    print("========================== query facet ==============")
-    print(" AND ".join(["({x})".format(x=x) for x in q]))
-    print("========================== query facet ==============")
+    #print("========================== query facet ==============")
+    #print(" AND ".join(["({x})".format(x=x) for x in q]))
+    #print("========================== query facet ==============")
     
 
     # for the "multiple_" metadata attributes in the package schema, clean their output
@@ -153,8 +153,11 @@ def datastore_cache(context, data_dict):
 
     # make sure the call has the necessary inputs
     assert "resource_id" in data_dict.keys() or "package_id" in data_dict.keys(), "This endpoint requires package_id or resource_id as an input"
+
+    print("==============----------- DATASTORE CACHE START -------------================================")
     
     # if input param has package id, get all its resource ids that are datastore resources
+    print("----------- Looking for package id in data_dict")
     if "package_id" in data_dict.keys():
         package = tk.get_action("package_show")(context, {"id": data_dict["package_id"]})
         package_summary = {
@@ -163,6 +166,7 @@ def datastore_cache(context, data_dict):
         }
 
     # otherwise, use input param has resource id only
+    print("----------- Looking for resource id in data_dict")
     if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
         resource = tk.get_action("resource_show")(context, {"id": data_dict["resource_id"]})
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
@@ -174,13 +178,15 @@ def datastore_cache(context, data_dict):
             "resources": [ resource_dict ]
         }
         
+    print("----------- found {} resources in datastore_cache input".format(str(len(package_summary["resources"]))))
     # for each resource id in your list...
     assert len(package_summary["resources"]) > 0, "Your inputs are not associated with any datastore resources"
     for resource_info in package_summary["resources"]:
 
-        resource = tk.get_action("datastore_search")(context, {"id": resource_info["id"]})
+        #resource = tk.get_action("datastore_search")(context, {"id": resource_info["id"]})
 
         # is the datastore resource spatial? if it is, we need to create 2 files per type (for each CRS we use)
+        print("--------- checking if spatial")
         spatial = utils.is_geospatial( resource_info["id"] )
 
         # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2945 in spatial formats
@@ -190,6 +196,10 @@ def datastore_cache(context, data_dict):
                 for epsg_code in ["4326", "2945"]:
                     params = {"format": format, "projection": epsg_code}
                     filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
+
+                    print("=========================== CONVERTING Spatial FILE")
+                    print("--------------- " + format + " " + epsg_code)
+
 
                     try:
                         # try making a resource from scratch
@@ -223,6 +233,9 @@ def datastore_cache(context, data_dict):
                 params = {"format": format}
                 filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
+                print("========================== CONVERTING Non Spatial FILE")
+                print("-------------- " + format)
+
                 try:
                     # try creating a resource
                     filestore_resource = tk.get_action("resource_create")(context, {
@@ -252,6 +265,8 @@ def datastore_cache(context, data_dict):
                 
         # put array of filepaths into package_patch call and current date into resource_patch call
         tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
+    
+    print("======-------------------------- FINISHED DATASTORE CACHE ------------------- =====================")
     return output
 
 @tk.chained_action
@@ -261,21 +276,26 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # In other words, it is put into the datastore *and* copied into multiple formats into the filestore
 
     # make sure an authorized user is making this call
+    print("------------ Checking Auth")
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
-
+    print("------------ Done Checking Auth")
     # 2000 and 20000 are hardcoded "chunk" sizes
     # ETLs from NiFi send data in multiple "chunks" 
     # We dont want to hit the /datastore_cache for each chunk, just the last one
     # The last "chunk" wont be 2000 or 20000 records in size
 
+    
     if "records" not in data_dict.keys():
         numrecords = 0
     else:
         numrecords = len(data_dict["records"])
+    print("=============================== STARTING LOAD OF {} RECORDS".format(str(numrecords)))
     output = original_datastore_create(context, data_dict)
+    print("=============================== LOADED {} RECORDS".format(str(numrecords)))
     if numrecords not in [2000, 20000, 0]:
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
-        
+    print("------------ Done Checking If ready for Datastore Cache")
+    
     return output
 
 
