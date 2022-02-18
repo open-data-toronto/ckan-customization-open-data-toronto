@@ -31,6 +31,7 @@ def shape_function_wrapper(x):
 
 def _write_datastore(params, resource, target_dir):
     # converts and returns input file to given format
+    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx STARTING FILE CREATION")
 
     # get format and projection from the request headers - likely the input GET url params
     format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
@@ -47,12 +48,27 @@ def _write_datastore(params, resource, target_dir):
     # Get data from the datastore by using a datastore/dump call
     # Is this the best way to fetch data from datastore tables?
     length = tk.get_action("datastore_info")(None, {"id": resource["id"]})["meta"]["count"]
-    raw = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "limit": length})
+    # if the dataset is larger than 32000 records, CKAN's row output limit for datastore_search calls, then build the dataset chunk by chunk
+    max_length = 32000
+    records = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "offset": 0, "limit": 32000})["records"][:]
+    if length > max_length:
+        offset = max_length
+        while True:
+            
+            new_records = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "offset": offset, "limit": max_length})["records"][:]
+            records += new_records
+            offset += max_length
+            print("------------------------- getting records - offset {} limit {} records {} total records {}".format(str(offset), str(max_length), str(len(new_records)), len(records) ))
+            if len(new_records) == 0:
+                print("--------------------- Breaking out of loop!")
+                break
+
 
     # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas
-    df = pd.DataFrame( raw["records"][:] )
-    del raw
+    print("-------------------------------- FILE CREATION - to dataframe")
+    df = pd.DataFrame( records )
+    del records
 
     # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
@@ -67,6 +83,7 @@ def _write_datastore(params, resource, target_dir):
             crs={"init": "epsg:{0}".format(constants.DOWNLOAD_PROJECTION)},
             geometry="geometry",
         ).to_crs({"init": "epsg:{0}".format(projection)})
+        print("-------------------------------- FILE CREATION - to GEOGRAPHIC dataframe")
 
     # TODO: validate that the resource name doesn't already contain format
 
@@ -77,6 +94,7 @@ def _write_datastore(params, resource, target_dir):
     tmp_dir = tempfile.mkdtemp()
     path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
 
+    print("-------------------------------- FILE CREATION - output file making start")
     # turn the geodataframe into a file
     output = iotrans.to_file(
         df,
@@ -84,12 +102,16 @@ def _write_datastore(params, resource, target_dir):
         projection=projection,
         zip_content=(format in constants.ZIPPED_FORMATS),
     )
+    print("-------------------------------- FILE CREATION - output file making end")
 
     del df
-
+    print("-------------------------------- FILE CREATION - output file writing start")
     # store the bytes of the file
     with open(output, 'rb') as f:
         response = io.BytesIO(f.read())
+    print("-------------------------------- FILE CREATION - output file writing end")
+
+    
 
     # delete the tmp dir used above to make the file
     iotrans.utils.prune(tmp_dir)
@@ -98,5 +120,7 @@ def _write_datastore(params, resource, target_dir):
     ## assign filename and mimetype
     fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], filename_suffix)
     mt = utils.get_mimetype(fn)
+
+    print("--------------------- FINISHED FILE CREATION")
 
     return fn, mt, response
