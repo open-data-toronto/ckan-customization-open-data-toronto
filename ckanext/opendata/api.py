@@ -292,7 +292,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     print("=============================== STARTING LOAD OF {} RECORDS".format(str(numrecords)))
     output = original_datastore_create(context, data_dict)
     print("=============================== LOADED {} RECORDS".format(str(numrecords)))
-    if numrecords not in [2000, 20000, 0]:
+    if numrecords not in [2000, 1999, 20000, 19999, 0]:
         tk.get_action("datastore_cache")(context, {"resource_id": output["resource_id"]})
     print("------------ Done Checking If ready for Datastore Cache")
     
