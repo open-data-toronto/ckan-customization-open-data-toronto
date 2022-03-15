@@ -12,6 +12,7 @@ import tempfile
 import gc
 import io
 import json
+import csv
 import os
 
 from . import constants, utils
@@ -46,29 +47,18 @@ def _write_datastore(params, resource, target_dir):
     ), "Inconsistency between data type and requested file format"
 
     # Get data from the datastore by using a datastore/dump call
-    # Is this the best way to fetch data from datastore tables?
-    length = tk.get_action("datastore_info")(None, {"id": resource["id"]})["meta"]["count"]
-    # if the dataset is larger than 32000 records, CKAN's row output limit for datastore_search calls, then build the dataset chunk by chunk
-    max_length = 32000
-    records = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "offset": 0, "limit": 32000})["records"][:]
-    if length > max_length:
-        offset = max_length
-        while True:
-            
-            new_records = tk.get_action("datastore_search")(None, {"resource_id": resource["id"], "offset": offset, "limit": max_length})["records"][:]
-            records += new_records
-            offset += max_length
-            print("------------------------- getting records - offset {} limit {} records {} total records {}".format(str(offset), str(max_length), str(len(new_records)), len(records) ))
-            if len(new_records) == 0:
-                print("--------------------- Breaking out of loop!")
-                break
-
 
     # convert the data to a dataframe
     # WISHLIST: remove dependency on pandas/geopandas
+    env = tk.config.get("ckan.site_url")
+    dump = env + "/datastore/dump/" + resource["id"]
+
     print("-------------------------------- FILE CREATION - to dataframe")
-    df = pd.DataFrame( records )
-    del records
+    df = pd.read_csv( dump )
+    print(" ---------------------------- ################################# are there duplicates?")
+    print( df[df.duplicated()] )
+    print(" ---------------------------- #################################")
+    #del records
 
     # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
@@ -111,7 +101,7 @@ def _write_datastore(params, resource, target_dir):
         response = io.BytesIO(f.read())
     print("-------------------------------- FILE CREATION - output file writing end")
 
-    
+    print(response)
 
     # delete the tmp dir used above to make the file
     iotrans.utils.prune(tmp_dir)
