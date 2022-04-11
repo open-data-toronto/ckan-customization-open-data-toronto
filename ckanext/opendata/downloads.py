@@ -72,7 +72,7 @@ def _write_datastore(params, resource, target_dir):
             df,
             crs={"init": "epsg:{0}".format(constants.DOWNLOAD_PROJECTION)},
             geometry="geometry",
-        ).to_crs({"init": "epsg:{0}".format(projection)})
+        )#.to_crs({"init": "epsg:{0}".format(projection)})
         print("-------------------------------- FILE CREATION - to GEOGRAPHIC dataframe")
 
     # TODO: validate that the resource name doesn't already contain format
