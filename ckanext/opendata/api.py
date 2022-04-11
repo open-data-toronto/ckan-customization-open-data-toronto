@@ -189,11 +189,11 @@ def datastore_cache(context, data_dict):
         print("--------- checking if spatial")
         spatial = utils.is_geospatial( resource_info["id"] )
 
-        # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2945 in spatial formats
+        # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2952 in spatial formats
         if spatial:
             for format in constants.GEOSPATIAL_FORMATS:
                 output[format] = {}
-                for epsg_code in ["4326", "2945"]:
+                for epsg_code in ["4326", "2952"]:
                     params = {"format": format, "projection": epsg_code}
                     filename, mimetype, response = downloads._write_datastore(params , resource_info, url_base + "/" + package_summary["package_id"])
 
