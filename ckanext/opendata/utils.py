@@ -185,7 +185,7 @@ def str_to_datetime(input):
             return output
         except ValueError:
             pass
-    logging.error("No valid datetime format in utils.str_to_datetime() for input string {}".format(input))
+    print("No valid datetime format in utils.str_to_datetime() for input string {}".format(input))
 
 def default_to_false(value):
     if value in [True, "true", "True", "TRUE"]:
