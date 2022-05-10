@@ -1,0 +1,5 @@
+{% block catalog %}
+    {% for record in h.get_catalog() %}
+      <li>{{ record }}</li>
+    {% endfor %}
+{% endblock %}

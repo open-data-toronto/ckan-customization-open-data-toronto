@@ -202,3 +202,16 @@ def list_to_words(input):
             for word in item.split(" "):
                 output.append(word)
         return output
+
+# gets catalog datastore resource as json object
+def get_catalog():
+    print("=================================================== get catalog start")
+
+    #resource_id = tk.get_action("package_show")({"id": "od-etl-configs"})["resources"][0]["id"]
+    output = ["1","2","3"]#tk.get_action("datastore_search")({"resource_id": resource_id})
+
+    print("=================================================== get catalog end")
+
+    print(output)
+
+    return output

@@ -33,6 +33,7 @@ def download_data(resource_id):
         return resp
 
 
+
 class ExtendedAPIPlugin(p.SingletonPlugin):
     p.implements(p.IActions)
 
@@ -133,3 +134,16 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
     def after_delete(self, context, resources):
         schema.update_package(context)
+
+
+
+class ExtendedThemePlugin(p.SingletonPlugin):
+    p.implements(p.IConfigurer)
+
+    def update_config(self, config):
+        tk.add_template_directory(config, 'templates')
+
+    def get_helpers(self):
+        return {
+            "get_catalog": utils.get_catalog,
+        }

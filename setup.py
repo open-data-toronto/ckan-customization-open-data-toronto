@@ -23,7 +23,7 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.7.10",
     ],
     keywords="",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
@@ -37,6 +37,7 @@ setup(
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
         extendedurl=ckanext.opendata.plugin:ExtendedURLPlugin
         extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin
+        extendedtheme=ckanext.opendata.plugin:ExtendedThemePlugin
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan
