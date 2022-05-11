@@ -139,6 +139,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
 class ExtendedThemePlugin(p.SingletonPlugin):
     p.implements(p.IConfigurer)
+    p.implements(p.ITemplateHelpers)
 
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')

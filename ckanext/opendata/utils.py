@@ -205,13 +205,13 @@ def list_to_words(input):
 
 # gets catalog datastore resource as json object
 def get_catalog():
-    print("=================================================== get catalog start")
 
-    #resource_id = tk.get_action("package_show")({"id": "od-etl-configs"})["resources"][0]["id"]
-    output = ["1","2","3"]#tk.get_action("datastore_search")({"resource_id": resource_id})
-
-    print("=================================================== get catalog end")
-
-    print(output)
+    try:
+        package = tk.get_action("package_show")(data_dict={"id": "od-etl-configs"})
+        resource_id = package["resources"][0]["id"]
+        output = tk.get_action("datastore_search")(data_dict={"resource_id": resource_id}) 
+    except Exception as e:
+        print("Couldnt access catalog page:\n" + str(e))
+        output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
     return output
