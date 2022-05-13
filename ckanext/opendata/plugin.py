@@ -142,7 +142,7 @@ class ExtendedThemePlugin(p.SingletonPlugin):
     p.implements(p.ITemplateHelpers)
 
     def update_config(self, config):
-        tk.add_template_directory(config, 'templates')
+        tk.add_template_directory(config, 'catalog_templates')
 
     def get_helpers(self):
         return {

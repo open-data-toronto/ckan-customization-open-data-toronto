@@ -1,0 +1,223 @@
+{% block catalog %}
+
+<!-- Bootstrap JS and CSS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js">
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js">
+</script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+<script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Custom Table CSS-->
+<style>
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    table-layout: fixed;
+    height: 400px
+  }
+
+  thead {
+    background-color: darkslategrey;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+
+</style>
+
+<!-- Charts -->
+<div class = "row">
+  <div class = "col-sm-2">
+    <canvas id = "owner_email_chart"></canvas>
+  </div>
+  <div class = "col-sm-2">
+    <canvas id = "engine_chart"></canvas>
+  </div>
+  <div class = "col-sm-2">
+    <canvas id = "datastore_active_chart"></canvas>
+  </div>
+</div>
+
+<!-- Table -->
+<table class="table table-striped" id="catalog-table">
+  <thead>
+    <tr>
+      {% for key, value in h.get_catalog().records[0].items() if key != "_id" %}
+      <th>{{ key.replace("_", " ").capitalize() }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in h.get_catalog().records %}
+
+      <tr>
+        {% for key, value in item.items() if key != "_id" %}
+        <td>{{ value }}</td>
+        {% endfor %}
+      </tr>
+
+    {% endfor %}
+  </tbody>
+
+</table>
+
+<script>
+  // Data table bootstrap sorting method
+  $('#catalog-table').DataTable({
+    "paging": false,
+  });
+
+  // Charts
+  // owner_email
+  var no_owner_email = {{ h.get_catalog().records | selectattr("owner_email", "==", None) | list | length }}
+  var opendata = {{ h.get_catalog().records | selectattr("owner_email", "==", "opendata@toronto.ca") | list | length }}
+  var owner_email_provided  = {{ h.get_catalog().records | rejectattr("owner_email", "in", ("opendata@toronto.ca", None)) | list | length }}
+  
+  const owner_email_data = {
+    labels: [
+      "No Owner Email",
+      "opendata@toronto.ca",
+      "Owner Email Provided",
+    ],
+    datasets: [{
+      label: 'Owner Email',
+      data: [no_owner_email, opendata, owner_email_provided],
+      backgroundColor: [
+        'rgb(255, 99, 132)',
+        'rgb(255, 205, 86)',
+        'rgb(54, 162, 235)',
+      ],
+      hoverOffset: 4
+    }]
+  };
+
+  const owner_email_config = {
+    type: "doughnut",
+    data: owner_email_data,
+    options: {
+        plugins: {
+          title: {
+            display: true,
+            text: "Owner Email",
+            font: {
+              size: 20,
+            }
+          },
+          legend: {
+            display: false
+          },
+        }
+      }
+    }
+
+  const owner_email_chart = new Chart(
+    document.getElementById('owner_email_chart'),
+    owner_email_config
+  );
+
+
+  // engine
+  var airflow = {{ h.get_catalog().records | rejectattr("engine", "in", ("NiFi", None))| list | length }}
+  var nifi = {{ h.get_catalog().records | selectattr("engine", "==", "NiFi") | list | length }}
+  var no_engine  = {{ h.get_catalog().records | selectattr("engine", "==", None) | list | length }}
+  
+  const engine_data = {
+    labels: [
+      "Unknown",
+      "NiFi",
+      "Airflow",
+    ],
+    datasets: [{
+      label: 'Dataset Engine',
+      data: [no_engine, nifi, airflow],
+      backgroundColor: [
+        'rgb(255, 99, 132)',
+        'rgb(255, 205, 86)',
+        'rgb(54, 162, 235)',
+      ],
+      hoverOffset: 4
+    }]
+  };
+
+  const engine_config = {
+    type: "doughnut",
+    data: engine_data,
+    options: {
+        plugins: {
+          title: {
+            display: true,
+            text: "Dataset Engine",
+            font: {
+              size: 20,
+            }
+          },
+          legend: {
+            display: false
+          },
+        }
+      }
+    }
+
+  const engine_chart = new Chart(
+    document.getElementById('engine_chart'),
+    engine_config
+  );
+
+
+  // datastore_active
+  var active = {{ h.get_catalog().records | selectattr("datastore_active", "in", (true, "true", "True")) | list |  length }}
+  var not_active = {{ h.get_catalog().records | selectattr("datastore_active", "in", (false, "false", "False")) | list |  length }}
+  
+  const datastore_active_data = {
+    labels: [
+      "Datastore",
+      "Filestore",
+    ],
+    datasets: [{
+      label: 'Datastore vs Filestore',
+      data: [active, not_active],
+      backgroundColor: [   
+        'rgb(54, 162, 235)',
+        'rgb(255, 99, 132)',
+      ],
+      hoverOffset: 4
+    }]
+  };
+
+  const datastore_active_config = {
+    type: "doughnut",
+    data: datastore_active_data,
+    options: {
+        plugins: {
+          title: {
+            display: true,
+            text: "Datastore vs Filestore",
+            font: {
+              size: 20,
+            }
+          },
+          legend: {
+            display: false
+          },
+        }
+      }
+    }
+
+  const datastore_active_chart = new Chart(
+    document.getElementById('datastore_active_chart'),
+    datastore_active_config
+  );
+
+
+</script>
+
+{% endblock %}
