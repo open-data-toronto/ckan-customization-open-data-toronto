@@ -277,6 +277,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 
     # make sure an authorized user is making this call
     print("------------ Checking Auth")
+    tk.check_access("datastore_create", context, data_dict)
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
     print("------------ Done Checking Auth")
     # 2000 and 20000 are hardcoded "chunk" sizes
