@@ -109,7 +109,7 @@ def _write_datastore(params, resource, target_dir):
 
     ## assign filename and mimetype
     fn = "{0}{2}.{1}".format(resource["name"], output.split(".")[-1], filename_suffix)
-    mt = utils.get_mimetype(fn)
+    mt = "application/octet-stream" #utils.get_mimetype(fn)
 
     print("--------------------- FINISHED FILE CREATION")
 

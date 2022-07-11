@@ -215,7 +215,4 @@ def get_catalog():
         print("Couldnt access catalog page:\n" + str(e))
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
-
-    print("-----------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx THE CATALOG IS {} RECORD LONG".format(str(len(output["records"]))))
-
     return output

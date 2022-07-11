@@ -162,7 +162,7 @@ def datastore_cache(context, data_dict):
         package = tk.get_action("package_show")(context, {"id": data_dict["package_id"]})
         package_summary = {
             "package_id": package["name"], 
-            "resources": [ {"id": resource["id"], "name": resource["name"]} for resource in package["resources"] if resource["datastore_active"] ]
+            "resources": [ {"id": resource["id"], "name": resource["name"]} for resource in package["resources"] if resource["datastore_active"] in [True, "true", "True"] ]
         }
 
     # otherwise, use input param has resource id only
@@ -170,9 +170,9 @@ def datastore_cache(context, data_dict):
     if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
         resource = tk.get_action("resource_show")(context, {"id": data_dict["resource_id"]})
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
-        resource_id = resource["id"] if resource["datastore_active"] else None
-        resource_name = resource["name"] if resource["datastore_active"] else None
-        resource_dict = {"id": resource_id, "name": resource_name} if resource["datastore_active"] else None
+        resource_id = resource["id"] if resource["datastore_active"] in [True, "true", "True"] else None
+        resource_name = resource["name"] if resource["datastore_active"] in [True, "true", "True"] else None
+        resource_dict = {"id": resource_id, "name": resource_name} if resource["datastore_active"] in [True, "true", "True"] else None
         package_summary = {
             "package_id": package["name"],
             "resources": [ resource_dict ]
@@ -184,7 +184,7 @@ def datastore_cache(context, data_dict):
     for resource_info in package_summary["resources"]:
 
         #resource = tk.get_action("datastore_search")(context, {"id": resource_info["id"]})
-
+        output = {}
         # is the datastore resource spatial? if it is, we need to create 2 files per type (for each CRS we use)
         print("--------- checking if spatial")
         spatial = utils.is_geospatial( resource_info["id"] )
