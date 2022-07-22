@@ -30,43 +30,27 @@ def shape_function_wrapper(x):
         return GeometryCollection()
 
 
-def _write_datastore(params, resource, target_dir):
-    # converts and returns input file to given format
-    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx STARTING FILE CREATION")
-
-    # get format and projection from the request headers - likely the input GET url params
-    format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
-    projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
-
-    # determine if the resource is geospatial
-    is_geospatial = utils.is_geospatial(resource["id"])
-
-    # make sure these formats make sense together
-    assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
-        not is_geospatial and format in constants.TABULAR_FORMATS
-    ), "Inconsistency between data type and requested file format"
-
-    # Get data from the datastore by using a datastore/dump call
+def _prepare_df(resource_id, is_geospatial):
 
     # convert the data to a dataframe
-    # WISHLIST: remove dependency on pandas/geopandas
     env = tk.config.get("ckan.site_url")
-    dump = env + "/datastore/dump/" + resource["id"]
+    dump = env + "/datastore/dump/" + resource_id
+    print("DDUUMMPP URL: ")
+    print(dump)
 
     print("-------------------------------- FILE CREATION - to dataframe")
+
+    # dump into dataframe and if geospatial convert to geodataframe)
     df = pd.read_csv( dump )
-    print(" ---------------------------- ################################# are there duplicates?")
-    print( df[df.duplicated()] )
-    print(" ---------------------------- #################################")
+    #print(" ---------------------------- ################################# are there duplicates?")
+    #print( df[df.duplicated()] )
+    #print(" ---------------------------- #################################")
     #del records
 
     # if we have geospatial data, use the shape() fcn on each object
     if is_geospatial:
         df["geometry"] = df["geometry"].apply(shape_function_wrapper)
         
-        # we'll add the EPSG code to the output filename
-        filename_suffix = " - {}".format( projection )
-
     # make this a geodataframe
         df = gpd.GeoDataFrame(
             df,
@@ -75,16 +59,40 @@ def _write_datastore(params, resource, target_dir):
         )#.to_crs({"init": "epsg:{0}".format(projection)})
         print("-------------------------------- FILE CREATION - to GEOGRAPHIC dataframe")
 
+    return df
+    '''
     # TODO: validate that the resource name doesn't already contain format
-
-    # if the file isnt geospatial, we wont need to add an EPSG code to its filename
-    if not is_geospatial:
-        filename_suffix = ""
+    
     
     tmp_dir = tempfile.mkdtemp()
     path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
+    '''
+def _write_datastore(params, resource, is_geospatial):
+    # converts and returns input file to given format
+    
 
-    print("-------------------------------- FILE CREATION - output file making start")
+    # get format and projection from the request headers - likely the input GET url params
+    format = params.get("format", constants.DOWNLOAD_FORMAT).upper()
+    projection = params.get("projection", constants.DOWNLOAD_PROJECTION)
+    df = params.get("df", None)
+
+    # make sure these formats make sense together
+    assert (is_geospatial and format in constants.GEOSPATIAL_FORMATS) or (
+        not is_geospatial and format in constants.TABULAR_FORMATS
+    ), "Inconsistency between data type and requested file format"
+
+
+    # we'll add the EPSG code to the output filename
+    if is_geospatial:
+        filename_suffix = " - {}".format( projection )
+    # if the file isnt geospatial, we wont need to add an EPSG code to its filename
+    if not is_geospatial:
+        filename_suffix = ""
+
+    tmp_dir = tempfile.mkdtemp()
+    path = os.path.join(tmp_dir, "{0}.{1}".format(resource["name"], format.lower()))
+
+    print("-------------------------------- FILE CREATION - output file making start") # THIS IS SLOW
     # turn the geodataframe into a file
     output = iotrans.to_file(
         df,
