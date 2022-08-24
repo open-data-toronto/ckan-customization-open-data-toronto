@@ -59,6 +59,17 @@ This extension uses CKAN's IActions plugin interface to add the following api en
 * ``/api/action/datastore_cache``: This extension has an additional hook on the native ``datastore_create`` endpoint that, under certain circumstances, prompts the firing of the ``/datastore_cache`` endpoint
 * ``/api/action/reindex_solr``: Allows an authorized user to refresh the solr index
 
+
+------------
+A note on /datastore_cache
+------------
+Datastore caching is how we enable users to download large datasets quickly.
+
+For a user to get a large datastore resource from CKAN as a file download, the server needs to get the data from CKAN and translate it into the file format (and, for geospatial datasets, Coordinate Reference System) requested by the user. ``/datastore_cache``, which relies heavily on https://github.com/open-data-toronto/iotrans, allows CKAN to transform and cache those files long before a user wants that data.
+
+By default, ``/datastore_cache`` is run after a datastore resource is updated ... but it can also be run on demand.
+
+
 ------------
 Contribution
 ------------
