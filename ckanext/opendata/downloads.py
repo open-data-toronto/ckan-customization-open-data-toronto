@@ -33,9 +33,9 @@ def shape_function_wrapper(x):
 def _prepare_df(resource_id, is_geospatial):
 
     # convert the data to a dataframe
-    env = tk.config.get("ckan.site_url")
+    env = "http://0.0.0.0:8080" #tk.config.get("ckan.site_url")
     dump = env + "/datastore/dump/" + resource_id
-    print("DDUUMMPP URL: ")
+    print("========= DUMP URL: ")
     print(dump)
 
     print("-------------------------------- FILE CREATION - to dataframe")
