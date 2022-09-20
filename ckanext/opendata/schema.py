@@ -25,7 +25,7 @@ def create_resource_views(context, resource):
     }
 
     # only make views for datastore resources
-    if not resource["datastore_active"]:
+    if resource["datastore_active"] in [False, "False", "false"]:
         return
 
     # delete all old views for this resource
