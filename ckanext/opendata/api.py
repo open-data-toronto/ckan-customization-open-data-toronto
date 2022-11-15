@@ -152,7 +152,9 @@ def datastore_cache(context, data_dict):
     assert context["auth_user_obj"], "This endpoint can be used by authorized accounts only"
 
     # make sure the call has the necessary inputs
-    assert "resource_id" in data_dict.keys() or "package_id" in data_dict.keys(), "This endpoint requires package_id or resource_id as an input"
+    if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys(): 
+        raise tk.ValidationError( {"constraints": [ "This endpoint requires package_id or resource_id as an input" ]} )
+        
 
     print("==============----------- DATASTORE CACHE START -------------================================")
     
@@ -179,8 +181,11 @@ def datastore_cache(context, data_dict):
         }
         
     print("----------- found {} resources in datastore_cache input".format(str(len(package_summary["resources"]))))
+    
+    if len(package_summary["resources"]) == 0:
+        raise tk.ValidationError( {"constraints": [ "Your inputs are not associated with any datastore resources" ]} )
+        
     # for each resource id in your list...
-    assert len(package_summary["resources"]) > 0, "Your inputs are not associated with any datastore resources"
     for resource_info in package_summary["resources"]:
 
         # init output
@@ -192,19 +197,38 @@ def datastore_cache(context, data_dict):
         is_geospatial = utils.is_geospatial( resource_info["id"] )
 
         # create df of gdf for 
-        df = downloads._prepare_df(resource_info["id"], is_geospatial)
+        #df = downloads._prepare_df(resource_info["id"], is_geospatial)
 
         # run iotrans wrapper on (g)df for each file + EPSG combination
         # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
-            for format in constants.GEOSPATIAL_FORMATS:
-                output[format] = {}
-                for epsg_code in ["4326", "2952"]:
-                    params = {"format": format, "projection": epsg_code, "df": df}
-                    filename, mimetype, response = downloads._write_datastore(params, resource_info, is_geospatial)
+            #for format in constants.GEOSPATIAL_FORMATS:
+            #    output[format] = {}
+            #    for epsg_code in ["4326", "2952"]:
+            #        params = {"format": format, "projection": epsg_code, "df": df}
+            #        filename, mimetype, response = downloads._write_datastore(params, resource_info, is_geospatial)
 
-                    print("=========================== CONVERTING Spatial FILE")
+            print("=========================== CONVERTING Spatial FILE")
+            print(resource_info)
+
+            cached_files = tk.get_action("to_file")(context, {
+                "resource_id": resource_info["id"],
+                "source_epsg": 4326,
+                "target_epsgs": [4326, 2952],
+                "target_formats": ["csv", "shp", "gpkg", "geojson"]
+            })
+
+            for key, val in cached_files.items():
+                format = key.split("-")[0]
+                epsg_code = key.split("-")[1]
+                mimetype = "application/octet-stream"
+                filename = val.split("/")[-1]
+                
+                with open(val, 'rb') as f:
+                    response = io.BytesIO(f.read())
                     print("--------------- " + format + " " + epsg_code)
+
+
                     try:
                         # try making a resource from scratch
                         filestore_resource = tk.get_action("resource_create")(context, {
@@ -230,15 +254,27 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"] 
                         })            
                     output[format][epsg_code] = filestore_resource["id"]
+                    f.close()
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not is_geospatial:
-            for format in constants.TABULAR_FORMATS:
-                params = {"format": format, "df": df}
-                filename, mimetype, response = downloads._write_datastore(params , resource_info, is_geospatial )
+            #for format in constants.TABULAR_FORMATS:
+            #    params = {"format": format, "df": df}
+            #    filename, mimetype, response = downloads._write_datastore(params , resource_info, is_geospatial )
 
-                print("========================== CONVERTING Non Spatial FILE")
-                print("-------------- " + format)
+            print("========================== CONVERTING Non Spatial FILE")
+            print("-------------- " + format)
+            cached_files = tk.get_action("to_file")(context, {
+                "resource_id": resource_info["id"],
+                "target_formats": ["csv", "xml", "json"]
+            })
+
+            for key, val in cached_files.items():
+                format = key.split("-")[0]
+                mimetype = "application/octet-stream"
+                filename = val.split("/")[-1]
+                with open(val, 'rb') as f:
+                    response = io.BytesIO(f.read())
 
                 try:
                     # try creating a resource
