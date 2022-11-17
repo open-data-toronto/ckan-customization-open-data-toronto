@@ -153,7 +153,7 @@ def datastore_cache(context, data_dict):
 
     # make sure the call has the necessary inputs
     if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys(): 
-        raise tk.ValidationError( {"constraints": [ "This endpoint requires package_id or resource_id as an input" ]} )
+        raise tk.ValidationError( {"constraints": [ "This endpoint requires package_id or resource_id as an input. You included: {}".format(str(data_dict.keys())) ]} )
         
 
     print("==============----------- DATASTORE CACHE START -------------================================")
@@ -208,6 +208,10 @@ def datastore_cache(context, data_dict):
             #        params = {"format": format, "projection": epsg_code, "df": df}
             #        filename, mimetype, response = downloads._write_datastore(params, resource_info, is_geospatial)
 
+            target_formats = ["csv", "shp", "gpkg", "geojson"]
+            for format in target_formats:
+                output[format] = {}
+
             print("=========================== CONVERTING Spatial FILE")
             print(resource_info)
 
@@ -215,7 +219,7 @@ def datastore_cache(context, data_dict):
                 "resource_id": resource_info["id"],
                 "source_epsg": 4326,
                 "target_epsgs": [4326, 2952],
-                "target_formats": ["csv", "shp", "gpkg", "geojson"]
+                "target_formats": target_formats,
             })
 
             for key, val in cached_files.items():
@@ -262,11 +266,15 @@ def datastore_cache(context, data_dict):
             #    params = {"format": format, "df": df}
             #    filename, mimetype, response = downloads._write_datastore(params , resource_info, is_geospatial )
 
+            target_formats = ["csv", "xml", "json"]
+            for format in target_format:
+                output[format] = {}
+
             print("========================== CONVERTING Non Spatial FILE")
             print("-------------- " + format)
             cached_files = tk.get_action("to_file")(context, {
                 "resource_id": resource_info["id"],
-                "target_formats": ["csv", "xml", "json"]
+                "target_formats": target_formats,
             })
 
             for key, val in cached_files.items():
