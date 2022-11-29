@@ -203,14 +203,14 @@ def datastore_cache(context, data_dict):
         # if this is spatial, we'll need to repeat the stuff below for EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
             #for format in constants.GEOSPATIAL_FORMATS:
-            #    output[format] = {}
+            #    output[format.upper()] = {}
             #    for epsg_code in ["4326", "2952"]:
             #        params = {"format": format, "projection": epsg_code, "df": df}
             #        filename, mimetype, response = downloads._write_datastore(params, resource_info, is_geospatial)
 
             target_formats = ["csv", "shp", "gpkg", "geojson"]
             for format in target_formats:
-                output[format] = {}
+                output[format.upper()] = {}
 
             print("=========================== CONVERTING Spatial FILE")
             print(resource_info)
@@ -230,35 +230,42 @@ def datastore_cache(context, data_dict):
                 
                 with open(val, 'rb') as f:
                     response = io.BytesIO(f.read())
+                    f.close()
                     print("--------------- " + format + " " + epsg_code)
 
 
-                    try:
-                        # try making a resource from scratch
-                        filestore_resource = tk.get_action("resource_create")(context, {
-                            "package_id": package_summary["package_id"], 
-                            "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
-                            "name": filename,
-                            "format": format,
-                            "is_datastore_cache_file": True, 
-                            "datastore_resource_id": resource_info["id"]
-                        })
-                    except:
-                        # otherwise, update the existing one
-                        existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
-                        resource_id = existing_resource["results"][0]["id"]
-                        filestore_resource = tk.get_action("resource_patch")(context, {
-                            "id": resource_id, 
-                            "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
-                            "name": filename,
-                            "format": format,
-                            "is_datastore_cache_file": True,
-                            "datastore_resource_id": resource_info["id"] 
-                        })            
-                    output[format][epsg_code] = filestore_resource["id"]
-                    f.close()
+                try:
+                    # try making a resource from scratch
+                    filestore_resource = tk.get_action("resource_create")(context, {
+                        "package_id": package_summary["package_id"], 
+                        "mimetype": mimetype,
+                        "upload": FileStorage(stream=response, filename=filename),
+                        "name": filename,
+                        "format": format,
+                        "is_datastore_cache_file": True, 
+                        "datastore_resource_id": resource_info["id"]
+                    })
+                except:
+                    # otherwise, update the existing one
+                    existing_resource = tk.get_action("resource_search")(context, {"query": "name:{}".format(filename)})
+                    resource_id = existing_resource["results"][0]["id"]
+                    filestore_resource = tk.get_action("resource_patch")(context, {
+                        "id": resource_id, 
+                        "mimetype": mimetype,
+                        "upload": FileStorage(stream=response, filename=filename),
+                        "name": filename,
+                        "format": format,
+                        "is_datastore_cache_file": True,
+                        "datastore_resource_id": resource_info["id"] 
+                    })            
+
+                # add details to output
+                output[format.upper()][epsg_code] = filestore_resource["id"]
+
+                # delete temp file now that we've used it
+                cached_files = tk.get_action("prune")(context, {"path":val})
+
+                
 
         # if its not spatial, we'll have different file formats, but no epsg codes to worry about
         elif not is_geospatial:
@@ -267,8 +274,8 @@ def datastore_cache(context, data_dict):
             #    filename, mimetype, response = downloads._write_datastore(params , resource_info, is_geospatial )
 
             target_formats = ["csv", "xml", "json"]
-            for format in target_format:
-                output[format] = {}
+            for format in target_formats:
+                output[format.upper()] = {}
 
             print("========================== CONVERTING Non Spatial FILE")
             print("-------------- " + format)
@@ -283,7 +290,8 @@ def datastore_cache(context, data_dict):
                 filename = val.split("/")[-1]
                 with open(val, 'rb') as f:
                     response = io.BytesIO(f.read())
-
+                    f.close()
+                    
                 try:
                     # try creating a resource
                     filestore_resource = tk.get_action("resource_create")(context, {
@@ -309,8 +317,11 @@ def datastore_cache(context, data_dict):
                         "datastore_resource_id": resource_info["id"] 
                     })
                 
-                output[format] = filestore_resource["id"] # put resource id for filestore resource
+                # add details to output
+                output[format.upper()] = filestore_resource["id"] # put resource id for filestore resource
         
+                # delete temp file now that we've used it
+                cached_files = tk.get_action("prune")(context, {"path":val})
 
         # put array of filepaths into package_patch call and current date into resource_patch call
         tk.get_action("resource_patch")(context, {"id": resource_info["id"], "datastore_cache": output, "datastore_cache_last_update": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") })
