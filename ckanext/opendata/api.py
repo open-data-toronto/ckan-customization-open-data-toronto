@@ -72,6 +72,8 @@ def build_query(query):
 
 @tk.side_effect_free
 def get_quality_score(context, data_dict):
+    """Receives package_id as input
+    returns associated data quality score from catalog"""
     pid = data_dict.get("package_id")
     rid = None
 
@@ -90,7 +92,7 @@ def get_quality_score(context, data_dict):
     if rid is not None:
         return tk.get_action("datastore_search")(
             context,
-            {"resource_id": rid, "q": {"package": pid}, 
+            {"resource_id": rid, "q": {"package": pid},
                 "sort": "recorded_at desc"},
         )["records"]
 
@@ -151,6 +153,7 @@ def query_facet(context, data_dict):
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
+    """Utility function for fuzzy searching packages"""
 
     q = build_query(data_dict)
     params = (
@@ -297,7 +300,7 @@ def datastore_cache(context, data_dict):
         # df = downloads._prepare_df(resource_info["id"], is_geospatial)
 
         # run iotrans wrapper on (g)df for each file + EPSG combination
-        # if this is spatial, we'll need to repeat the stuff below for 
+        # if this is spatial, we'll need to repeat the stuff below for
         # EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
 
@@ -336,7 +339,9 @@ def datastore_cache(context, data_dict):
                         {
                             "package_id": package_summary["package_id"],
                             "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
+                            "upload": FileStorage(
+                                stream=response,
+                                filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -464,14 +469,15 @@ def datastore_cache(context, data_dict):
 
 @tk.chained_action
 def datastore_create_hook(original_datastore_create, context, data_dict):
-    # This logic fires on "/datastore_create" which is called whenever records
-    # are inserted into the datastore
+    '''This logic fires on "/datastore_create" which is called whenever records
+    are inserted into the datastore
 
-    # When this endpoint is hit, this logic ensures the datastore resource
-    # will be cached
+    When this endpoint is hit, this logic ensures the datastore resource
+    will be cached
 
-    # In other words, it is put into the datastore *and* copied into multiple
-    # formats into the filestore
+    In other words, it is put into the datastore *and* copied into multiple
+    formats into the filestore
+    '''
 
     # make sure an authorized user is making this call
     logging.info("------------ Checking Auth")
@@ -482,7 +488,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     logging.info("------------ Done Checking Auth")
     # 2000 and 20000 are hardcoded "chunk" sizes
     # ETLs from NiFi send data in multiple "chunks"
-    # We dont want to hit the /datastore_cache for each chunk, 
+    # We dont want to hit the /datastore_cache for each chunk,
     # just the last chunk
     # The last "chunk" wont be 2000 or 20000 records in size
 
@@ -508,10 +514,10 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 
 @tk.side_effect_free
 def reindex_solr(context, data_dict):
-    # Endpoint to force a reindex of solr in the target environment
-    # This wont cause a reindex in an associated delivery environment, though
-    # The solr-sqs package is responsible for that
-
+    """Endpoint to force a reindex of solr in the target environment
+    This wont cause a reindex in an associated delivery environment, though
+    The solr-sqs package is responsible for that
+    """
     # make sure an authorized user is making this call
     assert context[
         "auth_user_obj"
