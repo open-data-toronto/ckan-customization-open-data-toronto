@@ -411,7 +411,7 @@ def datastore_cache(context, data_dict):
                             "upload": FileStorage(
                                 stream=response,
                                 filename=filename
-                                ),
+                            ),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,

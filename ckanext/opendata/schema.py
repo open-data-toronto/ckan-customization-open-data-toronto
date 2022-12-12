@@ -54,7 +54,14 @@ def create_resource_views(context, resource):
 
 def update_package(context):
     """Ensures changes to a resource in a package also affect
-    the package's metadata"""
+    the package's metadata
+
+    This ensures that a change to a resource last update date
+    also updates the package's last update date
+
+    This also ensures that a change to a resource's `format`,
+    or the addition of a new format, is considered in the package's
+    formats metadata field """
 
     package = context["package"]
     resources = [r for r in package.resources_all if r.state == "active"]
@@ -64,11 +71,6 @@ def update_package(context):
 
     for r in resources:
         resource_format = r.format.upper()
-
-        # Datastore resources will, by default, be marked as CSV (nonspatial)
-        # or GEOJSON (spatial)
-        # the logic below ensures that other formats are tagged to those
-        # resources based on whether theyre spatial
 
         # add all resource formats to the package's list of formats
         formats.add(resource_format)
