@@ -2,40 +2,20 @@ from datetime import datetime
 from . import constants
 
 import ckan.plugins.toolkit as tk
-import mimetypes
 import json
-import csv
-
-import codecs
-
-
-def string_to_hex(s):
-    return codecs.encode(s.encode("utf-8"), "hex")
-
-
-def hex_to_string(s):
-    return codecs.decode(s, "hex").decode("utf-8")
-
-
-def get_mimetype(path):
-    mimetype, encoding = mimetypes.guess_type(path)
-
-    if mimetype is None:
-        ext = path.split(".")[-1]
-
-        if ext in constants.CUSTOM_MIMETYPES:
-            return constants.CUSTOM_MIMETYPES[ext]
-
-    return mimetype
 
 
 def is_geospatial(resource_id):
+    """Determines whether input datastore resource is geospatial
+    It does this by seeing whether it has a 'geometry' column"""
     info = tk.get_action("datastore_info")(None, {"id": resource_id})
 
     return "geometry" in info["schema"]
 
 
 def to_list(input_list):
+    """Returns input as list, removing 'vocab_' prefix if present
+    vocab_ prefix is present in certain package metadata"""
     if not isinstance(input_list, list):
         return [input_list]
     else:
@@ -49,6 +29,7 @@ def to_list(input_list):
 
 
 def validate_length(key, data, errors, context):
+    """Throws an error if input is over a certain char count"""
     if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
         raise tk.ValidationError(
             {
@@ -63,20 +44,10 @@ def validate_length(key, data, errors, context):
     return data[key]
 
 
-def validate_tag_in_vocab(tag, vocab):
-    try:
-        tk.get_action("tag_show")(None, {"id": tag, "vocabulary_id": vocab})
-    except Exception:
-        raise tk.ValidationError(
-            {"constraints": ["Tag {0} is not in the vocabulary {1}".format(
-                tag, vocab)]}
-        )
-
-
 def unstringify(input):
-    # inputs "items" dict of a search_facet ...
-    # ... (it will hold arrays that solr turned into a string) ...
-    # outputs a dict for use in /search_facet
+    """inputs "items" dict of a search_facet 
+    (it will hold arrays that solr turned into a string)
+    outputs a dict for use in /search_facet"""
 
     names = []
     terms = []
@@ -120,9 +91,8 @@ def unstringify(input):
     return output
 
 
-# Useful scheming validator functions
-# ===
 def choices_to_string(value):
+    """Returns input as a comma-delimited string"""
 
     if isinstance(value, list):
         return ", ".join(value)
@@ -140,6 +110,7 @@ def choices_to_string(value):
 
 
 def string_to_choices(value):
+    """Returns input comma-delimited string as a list"""
     if isinstance(value, str):
         return value.split(",")
     else:
@@ -147,6 +118,7 @@ def string_to_choices(value):
 
 
 def default_to_none(value):
+    """Returns None if no input is given"""
     if value:
         return value
 
@@ -165,32 +137,6 @@ def default_to_today(value):
         return value
     else:
         return datetime.today()
-
-
-def datastore_to_csv(resource_id, data, filepath):
-    """In ckan <2.9.3, the lazyjson object only works as a normal dict
-    when you take its 0th index"""
-
-    with open(
-        "/usr/lib/ckan/default/src/ckanext-opendatatoronto/ckanext/opendata/"
-        + resource_id
-        + ".csv",
-        "w",
-    ) as file:
-        writer = csv.writer(file)
-        headers = data[0].keys()
-        writer.writerow(headers)
-        for row in data:
-            assert row.keys() == headers
-            writer.writerow(row.values())
-    file.close()
-
-
-def lazyjson_to_dict(lazyjson):
-    output = []
-    for item in lazyjson:
-        output.append(item)
-    return output
 
 
 def str_to_datetime(input):
@@ -222,6 +168,7 @@ def str_to_datetime(input):
 
 
 def default_to_false(value):
+    """Returns boolean false unless some permutation of true is given"""
     if value in [True, "true", "True", "TRUE"]:
         return True
     else:
@@ -229,6 +176,7 @@ def default_to_false(value):
 
 
 def list_to_words(input):
+    """splits input by spaces, returns list"""
     if isinstance(input, str):
         return input.split(" ")
     elif isinstance(input, list):
@@ -239,8 +187,8 @@ def list_to_words(input):
         return output
 
 
-# gets catalog datastore resource as json object
 def get_catalog():
+    """ gets catalog datastore resource as json object"""
 
     try:
         package = tk.get_action("package_show")(data_dict={
