@@ -45,7 +45,7 @@ def validate_length(key, data, errors, context):
 
 
 def unstringify(input):
-    """inputs "items" dict of a search_facet 
+    """inputs "items" dict of a search_facet
     (it will hold arrays that solr turned into a string)
     outputs a dict for use in /search_facet"""
 
