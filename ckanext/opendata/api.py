@@ -98,29 +98,6 @@ def get_quality_score(context, data_dict):
 
 
 @tk.side_effect_free
-def extract_info(context, data_dict):
-    '''returns summary statistics regarding a particular CKAN resource'''
-    resource_id = data_dict.get("resource_id")
-
-    if resource_id is None:
-        raise ValidationError("Missing resource ID")
-
-    count = tk.get_action("datastore_info")(context, {"id": resource_id})[
-        "meta"]["count"]
-
-    dt = tk.get_action("resource_show")(context, {"id": resource_id})[
-        "last_modified"
-        ]
-    d = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f").date()
-
-    return {
-        "rows": count,
-        "updated_at": dt,
-        "updated_today": d == datetime.today().date(),
-    }
-
-
-@tk.side_effect_free
 def query_facet(context, data_dict):
     '''runs package_search API call with input parameters
     This is triggered in the UI when someone clicks on a Dataset Filter
@@ -153,7 +130,9 @@ def query_facet(context, data_dict):
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
-    """Utility function for fuzzy searching packages"""
+    """Used by the catalog page to determine which packages should be listed
+    It receives inputs from filters or search terms users have selected
+    on the catalog page, then returns the correct CKAN packages"""
 
     q = build_query(data_dict)
     params = (

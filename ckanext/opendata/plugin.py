@@ -10,9 +10,9 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
     # IActions
     # ==============================
     These are custom api endpoints
-    ex: hitting <ckan_url>/api/action/extract_info will
-    trigger the api.extract_info function
-    These can also be used with tk.get_action("extract_info"),
+    ex: hitting <ckan_url>/api/action/datastore_cache will
+    trigger the api.datastore_cache function
+    These can also be used with tk.get_action("datastore_cache"),
     for example, in this CKAN extension code
     """
 
@@ -20,7 +20,6 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            "extract_info": api.extract_info,
             "quality_show": api.get_quality_score,
             "search_packages": api.query_packages,
             "search_facet": api.query_facet,
