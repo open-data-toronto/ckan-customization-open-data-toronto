@@ -300,6 +300,10 @@ def datastore_cache(context, data_dict):
                 },
             )
 
+            # get directory where all these cached files will be stored
+            # we'll want to use it to delete the dir later
+            cached_files_dir = "/".join(list(cached_files.values())[0].split("/")[:-1])
+
             for key, val in cached_files.items():
                 format = key.split("-")[0]
                 epsg_code = key.split("-")[1]
@@ -353,7 +357,7 @@ def datastore_cache(context, data_dict):
                 output[format.upper()][epsg_code] = filestore_resource["id"]
 
                 # delete temp file now that we've used it
-                cached_files = tk.get_action("prune")(context, {"path": val})
+                tk.get_action("prune")(context, {"path": val})
 
         # if its not spatial, we'll have different file formats,
         # but no epsg codes to worry about
@@ -371,6 +375,10 @@ def datastore_cache(context, data_dict):
                     "target_formats": target_formats,
                 },
             )
+
+            # get directory where all these cached files will be stored
+            # we'll want to use it to delete the dir later
+            cached_files_dir = "/".join(list(cached_files.values())[0].split("/")[:-1])
 
             for key, val in cached_files.items():
                 format = key.split("-")[0]
@@ -425,7 +433,10 @@ def datastore_cache(context, data_dict):
                 ]  # put resource id for filestore resource
 
                 # delete temp file now that we've used it
-                cached_files = tk.get_action("prune")(context, {"path": val})
+                tk.get_action("prune")(context, {"path": val})
+
+        # delete the temp directory where we stored the cached files
+        tk.get_action("prune")(context, {"path": cached_files_dir})
 
         # put array of filepaths into package_patch call
         # and current date into resource_patch call
