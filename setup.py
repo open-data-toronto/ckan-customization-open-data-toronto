@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-# Always prefer setuptools over distutils
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 from os import path
 
@@ -14,8 +13,7 @@ setup(
     name="""ckanext-opendatatoronto""",
     version="2.2.0",
     description="""
-        This extension contains plugins that modifiy and extend default CKAN
-        features for the City of Toronto Open Data Portal.
+        This extension contains plugins that modifiy and extend default CKAN features for the City of Toronto Open Data Portal.
     """,
     long_description=long_description,
     url="https://github.com/open-data-toronto/ckan-customization-open-data-toronto",
@@ -37,6 +35,7 @@ setup(
     entry_points="""
         [ckan.plugins]
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
+        extendedurl=ckanext.opendata.plugin:ExtendedURLPlugin
         extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin
         extendedtheme=ckanext.opendata.plugin:ExtendedThemePlugin
 
