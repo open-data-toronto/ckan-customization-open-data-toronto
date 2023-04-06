@@ -35,7 +35,6 @@ setup(
     entry_points="""
         [ckan.plugins]
         updateschema=ckanext.opendata.plugin:UpdateSchemaPlugin
-        extendedurl=ckanext.opendata.plugin:ExtendedURLPlugin
         extendedapi=ckanext.opendata.plugin:ExtendedAPIPlugin
         extendedtheme=ckanext.opendata.plugin:ExtendedThemePlugin
 
