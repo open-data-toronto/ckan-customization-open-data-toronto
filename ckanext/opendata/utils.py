@@ -239,6 +239,17 @@ def clean_civic_issues(input):
             if working_issue == working_input:
                 output.append(issue)
 
+    if len(output) == 0 and len(input) > 0:
+        raise tk.ValidationError(
+            {
+                "constraints": [
+                    "Input {} didnt match any civic issues".format(
+                        str(input)
+                    )
+                ]
+            }
+        )
+
     return output
 
 
@@ -262,5 +273,16 @@ def clean_topics(input):
             working_issue = re.sub(r'[^a-zA-Z0-9]', '', issue).lower()
             if working_issue == working_input:
                 output.append(issue)
+
+    if len(output) == 0 and len(input) > 0:
+        raise tk.ValidationError(
+            {
+                "constraints": [
+                    "Input {} didnt match any topics".format(
+                        str(input)
+                    )
+                ]
+            }
+        )
 
     return output
