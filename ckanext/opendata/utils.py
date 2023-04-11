@@ -1,11 +1,10 @@
-from ckan.lib.navl.dictization_functions import missing
 from datetime import datetime
 
 import ckan.plugins.toolkit as tk
 import mimetypes
 import json
 import csv
-
+import re
 import codecs
 
 
@@ -191,8 +190,9 @@ def list_to_words(input):
                 output.append(word)
         return output
 
-# gets catalog datastore resource as json object
+
 def get_catalog():
+    '''gets catalog datastore resource as json object'''
 
     try:
         package = tk.get_action("package_show")(data_dict={"id": "od-etl-configs"})
@@ -202,5 +202,65 @@ def get_catalog():
     except Exception as e:
         print("Couldnt access catalog page:\n" + str(e))
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
+
+    return output
+
+def to_boolean(input):
+    '''Input string representation of boolean, output boolean'''
+    if isinstance(input, bool):
+        return input
+    if isinstance(input, int):
+        return bool(input)
+    if input.lower() == "true":
+        return True
+    elif input.lower() == "false":
+        return False
+    else:
+        return input
+
+def clean_civic_issues(input):
+    '''Translate input string to civic issue or return error'''
+    output = []
+    package = tk.get_action("package_show")(None, {"id": "tags"})
+
+    # get civic issues
+    for resource in package["resources"]:
+        if resource["name"].lower() == "civic issues":
+            response = tk.get_action("datastore_search")(None, {"id": resource["id"]})
+            correct_civic_issues = [row["label"] for row in response["records"]]
+            break
+
+    # standardize strings and compare. If match, return correct civic issue
+    for this_input in input:
+        for issue in correct_civic_issues:
+
+            working_input = re.sub(r'[^a-zA-Z0-9]', '', this_input).lower()
+            working_issue = re.sub(r'[^a-zA-Z0-9]', '', issue).lower()
+            if working_issue == working_input:
+                output.append(issue)
+
+    return output
+
+
+def clean_topics(input):
+    '''Translate input string to topic or return error'''
+    output = []
+    package = tk.get_action("package_show")(None, {"id": "tags"})
+
+    # get topics
+    for resource in package["resources"]:
+        if resource["name"].lower() == "topics":
+            response = tk.get_action("datastore_search")(None, {"id": resource["id"]})
+            correct_topics = [row["label"] for row in response["records"]]
+            break
+
+    # standardize strings and compare. If match, return correct civic issue
+    for this_input in input:
+        for issue in correct_topics:
+
+            working_input = re.sub(r'[^a-zA-Z0-9]', '', this_input).lower()
+            working_issue = re.sub(r'[^a-zA-Z0-9]', '', issue).lower()
+            if working_issue == working_input:
+                output.append(issue)
 
     return output

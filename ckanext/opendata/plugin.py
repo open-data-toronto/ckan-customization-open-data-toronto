@@ -47,6 +47,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
             'default_to_today': utils.default_to_today,
             'default_to_false': utils.default_to_false,
             'default_to_none': utils.default_to_none,
+            'to_boolean': utils.to_boolean,
+            'clean_civic_issues': utils.clean_civic_issues,
+            'clean_topics': utils.clean_topics,
             
         }
 
