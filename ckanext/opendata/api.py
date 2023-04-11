@@ -4,7 +4,7 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 
-from . import constants, utils
+from . import utils
 from datetime import datetime
 
 import os
@@ -81,11 +81,11 @@ def get_quality_score(context, data_dict):
         raise ValidationError("Missing package ID")
 
     package = tk.get_action("package_show")(
-        context, {"id": constants.DQ.get("package")}
+        context, {"id": "catalogue-quality-scores"}
     )
 
     for r in package["resources"]:
-        if r["name"] == constants.DQ.get("resource"):
+        if r["name"] == "catalogue-scorecard":
             rid = r["id"]
             break
 
@@ -135,9 +135,7 @@ def query_packages(context, data_dict):
     on the catalog page, then returns the correct CKAN packages"""
 
     q = build_query(data_dict)
-    params = (
-        constants.CATALOGUE_SEARCH.copy()
-    )  # {"rows": 10, "sort": "score desc", "start": 0}
+    params = ({"rows": 10, "sort": "score desc", "start": 0})
     params.update(data_dict)
 
     output = tk.get_action("package_search")(

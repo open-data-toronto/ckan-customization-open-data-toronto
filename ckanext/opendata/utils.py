@@ -1,6 +1,5 @@
 from ckan.lib.navl.dictization_functions import missing
 from datetime import datetime
-from . import constants
 
 import ckan.plugins.toolkit as tk
 import mimetypes
@@ -16,18 +15,6 @@ def string_to_hex(s):
 
 def hex_to_string(s):
     return codecs.decode(s, "hex").decode("utf-8")
-
-
-def get_mimetype(path):
-    mimetype, encoding = mimetypes.guess_type(path)
-
-    if mimetype is None:
-        ext = path.split(".")[-1]
-
-        if ext in constants.CUSTOM_MIMETYPES:
-            return constants.CUSTOM_MIMETYPES[ext]
-
-    return mimetype
 
 
 def is_geospatial(resource_id):
@@ -47,12 +34,13 @@ def to_list(l):
 
 
 def validate_length(key, data, errors, context):
-    if data[key] and len(data[key]) > constants.MAX_FIELD_LENGTH:
+    max_length = 350
+    if data[key] and len(data[key]) > max_length:
         raise tk.ValidationError(
             {
                 "constraints": [
                     "Input exceed {0} character limit".format(
-                        constants.MAX_FIELD_LENGTH
+                        max_length
                     )
                 ]
             }

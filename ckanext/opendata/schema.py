@@ -1,6 +1,6 @@
 from six import string_types
 
-from . import constants, utils
+from . import utils
 
 import ckan.plugins.toolkit as tk
 import logging
@@ -53,18 +53,6 @@ def update_package(context):
 
     for r in resources:
         resource_format = r.format.upper()
-
-        # Datastore resources will, by default, be marked as CSV (nonspatial) or GEOJSON (spatial)
-        # the logic below ensures that other formats are tagged to those resources based on whether theyre spatial
-        #if (
-        #    "datastore_active" in r.extras and r.extras["datastore_active"]
-        #) or r.url_type == "datastore":
-
-        #    if resource_format == "CSV":
-        #        formats = formats.union(constants.TABULAR_FORMATS)
-        #    elif resource_format == "GEOJSON":
-        #        formats = formats.union(constants.GEOSPATIAL_FORMATS)
-        #else:
         
         # add all resource formats to the package's list of formats
         formats.add(resource_format)
