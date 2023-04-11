@@ -216,3 +216,16 @@ def get_catalog():
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
     return output
+
+def to_boolean(input):
+    '''Input string representation of boolean, output boolean'''
+    if isinstance(input, bool):
+        return input
+    if isinstance(input, int):
+        return bool(input)
+    if input.lower() == "true":
+        return True
+    elif input.lower() == "false":
+        return False
+    else:
+        return input
