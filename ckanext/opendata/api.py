@@ -500,6 +500,74 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     return output
 
 
+@tk.chained_action
+def datastore_delete_hook(original_datastore_delete, context, data_dict):
+    '''This logic fires on "/datastore_delete" which is called whenever records
+    are deleted from the datastore
+
+    When this endpoint is hit, this logic ensures critical values from the tags
+    package are not deleted.
+
+    If these values are deleted, datasets will not be able to get updates
+    '''
+
+    # make sure an authorized user is making this call
+    logging.info("------------ Checking Auth")
+    tk.check_access("datastore_delete", context, data_dict)
+    assert context[
+        "auth_user_obj"
+    ], "This endpoint can be used by authorized accounts only"
+    logging.info("------------ Done Checking Auth")
+
+    # checking if this targets the tags package
+    tags_package = tk.get_action("package_show")(context, {"id": "tags"})
+    tags_resources = {r["id"]:r["name"] for r in tags_package["resources"]
+                            if r["datastore_active"] in [True, "True", "true"]
+                        }
+
+    # if it does, make sure it doesnt target important tags
+    if data_dict["id"] in tags_resources.keys():
+        if (tags_resources[data_dict["id"]] in 
+            ["Owner Division", "Refresh Rate", "Dataset Category"]
+        ):
+            # if we delete important tags, ensure we dont delete all values
+            if "filters" not in data_dict.keys():
+                raise tk.ValidationError(
+                    {
+                        "constraints": [
+                            "Not allowed to bulk delete from {}".format(
+                                tags_resources[data_dict["id"]]
+                            )
+                        ]
+                    }
+                )
+
+            # make sure we dont delete values belonging to the tags package
+            elif "filters" in data_dict.keys():
+                tags_metadata = [
+                    tags_package["owner_division"],
+                    tags_package["refresh_rate"],
+                    tags_package["dataset_category"],
+                ]
+
+                incoming_deletes = data_dict["filters"].values()
+
+                matches = set(tags_metadata) & set(incoming_deletes)
+
+                if matches:
+                    raise tk.ValidationError(
+                        {
+                            "constraints": [
+                                "Not allowed to delete tag {}".format(
+                                    str(matches)
+                                )
+                            ]
+                        }
+                    )
+
+    output = original_datastore_delete(context, data_dict)
+
+
 @tk.side_effect_free
 def reindex_solr(context, data_dict):
     """Endpoint to force a reindex of solr in the target environment

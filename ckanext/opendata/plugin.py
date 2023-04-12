@@ -25,6 +25,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
+            "datastore_delete": api.datastore_delete_hook,
             "reindex_solr": api.reindex_solr
         }
 
