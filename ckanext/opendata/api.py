@@ -510,6 +510,7 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
 
     If these values are deleted, datasets will not be able to get updates
     '''
+    
 
     # make sure an authorized user is making this call
     logging.info("------------ Checking Auth")
@@ -518,41 +519,41 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
         "auth_user_obj"
     ], "This endpoint can be used by authorized accounts only"
     logging.info("------------ Done Checking Auth")
+    
 
-    # checking if this targets the tags package
-    tags_package = tk.get_action("package_show")(context, {"id": "tags"})
-    tags_resources = {r["id"]:r["name"] for r in tags_package["resources"]
+    # checking if this targets the metadata-catalog package
+    metadata_catalog_package = tk.get_action("package_show")(context, {"id": "metadata-catalog"})
+    metadata_catalog_resources = {r["id"]:r["name"] for r in metadata_catalog_package["resources"]
                             if r["datastore_active"] in [True, "True", "true"]
-                        }
-
-    # if it does, make sure it doesnt target important tags
-    if data_dict["id"] in tags_resources.keys():
-        if (tags_resources[data_dict["id"]] in 
+                        }    
+    # if it does, make sure it doesnt target important metadata-catalog
+    if data_dict["id"] in metadata_catalog_resources.keys():
+        if (metadata_catalog_resources[data_dict["id"]] in 
             ["Owner Division", "Refresh Rate", "Dataset Category"]
-        ):
-            # if we delete important tags, ensure we dont delete all values
+        ):            
+            # if we delete important metadata-catalog, ensure we dont delete all values
             if "filters" not in data_dict.keys():
                 raise tk.ValidationError(
                     {
                         "constraints": [
                             "Not allowed to bulk delete from {}".format(
-                                tags_resources[data_dict["id"]]
+                                metadata_catalog_resources[data_dict["id"]]
                             )
                         ]
                     }
                 )
 
-            # make sure we dont delete values belonging to the tags package
+            # make sure we dont delete values belonging to the metadata-catalog package
             elif "filters" in data_dict.keys():
-                tags_metadata = [
-                    tags_package["owner_division"],
-                    tags_package["refresh_rate"],
-                    tags_package["dataset_category"],
+                metadata_catalog_metadata = [
+                    metadata_catalog_package["owner_division"],
+                    metadata_catalog_package["refresh_rate"],
+                    metadata_catalog_package["dataset_category"],
                 ]
 
                 incoming_deletes = data_dict["filters"].values()
 
-                matches = set(tags_metadata) & set(incoming_deletes)
+                matches = set(metadata_catalog_metadata) & set(incoming_deletes)
 
                 if matches:
                     raise tk.ValidationError(
@@ -564,7 +565,7 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
                             ]
                         }
                     )
-
+    
     output = original_datastore_delete(context, data_dict)
 
 

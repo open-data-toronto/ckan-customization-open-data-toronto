@@ -221,7 +221,7 @@ def to_boolean(input):
 def clean_civic_issues(input):
     '''Translate input string to civic issue or return error'''
     output = []
-    package = tk.get_action("package_show")(None, {"id": "tags"})
+    package = tk.get_action("package_show")(None, {"id": "metadata-catalog"})
 
     # get civic issues
     for resource in package["resources"]:
@@ -256,7 +256,7 @@ def clean_civic_issues(input):
 def clean_topics(input):
     '''Translate input string to topic or return error'''
     output = []
-    package = tk.get_action("package_show")(None, {"id": "tags"})
+    package = tk.get_action("package_show")(None, {"id": "metadata-catalog"})
 
     # get topics
     for resource in package["resources"]:
