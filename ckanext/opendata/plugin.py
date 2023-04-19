@@ -4,8 +4,12 @@ from . import api, schema, utils
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
+from ckan.plugins.toolkit import _
+
 
 import datetime as dt
+
+import json
 
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
@@ -96,6 +100,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
 
 class ExtendedThemePlugin(p.SingletonPlugin):
+    '''Logic to manage custom themes and previews'''
+
+    # Custom theme logic for homepage etl-inventory viewer
     p.implements(p.IConfigurer)
     p.implements(p.ITemplateHelpers)
 
@@ -105,4 +112,33 @@ class ExtendedThemePlugin(p.SingletonPlugin):
     def get_helpers(self):
         return {
             "get_catalog": utils.get_catalog,
+            "get_dqs": utils.get_dqs,
         }
+
+    # Custom DQS preview logic
+    p.implements(p.IResourceView, inherit=True)
+
+    def info(self):
+        return {
+                'name': 'dqs_view',
+                'title': _('DQS'),
+                'icon': 'cog',
+                'iframed': False,
+                'always-available': True,
+                }
+
+    def can_view(self, data_dict):
+        return True
+
+    def setup_template_variables(self, context, data_dict):
+        return {
+                'resource_json': data_dict['resource'],
+                'resource_view_json': data_dict['resource_view'],
+                'package': data_dict["package"]
+                }
+
+    def view_template(self, context, data_dict):
+        return 'views/dqs_view.html'
+
+    def form_template(self, context, data_dict):
+        return 'views/dqs_form.html'

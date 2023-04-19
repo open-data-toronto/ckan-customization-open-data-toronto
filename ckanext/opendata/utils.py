@@ -204,3 +204,21 @@ def get_catalog():
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
     return output
+
+
+def get_dqs(input_resource, input_package):
+    package = tk.get_action("package_show")(data_dict={"id": "catalogue-quality-scores"})
+    dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes"][0]
+
+    datastore_resource = tk.get_action("datastore_search")(
+        data_dict=
+        {
+            "resource_id": dqs_resource_id, 
+            "limit": 32000,
+            "q": {"resource": input_resource["name"], "package": input_package["name"]}
+        }
+    )
+
+    output = sorted(datastore_resource["records"], key=lambda x:datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S"), reverse=True)[0]
+    
+    return output
