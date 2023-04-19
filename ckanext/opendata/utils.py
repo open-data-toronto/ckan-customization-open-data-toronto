@@ -219,6 +219,14 @@ def get_dqs(input_resource, input_package):
         }
     )
 
-    output = sorted(datastore_resource["records"], key=lambda x:datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S"), reverse=True)[0]
+    records = sorted(datastore_resource["records"], key=lambda x:datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S"), reverse=True)[0]
+
+    output = {}
+    for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
+        output[dimension] = {"score": records[dimension], "code": records[dimension+"_code"]}
+
+    print("===============================================================================================")
+    print(output)
+    print("===============================================================================================")
     
     return output
