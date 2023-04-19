@@ -207,6 +207,15 @@ def get_catalog():
 
 
 def get_dqs(input_resource, input_package):
+
+    # initialize icons for output
+    icons = {
+        "usability": "wrench",
+        "metadata": "info-circle",
+        "freshness": "hourglass",
+        "completeness": "battery-half",
+        "accessibility": "universal-access",
+    }
     package = tk.get_action("package_show")(data_dict={"id": "catalogue-quality-scores"})
     dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes"][0]
 
@@ -223,10 +232,6 @@ def get_dqs(input_resource, input_package):
 
     output = {}
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
-        output[dimension] = {"score": records[dimension], "code": records[dimension+"_code"]}
-
-    print("===============================================================================================")
-    print(output)
-    print("===============================================================================================")
+        output[dimension] = {"score": records[dimension], "code": records[dimension+"_code"], "icon": icons[dimension]}
     
     return output

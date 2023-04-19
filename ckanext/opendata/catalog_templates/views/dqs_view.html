@@ -1,24 +1,28 @@
 {% extends "base.html" %}
 
+<!-- Bootstrap JS and CSS -->
+
 {% block page %}
 
     <!-- Table -->
     <table class="table table-striped table-bordered table-condensed">
-        <thead>
+        <!-- <thead>
         <tr>
             <th>Dimension</th>
             <th>Score</th>
             <th>Code</th>
         </tr>
-        </thead>
+        </thead>-->
     
         <tbody>
           
         {% for key, value in h.get_dqs(resource_json, package).items() %}
         <tr>
-            <td>{{ key }}</td>
-            <td>{{ value.score }}</td>
-            <td>{{ value.code }}</td>
+            <div scope="row">
+                <td colspan="2"><span class="fa icon fa-{{ value.icon }}"></span> <b>{{ key }}</b></td>
+                <td colspan="2">{{ value.score }}</td>
+                <td colspan="8">{{ value.code }}</td>
+            </div>
         </tr>
         {% endfor %}
           
@@ -27,3 +31,8 @@
 
 {% endblock %}
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("body").tooltip({ selector: '[data-toggle=tooltip]' });
+    });
+</script>
