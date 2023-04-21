@@ -233,9 +233,8 @@ def get_dqs(input_resource, input_package):
     output = {}
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
         output[dimension] = {
-            "score": str(100*records[dimension])[:4]+"%",
-            "code": records[dimension+"_code"],
-            "icon": icons[dimension],
+            "score": str(int(100*records[dimension]))+"%",
+            "code": records[dimension+"_code"].split(";"),
             "description": descriptions[dimension],
         }
     

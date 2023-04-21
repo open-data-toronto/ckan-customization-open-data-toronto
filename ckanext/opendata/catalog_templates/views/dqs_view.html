@@ -16,7 +16,13 @@
                 </li>
                 <li class="media-item" style="width:65%">
                     <h6>Known issues:</h6>
-                    <p>{{ value.code }}</p>
+                    <ul>
+                        {% for code in value.code %}
+                        {% if code|length > 1 %}
+                        <li>{{ code }}</li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
                 </li>                
             </div>
         {% endfor %}
