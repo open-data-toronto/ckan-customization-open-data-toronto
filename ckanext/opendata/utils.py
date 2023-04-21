@@ -216,6 +216,13 @@ def get_dqs(input_resource, input_package):
         "completeness": "battery-half",
         "accessibility": "universal-access",
     }
+    descriptions = {
+        "usability": "How easy is it to work with the data?",
+        "metadata": "Is the data well described/contextualized?",
+        "freshness": "Is the dataset up-to-date?",
+        "completeness": "Is the significant amounts of missing data?",
+        "accessibility": "Is the data easy to access for different kinds of users?",
+    }
     package = tk.get_action("package_show")(data_dict={"id": "catalogue-quality-scores"})
     dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes"][0]
 
@@ -232,6 +239,11 @@ def get_dqs(input_resource, input_package):
 
     output = {}
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
-        output[dimension] = {"score": records[dimension], "code": records[dimension+"_code"], "icon": icons[dimension]}
+        output[dimension] = {
+            "score": str(100*records[dimension])[:4]+"%",
+            "code": records[dimension+"_code"],
+            "icon": icons[dimension],
+            "description": descriptions[dimension],
+        }
     
     return output
