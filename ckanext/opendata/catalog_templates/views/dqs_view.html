@@ -10,7 +10,7 @@
         {% for key, value in h.get_dqs(resource_json, package).items() %}
             <div class="row">                
                 <li class="media-item" style="width:30%">
-                    <h2 class="media-heading"><span class="fa fa-{{ value.icon }}"></span>{{ key.capitalize() }}</h2>
+                    <h2 class="media-heading">{{ key.capitalize() }}</h2>
                     <h4 class="text-muted">{{ value.score }}</h4>
                     <p><i>{{ value.description }}</i></p>
                 </li>

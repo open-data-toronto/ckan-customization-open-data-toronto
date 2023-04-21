@@ -208,14 +208,7 @@ def get_catalog():
 
 def get_dqs(input_resource, input_package):
 
-    # initialize icons for output
-    icons = {
-        "usability": "wrench",
-        "metadata": "info-circle",
-        "freshness": "hourglass",
-        "completeness": "battery-half",
-        "accessibility": "universal-access",
-    }
+    # initialize descriptions for output
     descriptions = {
         "usability": "How easy is it to work with the data?",
         "metadata": "Is the data well described/contextualized?",
