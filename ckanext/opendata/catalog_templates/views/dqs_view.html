@@ -17,9 +17,17 @@
                 <li class="media-item" style="width:65%">
                     <h6>Known issues:</h6>
                     <ul>
-                        {% for code in value.code %}
-                        {% if code|length > 1 %}
+                        {% for code, subcodes in value.codes.items() %}
+                        {% if code|length > 0 %}
                         <li>{{ code }}</li>
+                        {% if subcodes|length > 0 %}
+                            <ul>
+                            {% for subcode in subcodes %}
+                            <li>{{ subcode }}</li>
+                            {% endfor %}
+                            </ul>
+                            <br>
+                        {% endif %}
                         {% endif %}
                         {% endfor %}
                     </ul>

@@ -206,6 +206,44 @@ def get_catalog():
     return output
 
 
+def parse_dqs_codes(input):
+    '''takes a tilde (~) separated string containing dqs codes
+    and parses it into meaningful descriptions in an array'''
+
+    output = {}
+    # init translation dict
+    code_dict = {
+        "colnames_unclear": "Column names are not composed of clear english words", 
+        "constant_cols": "The following column(s) contain constant values:",
+        "metadata_missing": "The following metadata fields are empty:", 
+        "owner_is_opendata": "This dataset's owner is marked as opendata@toronto.ca, when there may be a better contact email", 
+        "bad_info_url": "The url where users can get more information about this data is broken", 
+        "data_def_missing": "There are no column definitions in this dataset", 
+        "periods_behind": "The dataset is not being refreshed at its designated refresh rate. It is this many periods behind:", 
+        "stale": "This dataset has not been updated in over 2 years", 
+        "significant_missing_data": "A significant amount of data is null in this dataset", 
+        "no_pipeline_found": "There isn't an ETL pipeline associated with this dataset - it is therefore updated manually", 
+        "no_tags": "There aren't any tags on this dataset that could be used to look it up on open.toronto.ca's search bar", 
+    }
+
+    codes = input.split("~")
+
+    for code in codes:
+        main_code = code.split(":")[0]
+        for lookup in code_dict.keys():
+            # if an input code matches the dict, add it to output
+            if code.startswith(lookup):
+                output[code_dict[main_code]] = []
+                # if code containts ':', it has more details
+                # we want to add those details to the output too
+                if ":" in code:
+                    subcodes = code.split(":")[-1].split(",")
+                    for subcode in subcodes:
+                        output[code_dict[main_code]].append(subcode)
+
+    return output
+
+
 def get_dqs(input_resource, input_package):
 
     # initialize descriptions for output
@@ -234,7 +272,7 @@ def get_dqs(input_resource, input_package):
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
         output[dimension] = {
             "score": str(int(100*records[dimension]))+"%",
-            "code": records[dimension+"_code"].split(";"),
+            "codes": parse_dqs_codes(records[dimension+"_code"]),
             "description": descriptions[dimension],
         }
     
