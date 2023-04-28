@@ -254,6 +254,8 @@ def get_dqs(input_resource, input_package):
         "completeness": "Is the significant amounts of missing data?",
         "accessibility": "Is the data easy to access for different kinds of users?",
     }
+
+    # get DQS values from CKAN for this package
     package = tk.get_action("package_show")(data_dict={"id": "catalogue-quality-scores"})
     dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes"][0]
 
@@ -262,17 +264,22 @@ def get_dqs(input_resource, input_package):
         {
             "resource_id": dqs_resource_id, 
             "limit": 32000,
-            "q": {"resource": input_resource["name"], "package": input_package["name"]}
+            "q": {"package": input_package["name"]}
         }
     )
 
-    records = sorted(datastore_resource["records"], key=lambda x:datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S"), reverse=True)[0]
+    max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource["records"])
 
+    records = [r for r in datastore_resource["records"] if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")]
+
+    
     output = {}
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
+        mean_score = sum(r[dimension] for r in records) / len(records)
+        codes = "~".join([r[dimension+"_code"] for r in records])
         output[dimension] = {
-            "score": str(int(100*records[dimension]))+"%",
-            "codes": parse_dqs_codes(records[dimension+"_code"]),
+            "score": str(int(100*mean_score))+"%",
+            "codes": parse_dqs_codes(codes),
             "description": descriptions[dimension],
         }
     

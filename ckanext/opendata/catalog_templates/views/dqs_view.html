@@ -13,6 +13,10 @@
                     <h2 class="media-heading">{{ key.capitalize() }}</h2>
                     <h4 class="text-muted">{{ value.score }}</h4>
                     <p><i>{{ value.description }}</i></p>
+                    {% if key == "usability" or key == "completeness" %}
+                    <br>
+                    <p><i>This score is an average. More details <a target="_blank" href="https://odadmin0.intra.dev-toronto.ca/dataset/catalogue-quality-scores">here</a></i></p>
+                    {% endif %}
                 </li>
                 <li class="media-item" style="width:65%">
                     <h6>Known issues:</h6>
