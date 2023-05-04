@@ -224,6 +224,7 @@ def parse_dqs_codes(input):
         "significant_missing_data": "A significant amount of data is null in this dataset", 
         "no_pipeline_found": "There isn't an ETL pipeline associated with this dataset - it is therefore updated manually", 
         "no_tags": "There aren't any tags on this dataset that could be used to look it up on open.toronto.ca's search bar", 
+        "invalid_geospatial": "Geography in this dataset is invalid"
     }
 
     codes = input.split("~")
