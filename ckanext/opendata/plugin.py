@@ -1,11 +1,7 @@
-from ckan.common import config
-
 from . import api, schema, utils
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
-
-import datetime as dt
 
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
@@ -15,8 +11,10 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
     # IActions
     # ==============================
     # These are custom api endpoints
-    # ex: hitting <ckan_url>/api/action/extract_info will trigger the api.extract_info function
-    # These can also be used with tk.get_action("extract_info"), for example, in this CKAN extension code
+    # ex: hitting <ckan_url>/api/action/seach_facet will trigger the
+    # api.seach_facet function
+    # These can also be used with tk.get_action("search_facet")
+    # in this CKAN extension code
 
     def get_actions(self):
         return {
@@ -25,6 +23,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
+            "datastore_delete": api.datastore_delete_hook,
             "reindex_solr": api.reindex_solr
         }
 
@@ -47,7 +46,10 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
             'default_to_today': utils.default_to_today,
             'default_to_false': utils.default_to_false,
             'default_to_none': utils.default_to_none,
-            
+            'to_boolean': utils.to_boolean,
+            'clean_civic_issues': utils.clean_civic_issues,
+            'clean_topics': utils.clean_topics,
+
         }
 
     # ==============================
@@ -58,10 +60,14 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     # Specifically:
     #   makes sure resources that already exist arent created again
     #   creates the map preview for geojson data
-    #   updates a package's formats and last_refreshed date based on changes to its resources
+    #   updates a package's formats and last_refreshed date based on changes
+    #   to its resources
 
     def before_create(self, context, resource):
-        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
+        package = tk.get_action("package_show")(context, {
+            "id": resource["package_id"]
+            }
+        )
 
         # throw an error if we attempt to create 2 packages with the same name
         for idx, r in enumerate(package["resources"]):
@@ -80,9 +86,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
         # auto assign a format, if the format isnt assigned yet
         if not ("format" in resource and resource["format"]):
             resource["format"] = resource["url"].split(".")[-1]
-        
+
         resource["format"] = resource["format"].upper()
-        
+
     def after_create(self, context, resource):
         schema.create_resource_views(context, resource)
         schema.update_package(context)
