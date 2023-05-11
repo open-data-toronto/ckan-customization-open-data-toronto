@@ -185,10 +185,10 @@ def datastore_cache(context, data_dict):
     output = {}
 
     # make sure an authorized user is making this call
-    if not context.get("auth_user_obj", None):
-        raise tk.ValidationError(
-            {"constraints": ["This endpoint can be used by authorized accounts only"]}
-        )
+    #if not context.get("auth_user_obj", None):
+    #    raise tk.ValidationError(
+    #        {"constraints": ["This endpoint can be used by authorized accounts only"]}
+    #    )
 
     # make sure the call has the necessary inputs
     if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys():
@@ -314,7 +314,11 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"],
                         },
                     )
-                except Exception:
+                except Exception as e:
+                    print("++++++++++++++++++++++++++++++++++++++++++++++")
+                    print(e)
+                    print("++++++++++++++++++++++++++++++++++++++++++++++")
+                    
                     # otherwise, update the existing one
                     existing_resource = tk.get_action("resource_search")(
                         context, {"query": "name:{}".format(filename)}
@@ -468,19 +472,24 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     if numrecords not in [2000, 1999, 20000, 19999, 0]:
 
         print("=================================================")
+        print(context)
         print(type(context))
         print(type(output["resource_id"]))
         print(type(datastore_cache_job))
         print("=================================================")
 
         context.pop("model")
+        context.pop("session")
+        #context.pop("auth_user_obj")
+        context.pop("connection")
         
         tk.enqueue_job(
             fn=datastore_cache_job, 
             args=[
+                context,
                 output["resource_id"],
             ], 
-            title="cache_job"
+            title="cache_job - " + output["resource_id"]
             #title=output["resource_id"]+"_datastore_cache_job",
             #timeout=3600
         )
@@ -491,9 +500,11 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 
     return output
 
-def datastore_cache_job(resource_id):
+def datastore_cache_job(context, resource_id):
     """Calls datastore_cache CKAN action"""
+
     tk.get_action("datastore_cache")(
+        context,
         {"resource_id": resource_id}
     )
 
