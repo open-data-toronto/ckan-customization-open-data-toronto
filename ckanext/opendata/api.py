@@ -314,10 +314,7 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"],
                         },
                     )
-                except Exception as e:
-                    print("++++++++++++++++++++++++++++++++++++++++++++++")
-                    print(e)
-                    print("++++++++++++++++++++++++++++++++++++++++++++++")
+                except Exception as e:                    
                     
                     # otherwise, update the existing one
                     existing_resource = tk.get_action("resource_search")(
@@ -471,16 +468,8 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     logging.info("=== LOADED {} RECORDS".format(str(numrecords)))
     if numrecords not in [2000, 1999, 20000, 19999, 0]:
 
-        print("=================================================")
-        print(context)
-        print(type(context))
-        print(type(output["resource_id"]))
-        print(type(datastore_cache_job))
-        print("=================================================")
-
         context.pop("model")
         context.pop("session")
-        #context.pop("auth_user_obj")
         context.pop("connection")
         
         tk.enqueue_job(
@@ -489,7 +478,8 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
                 context,
                 output["resource_id"],
             ], 
-            title="cache_job - " + output["resource_id"]
+            title="cache_job - " + output["resource_id"],
+            rq_kwargs={"timeout":3600}
             #title=output["resource_id"]+"_datastore_cache_job",
             #timeout=3600
         )
