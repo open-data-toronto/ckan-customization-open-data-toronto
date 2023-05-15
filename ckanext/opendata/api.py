@@ -196,10 +196,10 @@ def datastore_cache(context, data_dict):
             {"constraints": ["Endpoint needs input package_id or resource_id"]}
         )
 
-    logging.info(" ----- Datastore Caching has started!")
+    logging.info("[ckanext-opendatatoronto] ----- Datastore Caching has started!")
 
     # if input param has package id, get all its datastore resource
-    logging.info(" --- Looking for package id in data_dict")
+    logging.info("[ckanext-opendatatoronto] --- Looking for package id in data_dict")
     if "package_id" in data_dict.keys():
         package = tk.get_action("package_show")(
             context, {"id": data_dict["package_id"]}
@@ -214,7 +214,7 @@ def datastore_cache(context, data_dict):
         }
 
     # otherwise, use input param has resource id only
-    logging.info("----------- Looking for resource id in data_dict")
+    logging.info("[ckanext-opendatatoronto]----------- Looking for resource id in data_dict")
     if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
         resource = tk.get_action("resource_show")(
             context, {"id": data_dict["resource_id"]}
@@ -258,7 +258,7 @@ def datastore_cache(context, data_dict):
 
         # find out if resource is spatial
         # if it is, we need to create 2 files per file format for each CRS
-        logging.info("--------- checking if spatial")
+        logging.info("[ckanext-opendatatoronto]--------- checking if spatial")
         is_geospatial = utils.is_geospatial(resource_info["id"])
 
         # create df of gdf for
@@ -272,7 +272,7 @@ def datastore_cache(context, data_dict):
             for format in target_formats:
                 output[format.upper()] = {}
 
-            logging.info("=========================== CONVERTING Spatial FILE")
+            logging.info("[ckanext-opendatatoronto]=========================== CONVERTING Spatial FILE")
             logging.info(resource_info)
 
             cached_files = tk.get_action("to_file")(
@@ -298,7 +298,7 @@ def datastore_cache(context, data_dict):
                 with open(val, "rb") as f:
                     response = io.BytesIO(f.read())
                     f.close()
-                    logging.info("--------------- " + format + " " + epsg_code)
+                    logging.info("[ckanext-opendatatoronto]--------------- " + format + " " + epsg_code)
 
                 try:
                     # try making a resource from scratch
@@ -347,8 +347,8 @@ def datastore_cache(context, data_dict):
             for format in target_formats:
                 output[format.upper()] = {}
 
-            logging.info("---------- CONVERTING Non Spatial FILE")
-            logging.info("-------------- " + format)
+            logging.info("[ckanext-opendatatoronto]---------- CONVERTING Non Spatial FILE")
+            logging.info("[ckanext-opendatatoronto]-------------- " + format)
             cached_files = tk.get_action("to_file")(
                 context,
                 {
@@ -426,7 +426,7 @@ def datastore_cache(context, data_dict):
             },
         )
 
-    logging.info(" --- Finished Datastore Cache")
+    logging.info("[ckanext-opendatatoronto] --- Finished Datastore Cache")
     return output
 
 
@@ -443,12 +443,12 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     """
 
     # make sure an authorized user is making this call
-    logging.info("------------ Checking Auth")
+    logging.info("[ckanext-opendatatoronto]------------ Checking Auth")
     tk.check_access("datastore_create", context, data_dict)
     assert context[
         "auth_user_obj"
     ], "This endpoint can be used by authorized accounts only"
-    logging.info("------------ Done Checking Auth")
+    logging.info("[ckanext-opendatatoronto]------------ Done Checking Auth")
     # 2000 and 20000 are hardcoded "chunk" sizes
     # ETLs from NiFi send data in multiple "chunks"
     # We dont want to hit the /datastore_cache for each chunk,
@@ -465,7 +465,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
         )
     )
     output = original_datastore_create(context, data_dict)
-    logging.info("=== LOADED {} RECORDS".format(str(numrecords)))
+    logging.info("[ckanext-opendatatoronto]=== LOADED {} RECORDS".format(str(numrecords)))
     if numrecords not in [2000, 1999, 20000, 19999, 0]:
 
         context.pop("model")
@@ -486,7 +486,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
         #tk.get_action("datastore_cache")(
         #    context, {"resource_id": output["resource_id"]}
         #)
-    logging.info("------------ Done Checking If ready for Datastore Cache")
+    logging.info("[ckanext-opendatatoronto]------------ Done Checking If ready for Datastore Cache")
 
     return output
 
@@ -510,12 +510,12 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
     """
 
     # make sure an authorized user is making this call
-    logging.info("------------ Checking Auth")
+    logging.info("[ckanext-opendatatoronto]------------ Checking Auth")
     tk.check_access("datastore_delete", context, data_dict)
     assert context[
         "auth_user_obj"
     ], "This endpoint can be used by authorized accounts only"
-    logging.info("------------ Done Checking Auth")
+    logging.info("[ckanext-opendatatoronto]------------ Done Checking Auth")
 
     # checking if this targets the metadata-catalog package
     metadata_catalog_package = tk.get_action("package_show")(
