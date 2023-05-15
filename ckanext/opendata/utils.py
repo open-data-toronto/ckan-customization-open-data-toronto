@@ -212,7 +212,6 @@ def get_catalog():
         output = tk.get_action("datastore_search")(data_dict={"resource_id": resource_id, "limit": 32000}) 
         output["url"] = package["resources"][0]["url"]
     except Exception as e:
-        print("Couldnt access catalog page:\n" + str(e))
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
     return output
