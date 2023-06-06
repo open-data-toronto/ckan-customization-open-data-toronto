@@ -4,42 +4,67 @@
     body {
         background-color: white;
     }
+    .container {
+        background-color: white;
+    }
+    .media-grid {
+        background-color: white;
+    }
+    .media-item {
+        padding-bottom: 0;
+    }
 </style>
-    <ul class="media-grid">
-        <div class="container">
-        {% for key, value in h.get_dqs(resource_json, package).items() %}
-            <div class="row">                
-                <li class="media-item" style="width:30%">
-                    <h2 class="media-heading">{{ key.capitalize() }}</h2>
-                    <h4 class="text-muted">{{ value.score }}</h4>
-                    <p><i>{{ value.description }}</i></p>
-                    {% if key == "usability" or key == "completeness" %}
-                    <br>
-                    <p><i>This score is an average. More details <a target="_blank" href="https://odadmin0.intra.dev-toronto.ca/dataset/catalogue-quality-scores">here</a></i></p>
-                    {% endif %}
-                </li>
-                <li class="media-item" style="width:65%">
-                    <h6>Known issues:</h6>
-                    <ul>
-                        {% for code, subcodes in value.codes.items() %}
-                        {% if code|length > 0 %}
-                        <li>{{ code }}</li>
-                        {% if subcodes|length > 0 %}
-                            <ul>
-                            {% for subcode in subcodes %}
-                            <li>{{ subcode }}</li>
-                            {% endfor %}
-                            </ul>
-                            <br>
-                        {% endif %}
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                </li>                
-            </div>
-        {% endfor %}
+<ul class="media-grid">
+    <div class="container">
+        <div class="row">
+            {% for key, value in h.get_dqs(resource_json, package).overall.items() %} 
+            <li class="media-item" style="width:30%">
+                <span class="media-heading">{{ key.capitalize() }}</span>
+                <br>
+                <span class="text-muted">{{ value }}</span>                
+            </li>
+            {% endfor %}
         </div>
-    </ul>
+    </div>
+</ul>
+
+<ul class="media-grid">
+    <div class="container">
+    {% for key, value in h.get_dqs(resource_json, package).dimensions.items() %}
+        <div class="row">                
+            <li class="media-item" style="width:30%">
+                <span class="media-heading">{{ key.capitalize() }}</span>
+                <span class="text-muted">{{ value.score }}</span>
+                <p>{{ value.description }}</p>                    
+            </li>
+            <li class="media-item" style="width:65%">
+                {% if value.codes.values()|length < 1 %}
+                <p>No known issues</p>
+                {% endif %}
+                {% if value.codes.values()|length > 0 %}
+                <p>Known issues:</p>
+                <ul>
+                    {% for code, subcodes in value.codes.items() %}
+                    {% if code|length > 0 %}
+                    <li>{{ code }}</li>
+                    {% if subcodes|length > 0 %}
+                        <ul>
+                        {% for subcode in subcodes %}
+                        <li>{{ subcode }}</li>
+                        {% endfor %}
+                        </ul>
+                        <br>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </li>                
+        </div>
+        <hr>
+    {% endfor %}
+    </div>
+</ul>
           
 
 {% endblock %}
