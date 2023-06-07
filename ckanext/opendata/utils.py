@@ -5,6 +5,7 @@ import ckan.plugins.toolkit as tk
 import mimetypes
 import json
 import csv
+import re
 
 import codecs
 
@@ -210,23 +211,50 @@ def parse_dqs_codes(input):
     '''takes a tilde (~) separated string containing dqs codes
     and parses it into meaningful descriptions in an array'''
 
+    print("==========================")
+    print(input)
+    print("==========================")
+
     output = {}
     # init translation dict
     code_dict = {
         "colnames_unclear": "Column names are not composed of clear english words", 
-        "constant_cols": "These column(s) contain constant values:",
-        "metadata_missing": "The following metadata fields are empty:", 
+        "constant_cols": "The following column(s) contain constant values:",
+        "metadata_missing": "The following metadata field(s) are empty:", 
         "owner_is_opendata": "This dataset's owner is marked as opendata@toronto.ca, when there may be a better contact email", 
         "bad_info_url": "The url where users can get more information about this data is broken", 
         "all_data_def_missing": "There are no column definitions in this dataset", 
         "missing_def_cols": "The following column definitions are empty:", 
-        "periods_behind": "The dataset is not being refreshed at its designated refresh rate.", 
+        #"periods_behind": "The dataset is not being refreshed at its designated refresh rate.", 
         "stale": "This dataset has not been updated in over 2 years", 
         "significant_missing_data": "A significant amount of data is null in this dataset", 
         "no_pipeline_found": "This dataset is updated by hand", 
         "no_tags": "This dataset hasn't been associated with any additional, searchable keywords", 
         "invalid_geospatial": "Geography in this dataset is invalid"
     }
+
+    # we add special logic for periods_behind
+    # map refresh_rate values to time period values
+    rr_dict = {
+        "daily": "days",
+        "weekly": "weeks",
+        "monthly": "months",
+        "quarterly": "quarters",
+        "semi-annually": "half-years",
+        "annually": "years"
+    }
+
+    if "periods_behind" in input and "refresh_rate" in input:
+        # get the number of periods behind
+        periods_behind = int(float(re.search(
+            r"periods_behind:([0-9\.]*?)\~", input).group(1)))
+        # get the designated refresh rate
+        rr = re.search(r"refresh_rate:(.*?)\~", input).group(1)
+        s = "This dataset is {} {} behind its refresh rate".format(
+            periods_behind, rr_dict[rr]
+        )
+        output[s] = []
+
 
     codes = input.split("~")
 
@@ -235,7 +263,8 @@ def parse_dqs_codes(input):
         for lookup in code_dict.keys():
             # if an input code matches the dict, add it to output
             if code.startswith(lookup):
-                output[code_dict[main_code]] = []
+                if code_dict[main_code] not in output.keys():
+                    output[code_dict[main_code]] = []
                 # if code containts ':', it has more details
                 # we want to add those details to the output too
                 if ":" in code:
@@ -243,6 +272,9 @@ def parse_dqs_codes(input):
                     for subcode in subcodes:
                         output[code_dict[main_code]].append(subcode)
 
+    print("--------------------------------------------------------------")
+    print(output)
+    print("--------------------------------------------------------------")
     return output
 
 
@@ -282,7 +314,7 @@ def get_dqs(input_resource, input_package):
             "grade": records[0]["grade_norm"],
         }
     }
-    for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
+    for dimension in ["freshness", "metadata", "usability", "completeness", "accessibility"]:
         mean_score = sum(r[dimension] for r in records) / len(records)
         codes = "~".join([r[dimension+"_code"] for r in records])
         output["dimensions"][dimension] = {
