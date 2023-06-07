@@ -214,16 +214,17 @@ def parse_dqs_codes(input):
     # init translation dict
     code_dict = {
         "colnames_unclear": "Column names are not composed of clear english words", 
-        "constant_cols": "The following column(s) contain constant values:",
+        "constant_cols": "These column(s) contain constant values:",
         "metadata_missing": "The following metadata fields are empty:", 
         "owner_is_opendata": "This dataset's owner is marked as opendata@toronto.ca, when there may be a better contact email", 
         "bad_info_url": "The url where users can get more information about this data is broken", 
-        "data_def_missing": "There are no column definitions in this dataset", 
-        "periods_behind": "The dataset is not being refreshed at its designated refresh rate. It is this many periods behind:", 
+        "all_data_def_missing": "There are no column definitions in this dataset", 
+        "missing_def_cols": "The following column definitions are empty:", 
+        "periods_behind": "The dataset is not being refreshed at its designated refresh rate.", 
         "stale": "This dataset has not been updated in over 2 years", 
         "significant_missing_data": "A significant amount of data is null in this dataset", 
-        "no_pipeline_found": "There isn't an ETL pipeline associated with this dataset - it is therefore updated manually", 
-        "no_tags": "There aren't any tags on this dataset that could be used to look it up on open.toronto.ca's search bar", 
+        "no_pipeline_found": "This dataset is updated by hand", 
+        "no_tags": "This dataset hasn't been associated with any additional, searchable keywords", 
         "invalid_geospatial": "Geography in this dataset is invalid"
     }
 
@@ -250,15 +251,15 @@ def get_dqs(input_resource, input_package):
     # initialize descriptions for output
     descriptions = {
         "usability": "How easy is it to work with the data?",
-        "metadata": "Is the data well described/contextualized?",
+        "metadata": "Is the data well described?",
         "freshness": "Is the dataset up-to-date?",
-        "completeness": "Is the significant amounts of missing data?",
+        "completeness": "Is there lots of missing data?",
         "accessibility": "Is the data easy to access for different kinds of users?",
     }
 
     # get DQS values from CKAN for this package
     package = tk.get_action("package_show")(data_dict={"id": "catalogue-quality-scores"})
-    dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes"][0]
+    dqs_resource_id = [r["id"] for r in package["resources"] if r["name"] == "quality-scores-explanation-codes-and-scores"][0]
 
     datastore_resource = tk.get_action("datastore_search")(
         data_dict=
@@ -272,13 +273,19 @@ def get_dqs(input_resource, input_package):
     max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource["records"])
 
     records = [r for r in datastore_resource["records"] if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")]
-
     
-    output = {}
+    output = {
+        "dimensions": {},
+        "overall": {
+            "last refreshed": max_date.strftime("%Y-%m-%dT%H:%M:%S")[:10],
+            "overall score": str(int(float(records[0]["score_norm"])*100))+"%",
+            "grade": records[0]["grade_norm"],
+        }
+    }
     for dimension in ["usability", "metadata", "freshness", "completeness", "accessibility"]:
         mean_score = sum(r[dimension] for r in records) / len(records)
         codes = "~".join([r[dimension+"_code"] for r in records])
-        output[dimension] = {
+        output["dimensions"][dimension] = {
             "score": str(int(100*mean_score))+"%",
             "codes": parse_dqs_codes(codes),
             "description": descriptions[dimension],
