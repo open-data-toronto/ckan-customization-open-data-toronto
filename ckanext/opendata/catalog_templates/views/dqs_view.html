@@ -38,7 +38,7 @@
     <div class="container">
         <div class="row">
             <br>
-            {% for key, value in h.get_dqs(resource_json, package).overall.items() %} 
+            {% for key, value in h.get_dqs(package).overall.items() %} 
             <li class="media-item" style="width:30%">
                     <span class="media-heading">{{ key.capitalize() }}</span>
                     <br>
@@ -65,7 +65,7 @@
     </div>
     <br>
     <div class="container">
-    {% for key, value in h.get_dqs(resource_json, package).dimensions.items() %}
+    {% for key, value in h.get_dqs(package).dimensions.items() %}
         <div class="row"> 
             <br>               
             <li class="media-item" style="width:30%">

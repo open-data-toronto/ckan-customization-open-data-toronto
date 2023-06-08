@@ -24,7 +24,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            "quality_show": api.get_quality_score,
+            "quality_show": api.quality_show,
             "search_packages": api.query_packages,
             "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,

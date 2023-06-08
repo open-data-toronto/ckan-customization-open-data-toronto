@@ -71,7 +71,7 @@ def build_query(query):
 
 
 @tk.side_effect_free
-def get_quality_score(context, data_dict):
+def quality_show(context, data_dict):
     """Receives package_id as input
     returns associated data quality score from catalog"""
     pid = data_dict.get("package_id")
@@ -85,16 +85,16 @@ def get_quality_score(context, data_dict):
     )
 
     for r in package["resources"]:
-        if r["name"] == "catalogue-scorecard":
+        if r["name"] == "quality-scores-explanation-codes-and-scores":
             rid = r["id"]
             break
 
     if rid is not None:
-        return tk.get_action("datastore_search")(
+        return [r for r in tk.get_action("datastore_search")(
             context,
             {"resource_id": rid, "q": {"package": pid},
                 "sort": "recorded_at desc"},
-        )["records"]
+        )["records"] if r["package"] == pid]
 
 
 @tk.side_effect_free
