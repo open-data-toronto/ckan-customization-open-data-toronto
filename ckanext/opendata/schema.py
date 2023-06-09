@@ -22,18 +22,31 @@ def create_resource_views(context, resource):
             "title": "Data Explorer",
             "view_type": "recline_view",
         },
+        "dqs": {
+            "resource_id": resource["id"],
+            "title": "DQS",
+            "view_type": "dqs_view",
+        },
     }
 
-    # only make views for datastore resources
-    if resource["datastore_active"] in [False, "False", "false"]:
+    # we dont make views for datastore_cache resources
+    if resource.get("is_datastore_cache_file", False) in [True, "True", "true"]:
         return
 
-    # delete all old views for this resource
+    # gather all old views for this resource
     views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
     existing_view_types = []
     for view in views:
         existing_view_types.append( view["view_type"] )
-        #tk.get_action("resource_view_delete")(context, {"id": view["id"] }) 
+
+    # make DQS views for any resource
+    if "dqs_view" not in existing_view_types:
+        tk.get_action("resource_view_create")(context, format_views["dqs"])
+
+    # only make "preview" views for datastore resources
+    # those require datastore resources, so if not datasore, we stop here
+    if resource["datastore_active"] in [False, "False", "false"]:
+        return
 
     # make a data explorer view for all resources
     if "recline_view" not in existing_view_types:
