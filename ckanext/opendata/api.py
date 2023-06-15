@@ -493,6 +493,9 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
     ], "This endpoint can be used by authorized accounts only"
     logging.info("------------ Done Checking Auth")
 
+    # get resource_id from data_dict
+    rid = data_dict.get("resource_id", None) or data_dict.get("id", None)
+
     # checking if this targets the metadata-catalog package
     metadata_catalog_package = tk.get_action("package_show")(
         context, {"id": "metadata-catalog"}
@@ -503,8 +506,8 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
         if r["datastore_active"] in [True, "True", "true"]
     }
     # if it does, make sure it doesnt target important metadata-catalog
-    if data_dict["id"] in metadata_catalog_resources.keys():
-        if metadata_catalog_resources[data_dict["id"]] in [
+    if rid in metadata_catalog_resources.keys():
+        if metadata_catalog_resources[rid] in [
             "Owner Division",
             "Refresh Rate",
             "Dataset Category",
