@@ -254,6 +254,10 @@ def parse_dqs_codes(input):
 
     codes = input.split("~")
 
+    print("===================")
+    print(codes)
+    print("===================")
+
     for code in codes:
         main_code = code.split(":")[0]
         for lookup in code_dict.keys():
@@ -267,6 +271,15 @@ def parse_dqs_codes(input):
                     subcodes = code.split(":")[-1].split(",")
                     for subcode in subcodes:
                         output[code_dict[main_code]].append(subcode)
+
+    # remove dupes
+    for k,v in output.items():
+        if isinstance(v, list):
+            output[k] = set(v)
+
+    print("---------------------")
+    print(output)
+    print("---------------------")
 
     return output
 
