@@ -232,21 +232,18 @@ def parse_dqs_codes(input):
     # we add special logic for periods_behind
     # map refresh_rate values to time period values
     rr_dict = {
-        "daily": "day(s)",
-        "weekly": "week(s)",
-        "monthly": "month(s)",
-        "quarterly": "quarter(s)",
-        "semi-annually": "half-year(s)",
-        "annually": "year(s)"
+        "daily": "days",
+        "weekly": "weeks",
+        "monthly": "months",
+        "quarterly": "quarters",
+        "semi-annually": "half-years",
+        "annually": "years"
     }
 
     if "periods_behind" in input and "refresh_rate" in input:
         # get the number of periods behind
         periods_behind = int(float(re.search(
             r"periods_behind:([0-9\.]*)", input).group(1)))
-
-        if periods_behind < 1:
-            periods_behind = "almost 1"
         # get the designated refresh rate
         rr = re.search(r"refresh_rate:(.*?)[\~]", input).group(1)
         s = "This dataset is {} {} behind its refresh rate".format(
@@ -271,11 +268,6 @@ def parse_dqs_codes(input):
                     for subcode in subcodes:
                         output[code_dict[main_code]].append(subcode)
 
-    # remove dupes
-    for k,v in output.items():
-        if isinstance(v, list):
-            output[k] = set(v)
-
     return output
 
 
@@ -283,11 +275,33 @@ def get_dqs(input_package):
 
     # initialize descriptions for output
     descriptions = {
-        "usability": "How easy is it to work with the data?",
-        "metadata": "Is the data well described?",
-        "freshness": "Is the dataset up-to-date?",
-        "completeness": "Is there lots of missing data?",
-        "accessibility": "Is the data easy to access for different kinds of users?",
+        "usability": {"definition": "How easy is it to work with the data?", 
+                      "metrics": [
+                        "Do columns have meaningful, English names?",
+                        "Do any columns have a single, constant value?"
+                      ]},
+        "metadata": {"definition": "Is the data well described?", 
+                      "metrics": [
+                        "Are there metadata missing from the dataset?",
+                        "Is the dataset associated with a placeholder email, like opendata@toronto.ca?",
+                        "Is the 'Learn More' URL a broken link?",
+                        "Are data definitions missing?",
+                      ]},
+        "freshness": {"definition": "Is the dataset up-to-date?", 
+                      "metrics": [
+                        "Is the dataset not being refreshed on schedule (if it has a refresh rate)?",
+                        "Has the data not been updated in over 2 years?"
+                      ]},
+        "completeness": {"definition": "Is there lots of missing data?", 
+                      "metrics": [
+                        "Are more than half of the values in this dataset null?"
+                      ]},
+        "accessibility": {"definition": "Is the data easy to access for different kinds of users?", 
+                      "metrics": [
+                        "Are there any tags/keywords on the dataset?",
+                        "Is this dataset updated manually by the Open Data team?",
+                        "Is the data stored as a file instead of a database table?",
+                      ]},
     }
 
     # get DQS values from CKAN for this package    
@@ -302,8 +316,8 @@ def get_dqs(input_package):
         "dimensions": {},
         "overall": {
             "last refreshed": max_date.strftime("%Y-%m-%dT%H:%M:%S")[:10],
-            "overall score": str(int(float(records[0]["score_norm"])*100))+"%",
-            "grade": records[0]["grade_norm"],
+            "overall score": str(int(float(records[0]["score"])*100))+"%",
+            "grade": records[0]["grade"],
         }
     }
 
@@ -322,7 +336,8 @@ def get_dqs(input_package):
         output["dimensions"][dimension] = {
             "score": str(int(100*mean_score))+"%",
             "codes": parse_dqs_codes(codes),
-            "description": descriptions[dimension],
+            "description": descriptions[dimension]["definition"],
+            "metrics": descriptions[dimension]["metrics"],
         }
     
     return output
