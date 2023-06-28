@@ -307,6 +307,8 @@ def get_dqs(input_package):
     # get DQS values from CKAN for this package    
     datastore_resource = tk.get_action("quality_show")(data_dict={"package_id": input_package["name"]})
 
+    if len(datastore_resource) == 0:
+        return []
     # parse DQS values
     max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource)
     records = [r for r in datastore_resource if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")]

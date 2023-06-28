@@ -34,6 +34,20 @@
     }
 
 </style>
+
+{% if h.get_dqs(package)|length == 0 %}
+<ul class="media-grid">
+    <div class="container">
+        <div class="row">
+            
+            <li class="media-item" style="width:80%">
+                This Data Quality Score has not yet been calculated
+            </li>
+            
+        </div>
+    </div>
+</ul>
+{% else %}
 <ul class="media-grid">
     <div class="container">
         <div class="row">
@@ -175,6 +189,8 @@
     {% endfor %}
     </div>
 </ul>
+{% endif %}
+
           
 
 {% endblock %}
