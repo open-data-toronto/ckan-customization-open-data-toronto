@@ -232,18 +232,20 @@ def parse_dqs_codes(input):
     # we add special logic for periods_behind
     # map refresh_rate values to time period values
     rr_dict = {
-        "daily": "days",
-        "weekly": "weeks",
-        "monthly": "months",
-        "quarterly": "quarters",
-        "semi-annually": "half-years",
-        "annually": "years"
+        "daily": "day(s)",
+        "weekly": "week(s)",
+        "monthly": "month(s)",
+        "quarterly": "quarter(s)",
+        "semi-annually": "half-year(s)",
+        "annually": "year(s)"
     }
 
     if "periods_behind" in input and "refresh_rate" in input:
         # get the number of periods behind
         periods_behind = int(float(re.search(
             r"periods_behind:([0-9\.]*)", input).group(1)))
+        if periods_behind < 1:
+            periods_behind = "just under 1"
         # get the designated refresh rate
         rr = re.search(r"refresh_rate:(.*?)[\~]", input).group(1)
         s = "This dataset is {} {} behind its refresh rate".format(
