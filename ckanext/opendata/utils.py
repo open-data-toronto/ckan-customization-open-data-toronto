@@ -267,6 +267,10 @@ def parse_dqs_codes(input):
                     subcodes = code.split(":")[-1].split(",")
                     for subcode in subcodes:
                         output[code_dict[main_code]].append(subcode)
+    
+    # remove duplicate explanation code details    
+    for k,v in output.items():
+        output[k] = set(v)
 
     return output
 
