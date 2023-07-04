@@ -277,7 +277,7 @@ def parse_dqs_codes(input):
     return output
 
 
-def get_dqs(input_package):
+def get_dqs(input_package, input_resource):
 
     # initialize descriptions for output
     descriptions = {
@@ -311,10 +311,19 @@ def get_dqs(input_package):
     }
 
     # get DQS values from CKAN for this package    
-    datastore_resource = tk.get_action("quality_show")(data_dict={"package_id": input_package["name"]})
+    datastore_resources = tk.get_action("quality_show")(data_dict={"package_id": input_package["name"]})
 
-    if len(datastore_resource) == 0:
+    # if there's no DQS for this package, return empty list
+    if len(datastore_resources) == 0:
         return []
+
+    print("-----------------------------")
+    print(input_resource)
+    print(datastore_resources)
+    print("-----------------------------")
+
+    datastore_resource = [r for r in datastore_resources if r["resource"] == input_resource["name"]]
+
     # parse DQS values
     max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource)
     records = [r for r in datastore_resource if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")]

@@ -132,7 +132,7 @@ class ExtendedThemePlugin(p.SingletonPlugin):
 
     def setup_template_variables(self, context, data_dict):
         return {
-                'resource_json': data_dict['resource'],
+                'resource': data_dict['resource'],
                 'resource_view_json': data_dict['resource_view'],
                 'package': data_dict["package"]
                 }
