@@ -317,11 +317,6 @@ def get_dqs(input_package, input_resource):
     if len(datastore_resources) == 0:
         return []
 
-    print("-----------------------------")
-    print(input_resource)
-    print(datastore_resources)
-    print("-----------------------------")
-
     datastore_resource = [r for r in datastore_resources if r["resource"] == input_resource["name"]]
 
     # parse DQS values
@@ -344,7 +339,7 @@ def get_dqs(input_package, input_resource):
     store_type = "datastore" if any([r for r in datastore_resource if r["store_type"]=="datastore"]) else "filestore"
     dimensions = ["freshness", "metadata", "accessibility"]
     if store_type == "datastore":
-        dimensions += ["usability", "completeness"]
+        dimensions += ["completeness","usability"]
 
 
     for dimension in dimensions:
