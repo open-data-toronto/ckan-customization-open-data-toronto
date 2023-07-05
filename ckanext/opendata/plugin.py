@@ -1,15 +1,8 @@
-from ckan.common import config
-
 from . import api, schema, utils
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckan.plugins.toolkit import _
-
-
-import datetime as dt
-
-import json
 
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
@@ -19,8 +12,10 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
     # IActions
     # ==============================
     # These are custom api endpoints
-    # ex: hitting <ckan_url>/api/action/extract_info will trigger the api.extract_info function
-    # These can also be used with tk.get_action("extract_info"), for example, in this CKAN extension code
+    # ex: hitting <ckan_url>/api/action/extract_info will trigger the
+    # api.extract_info function
+    # These can also be used with tk.get_action("extract_info"), for example,
+    # in this CKAN extension code
 
     def get_actions(self):
         return {
@@ -29,7 +24,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
-            "reindex_solr": api.reindex_solr
+            "reindex_solr": api.reindex_solr,
         }
 
 
@@ -45,13 +40,12 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
     def get_validators(self):
         return {
-            'validate_length': utils.validate_length,
-            'choices_to_string': utils.choices_to_string,
-            'string_to_choices': utils.string_to_choices,
-            'default_to_today': utils.default_to_today,
-            'default_to_false': utils.default_to_false,
-            'default_to_none': utils.default_to_none,
-            
+            "validate_length": utils.validate_length,
+            "choices_to_string": utils.choices_to_string,
+            "string_to_choices": utils.string_to_choices,
+            "default_to_today": utils.default_to_today,
+            "default_to_false": utils.default_to_false,
+            "default_to_none": utils.default_to_none,
         }
 
     # ==============================
@@ -62,10 +56,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     # Specifically:
     #   makes sure resources that already exist arent created again
     #   creates the map preview for geojson data
-    #   updates a package's formats and last_refreshed date based on changes to its resources
+    #   updates a package's formats and last_refreshed date based on changes
+    #   to its resources
 
     def before_create(self, context, resource):
-        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
+        package = tk.get_action("package_show")(context, {
+            "id": resource["package_id"]
+        })
 
         # throw an error if we attempt to create 2 packages with the same name
         for idx, r in enumerate(package["resources"]):
@@ -84,9 +81,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
         # auto assign a format, if the format isnt assigned yet
         if not ("format" in resource and resource["format"]):
             resource["format"] = resource["url"].split(".")[-1]
-        
+
         resource["format"] = resource["format"].upper()
-        
+
     def after_create(self, context, resource):
         schema.create_resource_views(context, resource)
         schema.update_package(context)
@@ -100,14 +97,14 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
 
 class ExtendedThemePlugin(p.SingletonPlugin):
-    '''Logic to manage custom themes and previews'''
+    """Logic to manage custom themes and previews"""
 
     # Custom theme logic for homepage etl-inventory viewer
     p.implements(p.IConfigurer)
     p.implements(p.ITemplateHelpers)
 
     def update_config(self, config):
-        tk.add_template_directory(config, 'catalog_templates')
+        tk.add_template_directory(config, "catalog_templates")
 
     def get_helpers(self):
         return {
@@ -120,25 +117,25 @@ class ExtendedThemePlugin(p.SingletonPlugin):
 
     def info(self):
         return {
-                'name': 'dqs_view',
-                'title': _('DQS'),
-                'icon': 'cog',
-                'iframed': False,
-                'always-available': True,
-                }
+            "name": "dqs_view",
+            "title": _("DQS"),
+            "icon": "cog",
+            "iframed": False,
+            "always-available": True,
+        }
 
     def can_view(self, data_dict):
         return True
 
     def setup_template_variables(self, context, data_dict):
         return {
-                'resource': data_dict['resource'],
-                'resource_view_json': data_dict['resource_view'],
-                'package': data_dict["package"]
-                }
+            "resource": data_dict["resource"],
+            "resource_view_json": data_dict["resource_view"],
+            "package": data_dict["package"],
+        }
 
     def view_template(self, context, data_dict):
-        return 'views/dqs_view.html'
+        return "views/dqs_view.html"
 
     def form_template(self, context, data_dict):
-        return 'views/dqs_form.html'
+        return "views/dqs_form.html"
