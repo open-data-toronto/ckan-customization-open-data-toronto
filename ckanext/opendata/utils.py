@@ -27,7 +27,7 @@ def to_list(input):
         # If the item is already a list from wordpress, it 
         # may have "vocab_" as an unnecessary prefix to certain 
         # values, specifically when running extendedapi's /search_facets
-        return [item.replace("vocab_", "") if item.startswith("vocab_") else item for item in l]
+        return [item.replace("vocab_", "") if item.startswith("vocab_") else item for item in input]
 
 
 def validate_length(key, data, errors, context):
