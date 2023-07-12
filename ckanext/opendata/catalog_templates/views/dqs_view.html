@@ -69,7 +69,7 @@
                 {% if key == "overall score" %} 
                 <h5>
                     <span class="media-heading">{{ key.capitalize() }}</span>
-                    <div id="weighting" class="dropdown btn-group" aria-labelledby="description" tabindex="0">
+                    <div id="weighting" class="dropdown btn-group" aria-labelledby="weighting-info" tabindex="0" role="tooltip">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
@@ -88,10 +88,7 @@
                                 Weights scale when dimensions are missing
                             </ul>                                        
                         </div>
-                    </div>
-                    <p id="score-details" hidden> 
-                        Freshness is worth 35%. Metadata is worth 35%. Accessibility is worth 15%. Completeness is worth 10%. Usability is worth 5%. Weights scale when dimensions are missing
-                    </p>
+                    </div>                    
                 </h5>       
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="bi bi-speedometer" viewBox="0 0 16 16">
                     <path d="M8 2a.5.5 0 0 1 .5.5V4a.5.5 0 0 1-1 0V2.5A.5.5 0 0 1 8 2zM3.732 3.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707zM2 8a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 8zm9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5zm.754-4.246a.389.389 0 0 0-.527-.02L7.547 7.31A.91.91 0 1 0 8.85 8.569l3.434-4.297a.389.389 0 0 0-.029-.518z"/>
@@ -102,7 +99,7 @@
                 {% if key == "grade" %} 
                 <h5>
                     <span class="media-heading">{{ key.capitalize() }}</span>
-                    <div id="grade" class="dropdown btn-group" aria-labelledby="grade-details" tabindex="0">
+                    <div id="grade" class="dropdown btn-group" aria-labelledby="grade-info" tabindex="0" role="tooltip">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
@@ -128,9 +125,6 @@
                             </ul>                                        
                         </div>
                     </div>
-                    <p id="grade-details" hidden> 
-                        Under 60% is bronze. Over is silver. Over 80% is gold.
-                    </p>
                 </h5>      
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="bi bi-trophy-fill {{ value.lower() }}" viewBox="0 0 16 16">
                     <path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33.076 33.076 0 0 1 2.5.5zm.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935zm10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935z"/>
@@ -154,7 +148,7 @@
                     <span class="media-heading">{{ key.capitalize() }}</span>
                     <span class="text-muted">{{ value.score }}</span>
 
-                    <div id="{{ key }}" class="dropdown btn-group" style="float:right" tabindex="0">
+                    <div id="{{ key }}" class="dropdown btn-group" style="float:right" aria-labelledby="{{ key }}-info" tabindex="0" role="tooltip">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
