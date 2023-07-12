@@ -38,6 +38,16 @@
     }
 
 </style>
+<script>
+function toggleInfo(ID) {
+  var x = document.getElementById(ID);
+  if (x.style.display === "none") {
+    x.style.display = "inline";
+  } else {
+    x.style.display = "none";
+  }
+}
+</script>
 
 {% if h.get_dqs(package)|length == 0 %}
 <ul class="media-grid">
@@ -68,14 +78,14 @@
                 {% if key == "overall score" %} 
                 <h5>
                     <span class="media-heading">{{ key.capitalize() }}</span>
-                    <div class="dropdown btn-group" aria-labelledby="description">
+                    <div onclick="toggleInfo('weighting-info')" onkeydown="toggleInfo('weighting-info')" class="dropdown btn-group" aria-labelledby="description" tabindex="0">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
                             </svg>
                         </div>
 
-                        <div class="dropdown-menu" style="width:250px" aria-label="score-details">
+                        <div id="weighting-info" class="dropdown-menu" style="width:250px; display:none" aria-label="score-details">
                             <ul>
                                 <b>Weighting</b>
                                 <li>Freshness: 35%</li>
@@ -101,13 +111,13 @@
                 {% if key == "grade" %} 
                 <h5>
                     <span class="media-heading">{{ key.capitalize() }}</span>
-                    <div class="dropdown btn-group" aria-labelledby="grade-details">
+                    <div onclick="toggleInfo('grade-info')" onkeydown="toggleInfo('grade-info')" class="dropdown btn-group" aria-labelledby="grade-details" tabindex="0">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
                             </svg>
                         </div>
-                        <div class="dropdown-menu">
+                        <div id="grade-info" class="dropdown-menu" style="display:none">
                             <ul>
                                 <li>&lt;60%  is 
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-trophy-fill bronze" viewBox="0 0 16 16">
@@ -153,13 +163,13 @@
                     <span class="media-heading">{{ key.capitalize() }}</span>
                     <span class="text-muted">{{ value.score }}</span>
 
-                    <div class="dropdown btn-group" style="float:right">
+                    <div onclick="toggleInfo('{{ key }}-info')" onkeydown="toggleInfo('{{ key }}-info')" class="dropdown btn-group" style="float:right" tabindex="0">
                         <div data-toggle="dropdown">                      
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#31708f" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
                             </svg>
                         </div>
-                        <div class="dropdown-menu" style="width:400px">
+                        <div id="{{ key }}-info" class="dropdown-menu" style="width:400px;display:none">
                             <ul>
                             {% for metric in value.metrics %}
                                 
