@@ -41,24 +41,24 @@
 
 
 {% if h.get_dqs(package)|length == 0 %}
-<ul class="media-grid">
+<div class="media-grid">
     <div class="container">
         <div class="row">
             
-            <li class="media-item" style="width:80%">
+            <div class="media-item" style="width:80%">
                 This Data Quality Score has not yet been calculated
-            </li>
+            </div>
             
         </div>
     </div>
-</ul>
+</div>
 {% else %}
-<ul class="media-grid">
+<div class="media-grid">
     <div class="container">
         <div class="row">
             <br>
             {% for key, value in h.get_dqs(package).overall.items() %} 
-            <li class="media-item" style="width:30%">
+            <div class="media-item" style="width:30%">
                 {% if key == "last refreshed" %} 
                 <h5><span class="media-heading">{{ key.capitalize() }}</span></h5>       
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="bi bi-calendar4" viewBox="0 0 16 16">
@@ -134,7 +134,7 @@
                 
                 {% endif %}
                 
-            </li>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -143,7 +143,7 @@
     {% for key, value in h.get_dqs(package).dimensions.items() %}
         <div class="row"> 
             <br>               
-            <li class="media-item" style="width:30%">
+            <div class="media-item" style="width:30%">
                 <h5>
                     <span class="media-heading">{{ key.capitalize() }}</span>
                     <span class="text-muted">{{ value.score }}</span>
@@ -169,8 +169,8 @@
                   
                 <p>{{ value.description }}</p> 
                                  
-            </li>
-            <li class="media-item" style="width:63%">
+            </div>
+            <div class="media-item" style="width:63%">
                 {% if value.codes.values()|length < 1 %}
                 <p>No known issues</p>
                 {% endif %}
@@ -192,13 +192,13 @@
                     {% endfor %}
                 </ul>
                 {% endif %}
-            </li>                
+            </div>                
         </div>
         <br>
         <!--<hr>-->
     {% endfor %}
     </div>
-</ul>
+</div>
 
 <script>
     // AODA event listeners for popup
