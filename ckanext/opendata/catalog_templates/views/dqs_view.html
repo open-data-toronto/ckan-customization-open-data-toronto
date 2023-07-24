@@ -40,7 +40,7 @@
 </style>
 
 
-{% if h.get_dqs(package)|length == 0 %}
+{% if h.get_dqs(package, resource)|length == 0 %}
 <div class="media-grid">
     <div class="container">
         <div class="row">
@@ -57,7 +57,7 @@
     <div class="container">
         <div class="row">
             <br>
-            {% for key, value in h.get_dqs(package).overall.items() %} 
+            {% for key, value in h.get_dqs(package, resource).overall.items() %}
             <div class="media-item" style="width:30%">
                 {% if key == "last refreshed" %} 
                 <h4><span class="media-heading">{{ key.capitalize() }}</span></h4>       
@@ -140,7 +140,7 @@
     </div>
     <br>
     <div class="container">
-    {% for key, value in h.get_dqs(package).dimensions.items() %}
+        {% for key, value in h.get_dqs(package, resource).dimensions.items() %}
         <div class="row"> 
             <br>               
             <div class="media-item" style="width:30%">
