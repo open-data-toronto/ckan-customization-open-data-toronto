@@ -222,7 +222,8 @@ def parse_dqs_codes(input):
         "significant_missing_data": "A significant amount of data is null in this dataset", 
         "no_pipeline_found": "This dataset is updated by hand", 
         "no_tags": "This dataset hasn't been associated with any additional, searchable keywords", 
-        "invalid_geospatial": "Geography in this dataset is invalid"
+        "invalid_geospatial": "Geography in this dataset is invalid",
+        "filestore_resource": "This data is saved in a file instead of in the Open Data database"
     }
 
     # we add special logic for periods_behind
@@ -230,6 +231,7 @@ def parse_dqs_codes(input):
     rr_dict = {
         "daily": "day(s)",
         "weekly": "week(s)",
+        "bi-weekly": "week(s)",
         "monthly": "month(s)",
         "quarterly": "quarter(s)",
         "semi-annually": "half-year(s)",
