@@ -243,14 +243,19 @@ def parse_dqs_codes(input):
         periods_behind = int(float(re.search(
             r"periods_behind:([0-9\.]*)", input).group(1)))
 
-        if periods_behind < 1:
-            periods_behind = "almost 1"
-
-        # get the designated refresh rate
         rr = re.search(r"refresh_rate:(.*?)[\~]", input).group(1)
-        s = "This dataset is {} {} behind its refresh rate".format(
-            periods_behind, rr_dict[rr]
-        )
+
+        # create the descriptive text for the periods behind
+        if periods_behind < 1:
+            s = "This dataset is almost 1 {} behind its refresh rate".format(
+                rr_dict[rr]
+            )
+
+        else:
+            s = "This dataset is over {} {} behind its refresh rate".format(
+                periods_behind, rr_dict[rr]
+            )
+        
         output[s] = []
 
 
