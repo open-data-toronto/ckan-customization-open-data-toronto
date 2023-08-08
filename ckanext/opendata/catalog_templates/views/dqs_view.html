@@ -39,8 +39,19 @@
 
 </style>
 
-
-{% if h.get_dqs(package, resource)|length == 0 %}
+{% if package.is_retired in (true, "true", "True") %}
+<div class="media-grid">
+    <div class="container">
+        <div class="row">
+            
+            <div class="media-item" style="width:80%">
+                This dataset is retired. Its Data Quality Score will not been calculated
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% elif h.get_dqs(package, resource)|length == 0 %}
 <div class="media-grid">
     <div class="container">
         <div class="row">
