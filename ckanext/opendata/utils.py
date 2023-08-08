@@ -323,6 +323,10 @@ def get_dqs(input_package, input_resource):
          return [] 
 	    
     datastore_resource = [r for r in datastore_resources if r["resource"] == input_resource["name"]]
+
+    # if there's no DQS for this resource, return empty list
+    if len(datastore_resource) == 0:
+         return [] 
     
     # parse DQS values
     max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource)
