@@ -185,10 +185,10 @@ def datastore_cache(context, data_dict):
     output = {}
 
     # make sure an authorized user is making this call
-    #if not context.get("auth_user_obj", None):
-    #    raise tk.ValidationError(
-    #        {"constraints": ["This endpoint can be used by authorized accounts only"]}
-    #    )
+    if not context.get("auth_user_obj", None):
+        raise tk.ValidationError(
+            {"constraints": ["This endpoint can be used by authorized accounts only"]}
+        )
 
     # make sure the call has the necessary inputs
     if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys():
