@@ -146,4 +146,6 @@ class ExtendedThemePlugin(p.SingletonPlugin):
     def get_helpers(self):
         return {
             "get_catalog": utils.get_catalog,
+            "get_supervisor_logs": utils.get_supervisor_logs,
         }
+        

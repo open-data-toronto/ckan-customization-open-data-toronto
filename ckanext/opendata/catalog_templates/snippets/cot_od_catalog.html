@@ -33,17 +33,8 @@
 
 </style>
 
-<!-- Charts -->
+<!-- Download Button -->
 <div class = "row">
-  <div class = "col-sm-2">
-    <canvas id = "owner_email_chart"></canvas>
-  </div>
-  <div class = "col-sm-2">
-    <canvas id = "engine_chart"></canvas>
-  </div>
-  <div class = "col-sm-2">
-    <canvas id = "datastore_active_chart"></canvas>
-  </div>
   <div class = "col-sm-4">
     <a type="button" class="btn btn-primary btn-lg btn-block" href="{{ h.get_catalog().url }}">Download List</a>
   </div>
@@ -79,148 +70,10 @@
     "paging": false,
   });
 
-  // Charts
-  // owner_email
-  var no_owner_email = {{ h.get_catalog().records | selectattr("owner_email", "==", None) | list | length }}
-  var opendata = {{ h.get_catalog().records | selectattr("owner_email", "==", "opendata@toronto.ca") | list | length }}
-  var owner_email_provided  = {{ h.get_catalog().records | rejectattr("owner_email", "in", ("opendata@toronto.ca", None)) | list | length }}
-  
-  const owner_email_data = {
-    labels: [
-      "No Owner Email",
-      "opendata@toronto.ca",
-      "Owner Email Provided",
-    ],
-    datasets: [{
-      label: 'Owner Email',
-      data: [no_owner_email, opendata, owner_email_provided],
-      backgroundColor: [
-        'rgb(255, 99, 132)',
-        'rgb(255, 205, 86)',
-        'rgb(54, 162, 235)',
-      ],
-      hoverOffset: 4
-    }]
-  };
-
-  const owner_email_config = {
-    type: "doughnut",
-    data: owner_email_data,
-    options: {
-        plugins: {
-          title: {
-            display: true,
-            text: "Owner Email",
-            font: {
-              size: 20,
-            }
-          },
-          legend: {
-            display: false
-          },
-        }
-      }
-    }
-
-  const owner_email_chart = new Chart(
-    document.getElementById('owner_email_chart'),
-    owner_email_config
-  );
-
-
-  // engine
-  var airflow = {{ h.get_catalog().records | rejectattr("engine", "in", ("NiFi", None))| list | length }}
-  var nifi = {{ h.get_catalog().records | selectattr("engine", "==", "NiFi") | list | length }}
-  var no_engine  = {{ h.get_catalog().records | selectattr("engine", "==", None) | list | length }}
-  
-  const engine_data = {
-    labels: [
-      "Unknown",
-      "NiFi",
-      "Airflow",
-    ],
-    datasets: [{
-      label: 'Dataset Engine',
-      data: [no_engine, nifi, airflow],
-      backgroundColor: [
-        'rgb(255, 99, 132)',
-        'rgb(255, 205, 86)',
-        'rgb(54, 162, 235)',
-      ],
-      hoverOffset: 4
-    }]
-  };
-
-  const engine_config = {
-    type: "doughnut",
-    data: engine_data,
-    options: {
-        plugins: {
-          title: {
-            display: true,
-            text: "Dataset Engine",
-            font: {
-              size: 20,
-            }
-          },
-          legend: {
-            display: false
-          },
-        }
-      }
-    }
-
-  const engine_chart = new Chart(
-    document.getElementById('engine_chart'),
-    engine_config
-  );
-
-
-  // datastore_active
-  var active = {{ h.get_catalog().records | selectattr("datastore_active", "in", (true, "true", "True")) | list |  length }}
-  var not_active = {{ h.get_catalog().records | selectattr("datastore_active", "in", (false, "false", "False")) | list |  length }}
-  
-  const datastore_active_data = {
-    labels: [
-      "Datastore",
-      "Filestore",
-    ],
-    datasets: [{
-      label: 'Datastore vs Filestore',
-      data: [active, not_active],
-      backgroundColor: [   
-        'rgb(54, 162, 235)',
-        'rgb(255, 99, 132)',
-      ],
-      hoverOffset: 4
-    }]
-  };
-
-  const datastore_active_config = {
-    type: "doughnut",
-    data: datastore_active_data,
-    options: {
-        plugins: {
-          title: {
-            display: true,
-            text: "Datastore vs Filestore",
-            font: {
-              size: 20,
-            }
-          },
-          legend: {
-            display: false
-          },
-        }
-      }
-    }
-
-  const datastore_active_chart = new Chart(
-    document.getElementById('datastore_active_chart'),
-    datastore_active_config
-  );
-
-
 </script>
+
+{% for item in h.get_supervisor_logs() %}
+  <p>{{ item }}</p>
+{% endfor %}
 
 {% endblock %}

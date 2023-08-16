@@ -215,3 +215,16 @@ def get_catalog():
         output = {"records": [{"message": "Log in as an administrator to see the catalog's ETL details on this page"}]}
 
     return output
+
+
+def get_supervisor_logs():
+    '''reads supervisor logs and presents them as JSON'''
+    log_path = "/var/log/ckan-worker.stderr.log" #TODO get this path from /etc/supervisord.conf
+
+    with open(log_path, "r") as f:
+        lines = []
+
+        for line in f:
+            lines.append(line)
+
+    return lines
