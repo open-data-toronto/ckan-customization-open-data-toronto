@@ -1,4 +1,4 @@
-''''Logic for multiple Open Data Toronto-specific CKAN actions'''
+"""'Logic for multiple Open Data Toronto-specific CKAN actions"""
 
 from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
@@ -80,8 +80,9 @@ def quality_show(context, data_dict):
     if pid is None:
         raise ValidationError("Missing package ID")
 
-    package = tk.get_action("package_show")(
-        context, {"id": "catalogue-quality-scores"}
+    package = tk.get_action("package_show")(context, {
+        "id": "catalogue-quality-scores"
+        }
     )
 
     for r in package["resources"]:
@@ -99,11 +100,11 @@ def quality_show(context, data_dict):
 
 @tk.side_effect_free
 def query_facet(context, data_dict):
-    '''runs package_search API call with input parameters
+    """runs package_search API call with input parameters
     This is triggered in the UI when someone clicks on a Dataset Filter
     This returns the appearance of the filter panel on the left side
     of open.toronto.ca intelligently
-    '''
+    """
 
     q = build_query(data_dict)
 
@@ -135,7 +136,7 @@ def query_packages(context, data_dict):
     on the catalog page, then returns the correct CKAN packages"""
 
     q = build_query(data_dict)
-    params = ({"rows": 10, "sort": "score desc", "start": 0})
+    params = {"rows": 10, "sort": "score desc", "start": 0}
     params.update(data_dict)
 
     output = tk.get_action("package_search")(
@@ -155,7 +156,7 @@ def query_packages(context, data_dict):
 
 @tk.side_effect_free
 def datastore_cache(context, data_dict):
-    '''Logic for creating datastore_cache filestore resources
+    """Logic for creating datastore_cache filestore resources
     Datastore_cache filestore resources are filestore copies
     of datastore resources. They're saved in the filestore so
     they can be accessed quickly by users.
@@ -176,29 +177,20 @@ def datastore_cache(context, data_dict):
     It creates each of these in 2 EPSGs:
     - 4326
     - 2952
-    '''
+    """
     # init some params we'll need later
     output = {}
 
     # make sure an authorized user is making this call
     if not context.get("auth_user_obj", None):
         raise tk.ValidationError(
-            {
-                "constraints": [
-                    "This endpoint can be used by authorized accounts only"
-                ]
-            }
+            {"constraints": ["This endpoint can be used by authorized accounts only"]}
         )
 
     # make sure the call has the necessary inputs
-    if ("resource_id" not in data_dict.keys()
-            and "package_id" not in data_dict.keys()):
+    if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys():
         raise tk.ValidationError(
-            {
-                "constraints": [
-                    "Endpoint needs input package_id or resource_id"
-                ]
-            }
+            {"constraints": ["Endpoint needs input package_id or resource_id"]}
         )
 
     logging.info(" ----- Datastore Caching has started!")
@@ -220,13 +212,14 @@ def datastore_cache(context, data_dict):
 
     # otherwise, use input param has resource id only
     logging.info("----------- Looking for resource id in data_dict")
-    if ("resource_id" in data_dict.keys()
-            and "package_id" not in data_dict.keys()):
+    if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
         resource = tk.get_action("resource_show")(
             context, {"id": data_dict["resource_id"]}
         )
-        package = tk.get_action("package_show")(context,
-                                                {"id": resource["package_id"]})
+        package = tk.get_action("package_show")(context, {
+            "id": resource["package_id"]
+            }
+        )
         resource_id = (
             resource["id"]
             if resource["datastore_active"] in [True, "true", "True"]
@@ -242,10 +235,7 @@ def datastore_cache(context, data_dict):
             if resource["datastore_active"] in [True, "true", "True"]
             else None
         )
-        package_summary = {
-                            "package_id": package["name"],
-                            "resources": [resource_dict]
-                           }
+        package_summary = {"package_id": package["name"], "resources": [resource_dict]}
 
     logging.info(
         "----------- found {} resources in datastore_cache input".format(
@@ -255,16 +245,11 @@ def datastore_cache(context, data_dict):
 
     if len(package_summary["resources"]) == 0:
         raise tk.ValidationError(
-            {
-                "constraints": [
-                    "Your inputs are not associated with datastore resources"
-                ]
-            }
+            {"constraints": ["Your inputs are not associated with datastore resources"]}
         )
 
     # for each resource id in your list...
     for resource_info in package_summary["resources"]:
-
         # init output
         output = {}
 
@@ -280,7 +265,6 @@ def datastore_cache(context, data_dict):
         # if this is spatial, we'll need to repeat the stuff below for
         # EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
-
             target_formats = ["csv", "shp", "gpkg", "geojson"]
             for format in target_formats:
                 output[format.upper()] = {}
@@ -320,9 +304,7 @@ def datastore_cache(context, data_dict):
                         {
                             "package_id": package_summary["package_id"],
                             "mimetype": mimetype,
-                            "upload": FileStorage(
-                                stream=response,
-                                filename=filename),
+                            "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -340,10 +322,7 @@ def datastore_cache(context, data_dict):
                         {
                             "id": resource_id,
                             "mimetype": mimetype,
-                            "upload": FileStorage(
-                                stream=response,
-                                filename=filename
-                                ),
+                            "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -393,10 +372,7 @@ def datastore_cache(context, data_dict):
                         {
                             "package_id": package_summary["package_id"],
                             "mimetype": mimetype,
-                            "upload": FileStorage(
-                                stream=response,
-                                filename=filename
-                            ),
+                            "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -414,10 +390,7 @@ def datastore_cache(context, data_dict):
                         {
                             "id": resource_id,
                             "mimetype": mimetype,
-                            "upload": FileStorage(
-                                stream=response,
-                                filename=filename
-                                ),
+                            "upload": FileStorage(stream=response, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -449,15 +422,13 @@ def datastore_cache(context, data_dict):
             },
         )
 
-    logging.info(
-        " --- Finished Datastore Cache"
-    )
+    logging.info(" --- Finished Datastore Cache")
     return output
 
 
 @tk.chained_action
 def datastore_create_hook(original_datastore_create, context, data_dict):
-    '''This logic fires on "/datastore_create" which is called whenever records
+    """This logic fires on "/datastore_create" which is called whenever records
     are inserted into the datastore
 
     When this endpoint is hit, this logic ensures the datastore resource
@@ -465,7 +436,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 
     In other words, it is put into the datastore *and* copied into multiple
     formats into the filestore
-    '''
+    """
 
     # make sure an authorized user is making this call
     logging.info("------------ Checking Auth")
@@ -498,6 +469,77 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     logging.info("------------ Done Checking If ready for Datastore Cache")
 
     return output
+
+
+@tk.chained_action
+def datastore_delete_hook(original_datastore_delete, context, data_dict):
+    """This logic fires on "/datastore_delete" which is called whenever records
+    are deleted from the datastore
+
+    When this endpoint is hit, this logic ensures critical values from the tags
+    package are not deleted.
+
+    If these values are deleted, datasets will not be able to get updates
+    """
+
+    # make sure an authorized user is making this call
+    logging.info("------------ Checking Auth")
+    tk.check_access("datastore_delete", context, data_dict)
+    assert context[
+        "auth_user_obj"
+    ], "This endpoint can be used by authorized accounts only"
+    logging.info("------------ Done Checking Auth")
+
+    # checking if this targets the metadata-catalog package
+    metadata_catalog_package = tk.get_action("package_show")(
+        context, {"id": "metadata-catalog"}
+    )
+    metadata_catalog_resources = {
+        r["id"]: r["name"]
+        for r in metadata_catalog_package["resources"]
+        if r["datastore_active"] in [True, "True", "true"]
+    }
+    # if it does, make sure it doesnt target important metadata-catalog
+    if data_dict["id"] in metadata_catalog_resources.keys():
+        if metadata_catalog_resources[data_dict["id"]] in [
+            "Owner Division",
+            "Refresh Rate",
+            "Dataset Category",
+        ]:
+            # if we delete important metadata-catalog, ensure we dont delete all values
+            if "filters" not in data_dict.keys():
+                raise tk.ValidationError(
+                    {
+                        "constraints": [
+                            "Not allowed to bulk delete from {}".format(
+                                metadata_catalog_resources[data_dict["id"]]
+                            )
+                        ]
+                    }
+                )
+
+            # make sure we dont delete values belonging to the metadata-catalog package
+            elif "filters" in data_dict.keys():
+                metadata_catalog_metadata = [
+                    metadata_catalog_package["owner_division"],
+                    metadata_catalog_package["refresh_rate"],
+                    metadata_catalog_package["dataset_category"],
+                ]
+
+                incoming_deletes = data_dict["filters"].values()
+
+                matches = set(metadata_catalog_metadata) & set(incoming_deletes)
+
+                if matches:
+                    raise tk.ValidationError(
+                        {
+                            "constraints": [
+                                "Not allowed to delete tag {}".format(str(matches))
+                            ]
+                        }
+                    )
+
+    original_datastore_delete(context, data_dict)
 
 
 @tk.side_effect_free
