@@ -454,6 +454,9 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # We dont want to hit the /datastore_cache for each chunk,
     # just the last chunk
     # The last "chunk" wont be 2000 or 20000 records in size
+    
+    # We also have an optional "do not cache" input for datastore_create
+    # if this is marked, caching wont occur after a final chunk
 
     if "records" not in data_dict.keys():
         numrecords = 0
@@ -466,26 +469,26 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     )
     output = original_datastore_create(context, data_dict)
     logging.info("[ckanext-opendatatoronto]=== LOADED {} RECORDS".format(str(numrecords)))
-    if numrecords not in [2000, 1999, 20000, 19999, 0]:
+    if numrecords not in [2000, 1999, 20000, 19999, 0] and not data_dict.get("do_not_cache", False):
 
         context.pop("model")
         context.pop("session")
         context.pop("connection")
         
-        tk.enqueue_job(
-            fn=datastore_cache_job, 
-            args=[
-                context,
-                output["resource_id"],
-            ], 
-            title="cache_job - " + output["resource_id"],
-            rq_kwargs={"timeout":3600}
-            #title=output["resource_id"]+"_datastore_cache_job",
-            #timeout=3600
-        )
-        #tk.get_action("datastore_cache")(
-        #    context, {"resource_id": output["resource_id"]}
+        #tk.enqueue_job(
+        #    fn=datastore_cache_job, 
+        #    args=[
+        #        context,
+        #        output["resource_id"],
+        #    ], 
+        #    title="cache_job - " + output["resource_id"],
+        #    rq_kwargs={"timeout":3600}
+        #    #title=output["resource_id"]+"_datastore_cache_job",
+        #    #timeout=3600
         #)
+        tk.get_action("datastore_cache")(
+            context, {"resource_id": output["resource_id"]}
+        )
     logging.info("[ckanext-opendatatoronto]------------ Done Checking If ready for Datastore Cache")
 
     return output
