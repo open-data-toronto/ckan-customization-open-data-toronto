@@ -71,7 +71,7 @@ def build_query(query):
 
 
 @tk.side_effect_free
-def get_quality_score(context, data_dict):
+def quality_show(context, data_dict):
     """Receives package_id as input
     returns associated data quality score from catalog"""
     pid = data_dict.get("package_id")
@@ -86,19 +86,16 @@ def get_quality_score(context, data_dict):
     )
 
     for r in package["resources"]:
-        if r["name"] == "catalogue-scorecard":
+        if r["name"] == "quality-scores-explanation-codes-and-scores":
             rid = r["id"]
             break
 
     if rid is not None:
-        return tk.get_action("datastore_search")(
+        return [r for r in tk.get_action("datastore_search")(
             context,
-            {
-                "resource_id": rid,
-                "q": {"package": pid},
-                "sort": "recorded_at desc"
-            },
-        )["records"]
+            {"resource_id": rid, "q": {"package": pid},
+                "sort": "recorded_at desc"},
+        )["records"] if r["package"] == pid]
 
 
 @tk.side_effect_free
@@ -519,6 +516,77 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
         "auth_user_obj"
     ], "This endpoint can be used by authorized accounts only"
     logging.info("[ckanext-opendatatoronto]------------ Done Checking Auth")
+
+    # checking if this targets the metadata-catalog package
+    metadata_catalog_package = tk.get_action("package_show")(
+        context, {"id": "metadata-catalog"}
+    )
+    metadata_catalog_resources = {
+        r["id"]: r["name"]
+        for r in metadata_catalog_package["resources"]
+        if r["datastore_active"] in [True, "True", "true"]
+    }
+    # if it does, make sure it doesnt target important metadata-catalog
+    if data_dict["id"] in metadata_catalog_resources.keys():
+        if metadata_catalog_resources[data_dict["id"]] in [
+            "Owner Division",
+            "Refresh Rate",
+            "Dataset Category",
+        ]:
+            # if we delete important metadata-catalog, ensure we dont delete all values
+            if "filters" not in data_dict.keys():
+                raise tk.ValidationError(
+                    {
+                        "constraints": [
+                            "Not allowed to bulk delete from {}".format(
+                                metadata_catalog_resources[data_dict["id"]]
+                            )
+                        ]
+                    }
+                )
+
+            # make sure we dont delete values belonging to the metadata-catalog package
+            elif "filters" in data_dict.keys():
+                metadata_catalog_metadata = [
+                    metadata_catalog_package["owner_division"],
+                    metadata_catalog_package["refresh_rate"],
+                    metadata_catalog_package["dataset_category"],
+                ]
+
+                incoming_deletes = data_dict["filters"].values()
+
+                matches = set(metadata_catalog_metadata) & set(incoming_deletes)
+
+                if matches:
+                    raise tk.ValidationError(
+                        {
+                            "constraints": [
+                                "Not allowed to delete tag {}".format(str(matches))
+                            ]
+                        }
+                    )
+
+    original_datastore_delete(context, data_dict)
+
+
+@tk.chained_action
+def datastore_delete_hook(original_datastore_delete, context, data_dict):
+    """This logic fires on "/datastore_delete" which is called whenever records
+    are deleted from the datastore
+
+    When this endpoint is hit, this logic ensures critical values from the tags
+    package are not deleted.
+
+    If these values are deleted, datasets will not be able to get updates
+    """
+
+    # make sure an authorized user is making this call
+    logging.info("------------ Checking Auth")
+    tk.check_access("datastore_delete", context, data_dict)
+    assert context[
+        "auth_user_obj"
+    ], "This endpoint can be used by authorized accounts only"
+    logging.info("------------ Done Checking Auth")
 
     # checking if this targets the metadata-catalog package
     metadata_catalog_package = tk.get_action("package_show")(
