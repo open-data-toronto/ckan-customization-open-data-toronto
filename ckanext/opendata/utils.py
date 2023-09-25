@@ -3,10 +3,6 @@ import ckan.plugins.toolkit as tk
 import json
 import csv
 import re
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 import codecs
 
 
