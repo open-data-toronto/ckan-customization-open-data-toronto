@@ -292,19 +292,20 @@ def datastore_cache(context, data_dict):
                 mimetype = "application/octet-stream"
                 filename = val.split("/")[-1]
 
-                with open(val, "rb") as f:
-                    response = io.BytesIO(f.read())
-                    f.close()
-                    logging.info("[ckanext-opendatatoronto]--------------- " + format + " " + epsg_code)
-
+                #with open(val, "rb") as f:
+                #    response = io.BytesIO(f.read())
+                #    f.close()
+                #    logging.info("[ckanext-opendatatoronto]--------------- " + format + " " + epsg_code)
+                
+                f = open(val, "rb")
                 try:
-                    # try making a resource from scratch
+                    # try making a resource from scratch                    
                     filestore_resource = tk.get_action("resource_create")(
                         context,
                         {
                             "package_id": package_summary["package_id"],
                             "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
+                            "upload": FileStorage(stream=f, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -323,7 +324,7 @@ def datastore_cache(context, data_dict):
                         {
                             "id": resource_id,
                             "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
+                            "upload": FileStorage(stream=f, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -362,9 +363,11 @@ def datastore_cache(context, data_dict):
                 format = key.split("-")[0]
                 mimetype = "application/octet-stream"
                 filename = val.split("/")[-1]
-                with open(val, "rb") as f:
-                    response = io.BytesIO(f.read())
-                    f.close()
+                #with open(val, "rb") as f:
+                #    response = io.BytesIO(f.read())
+                #    f.close()
+
+                f = open(val, "rb")
 
                 try:
                     # try creating a resource
@@ -373,7 +376,7 @@ def datastore_cache(context, data_dict):
                         {
                             "package_id": package_summary["package_id"],
                             "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
+                            "upload": FileStorage(stream=f, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
@@ -391,7 +394,7 @@ def datastore_cache(context, data_dict):
                         {
                             "id": resource_id,
                             "mimetype": mimetype,
-                            "upload": FileStorage(stream=response, filename=filename),
+                            "upload": FileStorage(stream=f, filename=filename),
                             "name": filename,
                             "format": format,
                             "is_datastore_cache_file": True,
