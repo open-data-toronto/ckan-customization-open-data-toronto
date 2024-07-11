@@ -11,7 +11,6 @@ import os
 import io
 import logging
 
-
 def build_query(query):
     """
     Takes inputs to api calls
@@ -127,6 +126,47 @@ def query_facet(context, data_dict):
             output["search_facets"][facet]["items"]
         )
     return output
+
+
+@tk.side_effect_free
+def query_intake(context, data_dict):
+    """Returns a dict where keys are ticket family names, values are tickets"""
+    pid = "open-data-intake"
+
+    package = tk.get_action("package_show")(context, {"id": pid})
+
+    for r in package["resources"]:
+        if r["name"] == "Open Data Intake Records":
+            rid = r["id"]
+            break
+
+    # get raw open data intake data from datastore
+    if rid is not None:
+        raw = tk.get_action("datastore_search")(context, {"resource_id": rid, "limit": 32000})["records"]
+
+        # get unique ticket ids
+        ids = {row["Ticket Id"] for row in raw}
+        working = {}
+    
+        # group records by ticket id
+        for ticket_id in ids:            
+
+            record_group = []
+            for record in raw:
+                if record["Ticket Id"] == ticket_id:
+                    record_group.append(record)
+            
+            working[ticket_id] = record_group
+
+    # join linked ticket objects together
+    for k,v in working.items():
+        if v["Linked Ticket Id"]:
+            for linked_id in v["Linked Ticket Id"].split(","):
+                working[k].append(working[linked_id])
+                del working[linked_id]
+
+    return working
+
 
 
 @tk.side_effect_free
