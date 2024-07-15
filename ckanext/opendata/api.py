@@ -150,7 +150,7 @@ def prepare_intake(context, data_dict):
         # get unique ticket names
         ids = {row["Ticket Id"] for row in raw}
     
-        # group records by ticket name
+        # group records by ticket id
         for ticket_id in ids:            
 
             record_group = []
@@ -162,7 +162,6 @@ def prepare_intake(context, data_dict):
 
     # join linked ticket objects together
     for ticket_id in ids:
-        #records = working.pop(ticket_id)
         # if there are any linked tickets, combine their records
         if working.get(ticket_id, False):
             if any([x["Linked Ticket Id"] for x in working[ticket_id]]):
@@ -181,12 +180,14 @@ def prepare_intake(context, data_dict):
 
     # one last loop to rename keys, sort them into tickets for new or existing datasets
     for k, records in grouped.items():
+        records = sorted(records, key=lambda x: datetime.strptime(utils.get_non_empty_var(x, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"))
         # identify tickets for existing data
         # grab tickets groups where theres an "update" ticket record
         if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
             for record in records:
                 if record["Request Type"] == "Update Existing Open Dataset Page":
                     output["new"][record["Ticket Name"][32:].replace("/","")] = records
+                    continue
         else:
             output["existing"][records[0]["Ticket Name"]] = records
 
