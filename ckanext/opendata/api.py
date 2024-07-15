@@ -129,11 +129,12 @@ def query_facet(context, data_dict):
 
 
 @tk.side_effect_free
-def query_intake(context, data_dict):
+def prepare_intake(context, data_dict):
     """Returns a dict where keys are ticket family names, values are tickets"""
     pid = "open-data-intake"
     working = {}
-    output = {}
+    grouped = {}
+    output = {"new":{}, "existing": {}}
 
     package = tk.get_action("package_show")(context, {"id": pid})
 
@@ -146,10 +147,10 @@ def query_intake(context, data_dict):
     if rid is not None:
         raw = tk.get_action("datastore_search")(context, {"resource_id": rid, "limit": 32000})["records"]
 
-        # get unique ticket ids
+        # get unique ticket names
         ids = {row["Ticket Id"] for row in raw}
     
-        # group records by ticket id
+        # group records by ticket name
         for ticket_id in ids:            
 
             record_group = []
@@ -172,15 +173,38 @@ def query_intake(context, data_dict):
                         for item in this:
                             records.append(item)
 
-                output[ticket_id] = records
-                
+                grouped[ticket_id] = records
+
+    # adding records that dont have linked tickets   
     for k, v in working.items():
-        output[k] = v
+        grouped[k] = v
+
+    # one last loop to rename keys, sort them into tickets for new or existing datasets
+    for k, records in grouped.items():
+        # identify tickets for existing data
+        # grab tickets groups where theres an "update" ticket record
+        if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
+            for record in records:
+                if record["Request Type"] == "Update Existing Open Dataset Page":
+                    output["new"][record["Ticket Name"][32:].replace("/","")] = records
+        else:
+            output["existing"][records[0]["Ticket Name"]] = records
 
     return output
 
 
-
+#@tk.side_effect_free
+#def query_intake(context, data_dict):
+#    output = {}
+#    assert data_dict.get("package_id", False) or data_dict.get("package_id", False), f"No 'package_id' in input!"
+#
+#    package_ids = data_dict.get("package_id", False) or data_dict.get("package_id", False)
+#    # If single package id, put it in a list for consistency
+#    if isinstance(package_ids, str):
+#        package_ids = [package_ids]
+#
+#    for package_id in package_ids
+    
 @tk.side_effect_free
 def query_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
