@@ -186,10 +186,10 @@ def prepare_intake(context, data_dict):
         if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
             for record in records:
                 if record["Request Type"] == "Update Existing Open Dataset Page":
-                    output["new"][record["Ticket Name"][32:].replace("/","")] = records
+                    output["existing"][record["Ticket Name"][32:].replace("/","")] = records
                     continue
         else:
-            output["existing"][records[0]["Ticket Name"]] = records
+            output["new"][records[0]["Ticket Name"]] = records
 
     return output
 
