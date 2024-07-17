@@ -397,3 +397,12 @@ def get_non_empty_var(input_dict, var1, var2):
         return input_dict[var1]
 
     
+def get_latest_intake_date(intake):
+    date = "0"
+    for rec in intake:
+        if rec["Status Timestamp"]:
+            if rec["Status Timestamp"] > date:
+                date = rec.get("Status Timestamp", "0")
+        if rec.get("Created", "0") > date:
+            date = rec.get("Created", "0")
+    return date

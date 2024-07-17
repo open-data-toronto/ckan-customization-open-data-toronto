@@ -222,11 +222,31 @@ def query_packages(context, data_dict):
             "q": " AND ".join(["({x})".format(x=x) for x in q]),  # solr query
             "rows": params["rows"],
             "sort": params["sort"],  # this is solr specific
-            "start": params[
-                "start"
-            ],  # since its 0: start the returned dataset at the first record
+            #"start": params[
+            #    "start"
+            #],  # since its 0: start the returned dataset at the first record
         },
     )
+
+    # Under certain filter criteria, we'll include intake records
+    # If we have a facet selected, we will return packages without intake records
+    if any(["[]" in x for x in [key for key in data_dict.keys()]]) or "score" in params["sort"]:
+        output["results"] = output["results"][:int(params["start"])]
+        return output
+
+    # If not, we start the process of including intake records in the reponse
+    # shuffle in intake new records
+    intake = tk.get_action("prepare_intake")()
+    for name, records in intake["new"].items():
+        # skip closed/published tickets
+        output["results"].append({
+            "name": name,
+            "last_refreshed": utils.get_latest_intake_date(records),
+            "type": "intake",       
+        })
+
+    # reshuffle packages based on sort, then skip # records based on start
+    output["results"] = sorted(output["results"], key=lambda x: x[params["sort"].split(" ")[0]])
 
     return output
 
