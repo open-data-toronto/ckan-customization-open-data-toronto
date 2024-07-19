@@ -11,7 +11,6 @@ import os
 import io
 import logging
 
-
 def build_query(query):
     """
     Takes inputs to api calls
@@ -129,6 +128,84 @@ def query_facet(context, data_dict):
     return output
 
 
+@tk.side_effect_free
+def prepare_intake(context, data_dict):
+    """Returns a dict where keys are ticket family names, values are tickets"""
+    pid = "open-data-intake"
+    working = {}
+    grouped = {}
+    output = {"new":{}, "existing": {}}
+
+    package = tk.get_action("package_show")(context, {"id": pid})
+
+    for r in package["resources"]:
+        if r["name"] == "Open Data Intake Records":
+            rid = r["id"]
+            break
+
+    # get raw open data intake data from datastore
+    if rid is not None:
+        raw = tk.get_action("datastore_search")(context, {"resource_id": rid, "limit": 32000})["records"]
+
+        # get unique ticket names
+        ids = {row["Ticket Id"] for row in raw}
+    
+        # group records by ticket id
+        for ticket_id in ids:            
+
+            record_group = []
+            for record in raw:
+                if record["Ticket Id"] == ticket_id:
+                    record_group.append(record)
+            
+            working[ticket_id] = record_group
+
+    # join linked ticket objects together
+    for ticket_id in ids:
+        # if there are any linked tickets, combine their records
+        if working.get(ticket_id, False):
+            if any([x["Linked Ticket Id"] for x in working[ticket_id]]):
+                records = working.pop(ticket_id)
+                for linked_id in records[0]["Linked Ticket Id"].split(","):
+                    if working.get(linked_id, False):
+                        this = working.pop(linked_id)
+                        for item in this:
+                            records.append(item)
+
+                grouped[ticket_id] = records
+
+    # adding records that dont have linked tickets   
+    for k, v in working.items():
+        grouped[k] = v
+
+    # one last loop to rename keys, sort them into tickets for new or existing datasets
+    for k, records in grouped.items():
+        records = sorted(records, key=lambda x: datetime.strptime(utils.get_non_empty_var(x, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"))
+        # identify tickets for existing data
+        # grab tickets groups where theres an "update" ticket record
+        if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
+            for record in records:
+                if record["Request Type"] == "Update Existing Open Dataset Page":
+                    output["existing"][record["Ticket Name"][32:].replace("/","")] = records
+                    continue
+        else:
+            output["new"][records[0]["Ticket Name"]] = records
+
+    return output
+
+
+#@tk.side_effect_free
+#def query_intake(context, data_dict):
+#    output = {}
+#    assert data_dict.get("package_id", False) or data_dict.get("package_id", False), f"No 'package_id' in input!"
+#
+#    package_ids = data_dict.get("package_id", False) or data_dict.get("package_id", False)
+#    # If single package id, put it in a list for consistency
+#    if isinstance(package_ids, str):
+#        package_ids = [package_ids]
+#
+#    for package_id in package_ids
+    
 @tk.side_effect_free
 def query_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
@@ -490,6 +567,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
 
     return output
 
+
 def datastore_cache_job(context, resource_id):
     """Calls datastore_cache CKAN action"""
 
@@ -497,76 +575,6 @@ def datastore_cache_job(context, resource_id):
         context,
         {"resource_id": resource_id}
     )
-
-@tk.chained_action
-def datastore_delete_hook(original_datastore_delete, context, data_dict):
-    """This logic fires on "/datastore_delete" which is called whenever records
-    are deleted from the datastore
-
-    When this endpoint is hit, this logic ensures critical values from the tags
-    package are not deleted.
-
-    If these values are deleted, datasets will not be able to get updates
-    """
-
-    # make sure an authorized user is making this call
-    logging.info("[ckanext-opendatatoronto]------------ Checking Auth")
-    tk.check_access("datastore_delete", context, data_dict)
-    assert context[
-        "auth_user_obj"
-    ], "This endpoint can be used by authorized accounts only"
-    logging.info("[ckanext-opendatatoronto]------------ Done Checking Auth")
-
-    # checking if this targets the metadata-catalog package
-    metadata_catalog_package = tk.get_action("package_show")(
-        context, {"id": "metadata-catalog"}
-    )
-    metadata_catalog_resources = {
-        r["id"]: r["name"]
-        for r in metadata_catalog_package["resources"]
-        if r["datastore_active"] in [True, "True", "true"]
-    }
-    # if it does, make sure it doesnt target important metadata-catalog
-    if data_dict["id"] in metadata_catalog_resources.keys():
-        if metadata_catalog_resources[data_dict["id"]] in [
-            "Owner Division",
-            "Refresh Rate",
-            "Dataset Category",
-        ]:
-            # if we delete important metadata-catalog, ensure we dont delete all values
-            if "filters" not in data_dict.keys():
-                raise tk.ValidationError(
-                    {
-                        "constraints": [
-                            "Not allowed to bulk delete from {}".format(
-                                metadata_catalog_resources[data_dict["id"]]
-                            )
-                        ]
-                    }
-                )
-
-            # make sure we dont delete values belonging to the metadata-catalog package
-            elif "filters" in data_dict.keys():
-                metadata_catalog_metadata = [
-                    metadata_catalog_package["owner_division"],
-                    metadata_catalog_package["refresh_rate"],
-                    metadata_catalog_package["dataset_category"],
-                ]
-
-                incoming_deletes = data_dict["filters"].values()
-
-                matches = set(metadata_catalog_metadata) & set(incoming_deletes)
-
-                if matches:
-                    raise tk.ValidationError(
-                        {
-                            "constraints": [
-                                "Not allowed to delete tag {}".format(str(matches))
-                            ]
-                        }
-                    )
-
-    original_datastore_delete(context, data_dict)
 
 
 @tk.chained_action
