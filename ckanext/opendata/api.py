@@ -205,12 +205,19 @@ def summarize_new_intake(context, data_dict):
         if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
             continue
 
-        # skip old and closed datasets
+        # prepare to skip old and finished ticket groups
         last_updated = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in records])
         age = datetime.today() - last_updated
-        if any([(rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" and age.days > 30) for rec in records]):
+        
+        # skip closed standalone inquiry tickets
+        if any([rec["To Status"] == "Closed" for rec in records]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in records]) and age.days > 30:
             continue
 
+        # skip old closed publish ticket groups
+        if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in records]) and age.days > 30:
+            continue
+
+        # add summary to output
         output.append({
             "ticket_group_name": ticket_group_name,
             "last_updated": last_updated,
