@@ -241,10 +241,20 @@ def detail_new_intake(context, data_dict):
     if "ticket_group_name" not in data_dict.keys():
         raise tk.ValidationError({"constraints": ["ticket_group_name required as input"]}) 
 
-    
+    ticket_group_name = data_dict["ticket_group_name"]
+
+    intake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_name, None)
+    if not intake:
+        raise tk.ValidationError({"constraints": [
+            f"Ticket Group Name {intake} does not exist"
+        ]}) 
 
     
-    
+    last_update = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
+    jira_ticket_ids = ", ".join([rec["Ticket Id"] for rec in intake])
+    inquiry_source = (rec["Inquiry Source"] for rec in intake)[0]
+
+
 @tk.side_effect_free
 def query_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
