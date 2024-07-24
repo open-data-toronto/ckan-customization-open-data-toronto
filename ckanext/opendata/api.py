@@ -186,25 +186,38 @@ def prepare_intake(context, data_dict):
         if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
             for record in records:
                 if record["Request Type"] == "Update Existing Open Dataset Page":
-                    output["existing"][record["Ticket Name"][32:].replace("/","")] = records
+                    output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
                     continue
         else:
-            output["new"][records[0]["Ticket Name"]] = records
+            output["new"][records[0]["Ticket Name"].strip()] = records
 
     return output
 
 
-#@tk.side_effect_free
-#def query_intake(context, data_dict):
-#    output = {}
-#    assert data_dict.get("package_id", False) or data_dict.get("package_id", False), f"No 'package_id' in input!"
-#
-#    package_ids = data_dict.get("package_id", False) or data_dict.get("package_id", False)
-#    # If single package id, put it in a list for consistency
-#    if isinstance(package_ids, str):
-#        package_ids = [package_ids]
-#
-#    for package_id in package_ids
+@tk.side_effect_free
+def summarize_new_intake(context, data_dict):
+    '''Returns summaries of all new, active ticket groups'''
+    output = []
+
+    intake = tk.get_action("prepare_intake")(context, data_dict)["new"]
+    for ticket_group_name, records in intake.items():
+        # skip published datasets
+        if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
+            continue
+
+        # skip old and closed datasets
+        last_updated = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in records])
+        age = datetime.today() - last_updated
+        if any([(rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" and age.days > 30) for rec in records]):
+            continue
+
+        output.append({
+            "ticket_group_name": ticket_group_name,
+            "last_updated": last_updated,
+            "status": ""
+        })
+
+    return output
     
 @tk.side_effect_free
 def query_packages(context, data_dict):

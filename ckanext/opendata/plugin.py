@@ -25,7 +25,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
             "reindex_solr": api.reindex_solr,
-            #"query_intake": api.query_intake,
+            "summarize_new_intake": api.summarize_new_intake,
             "prepare_intake": api.prepare_intake,
         }
 
