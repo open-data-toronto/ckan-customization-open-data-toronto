@@ -225,6 +225,25 @@ def summarize_new_intake(context, data_dict):
         })
 
     return output
+
+@tk.side_effect_free
+def detail_new_intake(context, data_dict):
+    """input a ticket group name, output a dict with all info needed on coming soon dataset detail page
+    Outputs include:
+    - Most recent update date
+    - Jira Ticket IDs
+    - Inquiry Source
+    - Request Type(s)
+    - Ticket Group Name
+    - Ordered list of milestones and their date
+    """
+    
+    if "ticket_group_name" not in data_dict.keys():
+        raise tk.ValidationError({"constraints": ["ticket_group_name required as input"]}) 
+
+    
+
+    
     
 @tk.side_effect_free
 def query_packages(context, data_dict):
