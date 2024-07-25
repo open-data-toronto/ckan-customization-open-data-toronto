@@ -324,8 +324,6 @@ def detail_new_intake(context, data_dict):
         "details": details
     }
 
-    print(output)
-
     return output
         
 
