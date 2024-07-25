@@ -221,8 +221,12 @@ def summarize_new_intake(context, data_dict):
         output.append({
             "ticket_group_name": ticket_group_name,
             "last_updated": last_updated,
-            "status": ""
+            "status": records[-1]["To Status"],
+            "inquiry_source": records[-1]["Inquiry Source"],
+            "ticket_count": len(set(x["Ticket Id"] for x in records)),
         })
+
+    output = sorted(output, key=lambda x: x["ticket_group_name"])
 
     return output
 
@@ -248,12 +252,82 @@ def detail_new_intake(context, data_dict):
         raise tk.ValidationError({"constraints": [
             f"Ticket Group Name {intake} does not exist"
         ]}) 
-
     
+    # prepare ticket group high level details
     last_update = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
-    jira_ticket_ids = ", ".join([rec["Ticket Id"] for rec in intake])
-    inquiry_source = (rec["Inquiry Source"] for rec in intake)[0]
+    jira_ticket_ids = [rec["Ticket Id"] for rec in intake]
+    inquiry_source = [rec["Inquiry Source"] for rec in intake][0]
+    request_types = [rec["Request Type"] for rec in intake]
+    to_statuses = [rec["To Status"] for rec in intake]
+    from_statuses = [rec["From Status"] for rec in intake]
 
+    details = []
+
+    # prepare ticket record details
+    # if this starts with an inquiry...
+    if "Make Open Data Inquiry" in request_types:
+        # first append the "inquiry identified detail"
+        details.append({
+            "title": "Inquiry Identified",
+            "complete date": min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["Request Type"] == "Make Open Data Inquiry"]),
+            "subtext": "A request to investigate an open dataset has been identified"
+        })
+        # then add available subsequent details
+        if "Initiating" in to_statuses:
+            details.append({
+                "title": "Investigation Initiated",
+                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Initiating"]),
+                "subtext": "Open Data is investigating the feasibility of this request by contacting possible data owners"
+            })
+
+        if "Exploring" in to_statuses:
+            details.append({
+                "title": "Investigation in Progress",
+                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Exploring"]),
+                "subtext": "Open Data has identified appropriate data owners and is withing with them to assess details of publishing data associated with this request"
+            })
+
+        if any([rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]):
+            details.append({
+                "title": "Investigation Concluding",
+                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division"]),
+                "subtext": "The owner division is compiling details needed to action this request"
+            })
+
+        # If the status of the ticket is closed and there are no other Request Types in the group, then label this as "will not publish"
+        if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]):
+            details.append({
+                "title": "Investigation Closed",
+                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed"]),
+                "subtext": "Open Data has determined this request is not actionable and so will not publish any updates or new datasets related to it"
+            })
+
+        # else if the status is closed and there are other request types, label it as "will publish"
+        elif any([rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]) and any([rec["Request Type"] != "Make Open Data Inquiry" for rec in intake]):
+            details.append({
+                "title": "Investigation Successful",
+                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry"]),
+                "subtext": "The owner division is compiling details needed to action this request."
+            })
+        
+        # If there are other, non-inquiry tickets in this group...
+        #if any([rec["Request Type"] != "Make Open Data Inquiry" for rec in intake]):
+
+    output = {
+        "ticket_group_name": ticket_group_name,
+        "last_update": last_update,
+        "jira_ticket_ids": jira_ticket_ids,
+        "inquiry_source": inquiry_source,
+        "request_types": request_types,
+        "to_statuses": to_statuses,
+        "from_statuses": from_statuses,
+        "details": details
+    }
+
+    print(output)
+
+    return output
+        
 
 @tk.side_effect_free
 def query_packages(context, data_dict):
