@@ -255,11 +255,11 @@ def detail_new_intake(context, data_dict):
     
     # prepare ticket group high level details
     last_update = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
-    jira_ticket_ids = [rec["Ticket Id"] for rec in intake]
+    jira_ticket_ids = list(set(rec["Ticket Id"] for rec in intake))
     inquiry_source = [rec["Inquiry Source"] for rec in intake][0]
-    request_types = [rec["Request Type"] for rec in intake]
-    to_statuses = [rec["To Status"] for rec in intake]
-    from_statuses = [rec["From Status"] for rec in intake]
+    request_types = list(set(rec["Request Type"] for rec in intake))
+    to_statuses = list(set(rec["To Status"] for rec in intake))
+    from_statuses = list(set(rec["From Status"] for rec in intake))
 
     details = []
 
