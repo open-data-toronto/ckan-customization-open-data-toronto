@@ -269,28 +269,28 @@ def detail_new_intake(context, data_dict):
         # first append the "inquiry identified detail"
         details.append({
             "title": "Inquiry Identified",
-            "complete date": min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["Request Type"] == "Make Open Data Inquiry"]),
+            "date_completed": min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["Request Type"] == "Make Open Data Inquiry"]),
             "subtext": "A request to investigate an open dataset has been identified"
         })
         # then add available subsequent details
         if "Initiating" in to_statuses:
             details.append({
                 "title": "Investigation Initiated",
-                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Initiating"]),
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Initiating"]),
                 "subtext": "Open Data is investigating the feasibility of this request by contacting possible data owners"
             })
 
         if "Exploring" in to_statuses:
             details.append({
                 "title": "Investigation in Progress",
-                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Exploring"]),
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Exploring"]),
                 "subtext": "Open Data has identified appropriate data owners and is withing with them to assess details of publishing data associated with this request"
             })
 
         if any([rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]):
             details.append({
                 "title": "Investigation Concluding",
-                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division"]),
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division"]),
                 "subtext": "The owner division is compiling details needed to action this request"
             })
 
@@ -298,7 +298,7 @@ def detail_new_intake(context, data_dict):
         if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]):
             details.append({
                 "title": "Investigation Closed",
-                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed"]),
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed"]),
                 "subtext": "Open Data has determined this request is not actionable and so will not publish any updates or new datasets related to it"
             })
 
@@ -306,12 +306,79 @@ def detail_new_intake(context, data_dict):
         elif any([rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]) and any([rec["Request Type"] != "Make Open Data Inquiry" for rec in intake]):
             details.append({
                 "title": "Investigation Successful",
-                "complete date": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry"]),
-                "subtext": "The owner division is compiling details needed to action this request."
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed" and rec["Request Type"] == "Make Open Data Inquiry"]),
+                "subtext": "The owner division is compiling details needed to action this request"
             })
         
-        # If there are other, non-inquiry tickets in this group...
-        #if any([rec["Request Type"] != "Make Open Data Inquiry" for rec in intake]):
+            if "Publish New Open Dataset Page" in request_types and "In Progress" in to_statuses:
+                details.append({
+                    "title": "Work in Progress",
+                    "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "In Progress" and rec["Request Type"] == "Publish New Open Dataset Page"]),
+                    "subtext": "Open Data is configuring the process to publish this data"
+                })
+
+            if any([rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in intake]):
+                details.append({
+                    "title": "Waiting on Owner Division",
+                    "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Publish New Open Dataset Page"]),
+                    "subtext": "Open Data needs more information from the data owner before progress can be made"
+                })
+
+            if "Publish New Open Dataset Page" in request_types and "Staged for Review" in to_statuses:
+                details.append({
+                    "title": "Waiting on Owner Division",
+                    "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Staged for Review" and rec["Request Type"] == "Publish New Open Dataset Page"]),
+                    "subtext": "The dataset has been staged for review in a non-public-facing location, and is being reviewed by Open Data and the data owner"
+                })
+
+            if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in intake]):
+                details.append({
+                    "title": "Will not be Published",
+                    "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page"]),
+                    "subtext": "The dataset will not be published"
+                })
+
+            if "Publish New Open Dataset Page" in request_types and "Published" in to_statuses:
+                details.append({
+                    "title": "Published",
+                    "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Published" and rec["Request Type"] == "Publish New Open Dataset Page"]),
+                    "subtext": "The dataset has been published"
+                })
+
+    elif "Make Open Data Inquiry" not in request_types:
+        details.append({
+            "title": "Request to Publish Received",
+            "date_completed": min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["Request Type"] == "Publish New Open Dataset Page"]),
+            "subtext": "A request has been received by the Open Data team"
+        })
+
+        if "Waiting on Owner Division" in to_statuses:
+            details.append({
+                "title": "Waiting on Owner Division",
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division"]),
+                "subtext": "Open Data needs more information from the data owner before progress can be made"
+            })
+
+        if "Staged for Review" in to_statuses:
+            details.append({
+                "title": "Staged for Review",
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Staged for Review"]),
+                "subtext": "The dataset has been staged for review in a non-public-facing location, and is being reviewed by Open Data and the data owner"
+            })
+
+        if "Closed" in to_statuses:
+            details.append({
+                "title": "Will not be Published",
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed"]),
+                "subtext": "The dataset will not be published"
+            })
+
+        if "Published" in to_statuses:
+            details.append({
+                "title": "Published",
+                "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Published"]),
+                "subtext": "The dataset has been published"
+            })
 
     output = {
         "ticket_group_name": ticket_group_name,
