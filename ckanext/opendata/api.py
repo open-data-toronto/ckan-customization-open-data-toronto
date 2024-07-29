@@ -326,7 +326,7 @@ def detail_new_intake(context, data_dict):
 
             if "Publish New Open Dataset Page" in request_types and "Staged for Review" in to_statuses:
                 details.append({
-                    "title": "Waiting on Owner Division",
+                    "title": "Staged for Review",
                     "date_completed": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Staged for Review" and rec["Request Type"] == "Publish New Open Dataset Page"]),
                     "subtext": "The dataset has been staged for review in a non-public-facing location, and is being reviewed by Open Data and the data owner"
                 })
