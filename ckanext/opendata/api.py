@@ -522,6 +522,12 @@ def query_packages(context, data_dict):
         },
     )
 
+    intake = tk.get_action("prepare_intake")(context, data_dict)["existing"]
+
+    for i in range(len(output["results"])):
+        if output["results"][i]["name"] in intake.keys():
+            output["results"][i]["updating"] = True
+
     return output
 
 
