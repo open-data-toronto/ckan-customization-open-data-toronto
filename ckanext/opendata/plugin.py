@@ -27,6 +27,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "reindex_solr": api.reindex_solr,
             "summarize_new_intake": api.summarize_new_intake,
             "detail_new_intake": api.detail_new_intake,
+            "detail_existing_intake": api.detail_existing_intake,
             "prepare_intake": api.prepare_intake,
         }
 
