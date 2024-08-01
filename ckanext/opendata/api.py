@@ -151,7 +151,7 @@ def prepare_intake(context, data_dict):
         ids = {row["Ticket Id"] for row in raw}
     
         # group records by ticket id
-        for ticket_id in ids:            
+        for ticket_id in ids:
 
             record_group = []
             for record in raw:
@@ -178,9 +178,11 @@ def prepare_intake(context, data_dict):
     for k, v in working.items():
         grouped[k] = v
 
-    # one last loop to rename keys, sort them into tickets for new or existing datasets
+    # one last loop to rename keys, sort them into tickets for new or existing datasets, and exclude resolved ticket groups
     for k, records in grouped.items():
         records = sorted(records, key=lambda x: datetime.strptime(utils.get_non_empty_var(x, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"))
+        if any([rec["Request Type"] in ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"] and rec["To Status"] in ["Closed", "Published", "Retired"] for rec in records]):
+            continue
         # identify tickets for existing data
         # grab tickets groups where theres an "update" ticket record
         if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
@@ -193,16 +195,6 @@ def prepare_intake(context, data_dict):
 
     return output
 
-@tk.side_effect_free
-def summarize_existing_intake(context, data_dict):
-    '''Returns summaries of all new, active ticket groups'''
-    output = []
-
-    intake = tk.get_action("prepare_intake")(context, data_dict)["existing"]
-    for ticket_group_name, records in intake.items():
-        # skip published datasets
-        if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
-            continue
 
 @tk.side_effect_free
 def summarize_new_intake(context, data_dict):
@@ -231,7 +223,7 @@ def summarize_new_intake(context, data_dict):
         output.append({
             "ticket_group_name": ticket_group_name,
             "last_updated": last_updated,
-            "status": records[-1]["To Status"],
+            "status": records[-1]["To Status"] or "Identified",
             "inquiry_source": records[-1]["Inquiry Source"],
             "ticket_count": len(set(x["Ticket Id"] for x in records)),
         })
@@ -285,7 +277,7 @@ def detail_new_intake(context, data_dict):
         # then add available subsequent details
         if "Initiating" in to_statuses:
             details.append({
-                "title": "Investigation Initiated",
+                "title": "Communications Initiated",
                 "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Initiating"]),
                 "subtext": "Open Data is investigating the feasibility of this request by contacting possible data owners"
             })
@@ -294,7 +286,7 @@ def detail_new_intake(context, data_dict):
             details.append({
                 "title": "Investigation in Progress",
                 "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Exploring"]),
-                "subtext": "Open Data has identified appropriate data owners and is withing with them to assess details of publishing data associated with this request"
+                "subtext": "Open Data has identified appropriate data owners and is working with them to assess details of publishing data associated with this request"
             })
 
         if any([rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Make Open Data Inquiry" for rec in intake]):
@@ -421,10 +413,9 @@ def detail_existing_intake(context, data_dict):
     ticket_group_name = data_dict["ticket_group_name"]
 
     intake = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_name, None)
-    if not intake:
-        raise tk.ValidationError({"constraints": [
-            f"Ticket Group Name {intake} does not exist"
-        ]}) 
+    if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake]): 
+        return "There is no active update ticket group associated with {}".format(ticket_group_name)
+        
     
     # prepare ticket group high level details
     last_update = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
@@ -501,7 +492,7 @@ def detail_existing_intake(context, data_dict):
     return output
 
 @tk.side_effect_free
-def query_packages(context, data_dict):
+def search_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
     It receives inputs from filters or search terms users have selected
     on the catalog page, then returns the correct CKAN packages"""
@@ -527,6 +518,9 @@ def query_packages(context, data_dict):
     for i in range(len(output["results"])):
         if output["results"][i]["name"] in intake.keys():
             output["results"][i]["updating"] = True
+            continue
+        else:
+            output["results"][i]["updating"] = False
 
     return output
 
