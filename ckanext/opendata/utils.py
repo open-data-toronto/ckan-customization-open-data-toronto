@@ -396,3 +396,163 @@ def get_non_empty_var(input_dict, var1, var2):
          return input_dict[var2]
      else:
 	         return input_dict[var1]
+
+
+def detail_intake(intake):
+    """Presents details of ticket group to be rendered on the frontend.
+    Attribute of output include:
+    - Most recent update date
+    - Jira Ticket IDs
+    - Inquiry Source
+    - Request Type(s)
+    - Ticket Group Name
+    - Ordered list of milestones (dicts)
+    
+    Each milestone will have the following attributes:
+    - title
+    - timestamp
+    - subtext
+    - activity_state (done, active, future)
+    """
+
+    assert isinstance(intake, list), f"Input must be a list of dicts!"
+    assert len(intake), f"Input must be populated!"
+
+    # Let's make high level info for this ticket group
+    last_update = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+    start_date = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+    jira_ticket_ids = []
+    inquiry_source = []
+    request_types = []
+    to_statuses = []
+    from_statuses = []
+    
+    for rec in intake:
+        ticket_group_name = rec["Ticket Name"]
+
+        # last update
+        if datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") > last_update:
+            last_update = datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S")    
+            latest_record = rec
+
+        # start date
+        if datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") < start_date:
+            start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
+
+        # ticket ids
+        if rec["Ticket Id"] not in jira_ticket_ids:
+            jira_ticket_ids.append(rec["Ticket Id"])
+
+        # inquiry source
+        if rec["Inquiry Source"] not in inquiry_source:
+            inquiry_source.append(rec["Inquiry Source"])
+
+        # request_types
+        if rec["Request Type"] not in request_types:
+            request_types.append(rec["Request Type"])
+
+        # to statuses
+        if rec["To Status"] not in to_statuses:
+            to_statuses.append(rec["To Status"])
+
+        # from statuses
+        if rec["From Status"] not in from_statuses:
+            from_statuses.append(rec["From Status"])
+
+    #last_update = max([datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
+    #start_date = min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake])
+    #jira_ticket_ids = list(set(rec["Ticket Id"] for rec in intake))
+    #inquiry_source = [rec["Inquiry Source"] for rec in intake][0]
+    #request_types = list(set(rec["Request Type"] for rec in intake))
+    #to_statuses = list(set(rec["To Status"] for rec in intake))
+    #from_statuses = list(set(rec["From Status"] for rec in intake))
+    details = []
+    
+    # ticket history is presented in an order that is meant to be easy to understand
+    # this history, then, has a set order. We show the history that fits this order
+    # we do this to simplify the process for people consuming this info
+
+    # first, here is the ideal order and content
+    orders = [
+        {
+            "request_types": ["Make Open Data Inquiry"],
+            "order": {
+                "Identified": {"order":1, "title": "Inquiry Received", "text": "This inquiry is on the Open Data Team's list"},
+                "Initiating": {"order":2, "title": "Initiating Inquiry", "text": "Open Data is searching for data owner(s) within the city to help address this inquiry"},
+                "Exploring": {"order":3, "title": "Exploring Details", "text": "Data owners have been identified, and technical details and feasibility concerns are being explored"},
+                #"Waiting on Division": {"order":4, "title": "", "text": "Data "},
+                "Closed": {"order":5, "title": "Inquiry Concluded", "text": "Investigations here have finished. If there are no additional details here, no further actions are being taken by City staff"}
+            }
+        },
+        {
+            "request_types": ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"],
+            "order": {
+                "Waiting on Open Data": {"order":6, "title": "Waiting on Open Data", "text": "The Open Data Team has the configurations it needs to create/update this dataset but has not begun work"},
+                "Waiting on Owner Division": {"order":7, "title": "Waiting on Owner Division", "text": "The Open Data Team needs more details from the data owners before work can continue"},
+                "In Progress": {"order":8, "title": "Configuration In Progress", "text": "Open Data is configuring the process of loading this data into the open data portal"},
+                "Staged for Review": {"order":9, "title": "Under Review", "text": "The dataset has been staged and is under review by city staff"},
+                "Published": {"order":10, "title": "Published", "text": "This data has been published"},
+                "Closed": {"order":10, "title": "Will not Action", "text": "There is no action that can be taken here, and so this work has concluded"},
+                "Retired": {"order":10, "title": "Retired", "text": "This dataset has been retired"},
+            }
+        }
+    ]
+
+
+    # sort out the last ticket type
+    latest_type = latest_record.get("Request Type")
+    latest_status = latest_record.get("To Status", None)
+    
+    for order in orders:
+        # for each status, we'll get all relevant ticket records and choose the earliest
+        for order_status, order_detail in order["order"].items():
+            detail = {
+                "timestamp": datetime.strptime("9999-12-31T00:00:00", "%Y-%m-%dT%H:%M:%S"),
+                "match": False
+            }
+            for i in range(len(intake)):
+                rec = intake[i]
+                # skip irrelevant tickets in this loop
+                if rec["Request Type"] not in order["request_types"]:
+                    continue
+                
+                # if we make a match and its the earliest timestamp, it will be included in the output
+                if rec["To Status"] == order_status and detail["timestamp"] > datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"):
+                    detail = {
+                        "title": order_detail["title"],
+                        "timestamp": datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"),
+                        "subtext": order_detail["text"],
+                        "activity_state": "done",
+                        "order": order_detail["order"]
+                    }
+
+                # if this is the end of the intake and there has been a match:
+                if i+1 == len(intake) and detail.get("match", True) == True:
+                    # make sure the last detail has activity_state of "active"
+                    detail["activity_state"] = "active"
+
+                # if this is the end of the intake and there hasn't been a match:
+                elif i+1 == len(intake) and detail.get("match", True) == False:
+                    # put a placeholder detail for future action
+                    detail = {
+                        "title": order_detail["title"],
+                        "timestamp": None,
+                        "subtext": order_detail["text"],
+                        "activity_state": "future",
+                        "order": order_detail["order"]
+                    }
+                
+            # append the detail if there's been a match
+            if detail.get("match", True):
+                details.append(detail)                
+
+    return  {
+        "ticket_group_name": ticket_group_name,
+        "last_update": last_update,
+        "jira_ticket_ids": jira_ticket_ids,
+        "inquiry_source": inquiry_source,
+        "request_types": request_types,
+        "to_statuses": to_statuses,
+        "from_statuses": from_statuses,
+        "details": details
+    }
