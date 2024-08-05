@@ -459,13 +459,6 @@ def detail_intake(intake):
         if rec["From Status"] not in from_statuses:
             from_statuses.append(rec["From Status"])
 
-    #last_update = max([datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
-    #start_date = min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake])
-    #jira_ticket_ids = list(set(rec["Ticket Id"] for rec in intake))
-    #inquiry_source = [rec["Inquiry Source"] for rec in intake][0]
-    #request_types = list(set(rec["Request Type"] for rec in intake))
-    #to_statuses = list(set(rec["To Status"] for rec in intake))
-    #from_statuses = list(set(rec["From Status"] for rec in intake))
     details = []
     
     # ticket history is presented in an order that is meant to be easy to understand
@@ -521,30 +514,65 @@ def detail_intake(intake):
                     detail = {
                         "title": order_detail["title"],
                         "timestamp": datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"),
-                        "subtext": order_detail["text"],
+                        "text": order_detail["text"],
                         "activity_state": "done",
-                        "order": order_detail["order"]
-                    }
-
-                # if this is the end of the intake and there has been a match:
-                if i+1 == len(intake) and detail.get("match", True) == True:
-                    # make sure the last detail has activity_state of "active"
-                    detail["activity_state"] = "active"
-
-                # if this is the end of the intake and there hasn't been a match:
-                elif i+1 == len(intake) and detail.get("match", True) == False:
-                    # put a placeholder detail for future action
-                    detail = {
-                        "title": order_detail["title"],
-                        "timestamp": None,
-                        "subtext": order_detail["text"],
-                        "activity_state": "future",
                         "order": order_detail["order"]
                     }
                 
             # append the detail if there's been a match
-            if detail.get("match", True):
+            if detail.get("match", True) == True:
                 details.append(detail)                
+
+    # loop through details again to 
+    #   make sure the final detail's state is "active"
+    #   see if there are "future" states, that they are added
+    #   special logic for final statuses to make sure only one is shown
+    #   make sure no dates and orders of things are incorrect
+    to_remove = []
+    for i in range(len(details)):
+        detail = details[i]
+
+        # make sure orders and dates are correct
+        if i+1 < len(details) and i != 0:
+            # loop through all preceding details. If it has a later date than this one, delete the preceding one
+            if details[i]["timestamp"] < details[i-1]["timestamp"]:
+                to_remove.append(i-1)
+
+        # if there's only a closed inquiry ticket, don't add future details
+        if detail["order"] == 5 and len(request_types) == 1:
+            break
+
+        # add active state to last detail
+        elif i+1 == len(details):            
+            details[i]["activity_state"] = "active"
+
+            # add future details
+            for order in orders:
+                for order_status, order_detail in order["order"].items():
+                    if order_detail["order"] > detail["order"]:
+                        if order_detail["order"] not in [10, 5]:
+                            details.append({
+                                "title": order_detail["title"],
+                                "timestamp": None,
+                                "text": order_detail["text"],
+                                "activity_state": "future",
+                                "order": order_detail["order"]
+                            })
+                        
+                        # special logic for "final" future detail
+                        elif order_detail["order"] == 10:
+                            details.append({
+                                "title": "Resolution",
+                                "timestamp": None,
+                                "text": "The resolution of this work can result in the publication, retirement, or update of an open dataset. It may, depending on circumstances, end in nothing actionable.",
+                                "activity_state": "future",
+                                "order": 10
+                            })
+                            break
+    
+    # remove problematic details
+    for i in to_remove:
+        details.pop(i)
 
     return  {
         "ticket_group_name": ticket_group_name,
