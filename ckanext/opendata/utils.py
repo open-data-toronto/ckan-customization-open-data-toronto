@@ -491,7 +491,6 @@ def detail_intake(intake):
         }
     ]
 
-
     # sort out the last ticket type
     latest_type = latest_record.get("Request Type")
     latest_status = latest_record.get("To Status", None)
@@ -518,6 +517,16 @@ def detail_intake(intake):
                         "activity_state": "done",
                         "order": order_detail["order"]
                     }
+
+                # if it's the first intake record, put one simple detail
+                if i+1 == 1 and len(details) == 0:
+                    details.append({
+                        "title": "Request Received",
+                        "timestamp": datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S"),
+                        "text": "Open Data has received this a request. Follow up actions on this will be logged here",
+                        "activity_state": "done",
+                        "order": 1
+                    })
                 
             # append the detail if there's been a match
             if detail.get("match", True) == True:
