@@ -277,82 +277,10 @@ def detail_existing_intake(context, data_dict):
 
     intake = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_name, None)
     if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake]): 
-        return "There is no active update ticket group associated with {}".format(ticket_group_name)
-        
-    
-    # prepare ticket group high level details
-    last_update = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in intake])
-    jira_ticket_ids = list(set(rec["Ticket Id"] for rec in intake))
-    inquiry_source = [rec["Inquiry Source"] for rec in intake][0]
-    request_types = list(set(rec["Request Type"] for rec in intake))
-    to_statuses = list(set(rec["To Status"] for rec in intake))
-    from_statuses = list(set(rec["From Status"] for rec in intake))
+        return "There is no active update ticket group associated with {}".format(ticket_group_name)    
 
-    details = []
+    return utils.detail_intake(intake)
 
-    # prepare ticket record details
-    # first append the first status
-    details.append({
-        "title": "Waiting on Open Data",
-        "timestamp": min([datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["Request Type"] == "Update Existing Open Dataset Page"]),
-        "subtext": "A request to update an open dataset has received and the Open Data team has not started working on it yet"
-    })
-
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "Waiting on Owner Division" for rec in intake]):
-
-        details.append({
-            "title": "Waiting on Owner Division",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Waiting on Owner Division" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "The Open Data team needs more information from the data owner before progress can be made"
-        })
-
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "In Progress" for rec in intake]):
-        details.append({
-            "title": "In Progress",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "In Progress" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "Open Data is working on this request"
-        })
-
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "Staged for Review" for rec in intake]):
-        details.append({
-            "title": "Staged for Review",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Staged for Review" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "The updates are under review before publishing"
-        })
-
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "Published" for rec in intake]):
-        details.append({
-            "title": "Published",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Published" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "This update has been published"
-        })
-
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "Retired" for rec in intake]):
-        details.append({
-            "title": "Retired",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Retired" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "This dataset has been retired"
-        })
-    
-    if any([rec["Request Type"] == "Update Existing Open Dataset Page" and rec["To Status"] == "Closed" for rec in intake]):
-        details.append({
-            "title": "Closed",
-            "timestamp": min([datetime.strptime(rec["Status Timestamp"], "%Y-%m-%dT%H:%M:%S") for rec in intake if rec["To Status"] == "Closed" and rec["Request Type"] == "Update Existing Open Dataset Page"]),
-            "subtext": "This update will not be published"
-        })
-
-    output = {
-        "ticket_group_name": ticket_group_name,
-        "last_update": last_update,
-        "jira_ticket_ids": jira_ticket_ids,
-        "inquiry_source": inquiry_source,
-        "request_types": request_types,
-        "to_statuses": to_statuses,
-        "from_statuses": from_statuses,
-        "details": details
-    }
-
-    return output
 
 @tk.side_effect_free
 def search_packages(context, data_dict):

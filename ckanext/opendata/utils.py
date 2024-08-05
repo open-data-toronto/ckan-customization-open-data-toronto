@@ -523,10 +523,10 @@ def detail_intake(intake):
             if detail.get("match", True) == True:
                 details.append(detail)                
 
-    # loop through details again to 
-    #   make sure the final detail's state is "active"
-    #   see if there are "future" states, that they are added
-    #   special logic for final statuses to make sure only one is shown
+    # loop through details again to ...
+    #   make sure the final detail's state is "active" if it's active
+    #   see if there are "future" states and add them
+    #   ensure only one final status is shown
     #   make sure no dates and orders of things are incorrect
     to_remove = []
     for i in range(len(details)):
