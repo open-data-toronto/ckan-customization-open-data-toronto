@@ -222,6 +222,7 @@ def summarize_new_intake(context, data_dict):
         # add summary to output
         output.append({
             "ticket_group_name": ticket_group_name,
+            "ticket_ids": list(set([r["Ticket Id"] for r in records])),
             "last_updated": last_updated,
             "status": records[-1]["To Status"] or "Identified",
             "inquiry_source": records[-1]["Inquiry Source"],
