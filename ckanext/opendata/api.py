@@ -136,6 +136,7 @@ def prepare_intake(context, data_dict):
     grouped = {}
     output = {"new":{}, "existing": {}}
 
+    breakpoint()
     package = tk.get_action("package_show")(context, {"id": pid})
 
     for r in package["resources"]:
@@ -200,7 +201,7 @@ def prepare_intake(context, data_dict):
 def summarize_new_intake(context, data_dict):
     '''Returns summaries of all new, active ticket groups'''
     output = []
-
+    breakpoint()
     intake = tk.get_action("prepare_intake")(context, data_dict)["new"]
     for ticket_group_name, records in intake.items():
         # skip published datasets
