@@ -45,21 +45,34 @@ def open_data_intake():
 import ckan.plugins.toolkit as tk
 import ckan.logic as logic
 
-# @pytest.mark.ckan_config('ckan.plugins','extendedapi')
-def test_summarize_new_intake(open_data_intake):
+
+@pytest.mark.parametrize(
+        "query",
+        ["events","event","EvEnT"]
+)
+def test_summarize_new_intake_uses_query(query):
     context = {}
-
-    data = {
-        "query": "something"
-    }
-    data = {}
-    # with pytest.raises(ckan.logic.ValidationError):
-
-    # action = logic.get_action('summarize_new_intake')
-    # result = action(context, **data)
-
-    # result = tk.get_action('summarize_new_intake')(context, data)
+    data = {"query": query}
     result = helpers.call_action('summarize_new_intake', context, **data)
-    # result = helpers.call_action('package_create', context, **data)
+    assert len(result) == 1
+    assert result[0]['ticket_group_name'] == 'Events at Nathan Phillips Square'
 
-    breakpoint()
+def test_summarize_new_intake_accepts_no_query():
+    context = {}
+    data = {}
+    result = helpers.call_action('summarize_new_intake', context, **data)
+    assert len(result) == 22
+
+def test_summarize_new_intake_accepts_ticket_number_query():
+    context = {}
+    ticket_id = "343"
+    data = {"query": ticket_id}
+    result = helpers.call_action('summarize_new_intake', context, **data)
+
+    assert all([
+        (
+            f"DIA-{ticket_id}" in intake['ticket_ids']
+            or str(ticket_id) in intake["ticket_group_name"]
+        )
+            for intake in result
+    ])

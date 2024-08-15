@@ -136,7 +136,6 @@ def prepare_intake(context, data_dict):
     grouped = {}
     output = {"new":{}, "existing": {}}
 
-    breakpoint()
     package = tk.get_action("package_show")(context, {"id": pid})
 
     for r in package["resources"]:
@@ -201,7 +200,6 @@ def prepare_intake(context, data_dict):
 def summarize_new_intake(context, data_dict):
     '''Returns summaries of all new, active ticket groups'''
     output = []
-    breakpoint()
     intake = tk.get_action("prepare_intake")(context, data_dict)["new"]
     for ticket_group_name, records in intake.items():
         # skip published datasets
@@ -230,9 +228,45 @@ def summarize_new_intake(context, data_dict):
             "ticket_count": len(set(x["Ticket Id"] for x in records)),
         })
 
-    output = sorted(output, key=lambda x: x["ticket_group_name"])
+    query_cleaned = data_dict.get('query','').lower().strip()
 
-    return output
+    if query_cleaned:
+        results = _sort_intakes(output, query_cleaned)
+    else:
+        results = sorted(output, key=lambda x: x["ticket_group_name"])
+
+    return results
+
+from typing import List, Dict
+
+def _sort_intakes(intakes:List[Dict], query:str) -> List[Dict]:
+    try:
+        int_query = int(query)
+        return _sorted_intakes_int(intakes, int_query)
+    except ValueError:
+        return _sorted_intakes_str(intakes, query)
+
+def _sorted_intakes_int(intakes:List[Dict], int_query:int) -> List[Dict]:
+    results = []
+    for intake in intakes:
+        in_ticket_ids = f"DIA-{int_query}" in intake["ticket_ids"]
+        in_query_str = str(int_query) in intake["ticket_ids"]
+        if in_ticket_ids or in_query_str:
+            results.append((in_ticket_ids, in_query_str, intake))
+
+    sorted_results = sorted(results, key=lambda x: (x[0],x[1]))
+    return [intake for _,_,intake in sorted_results]
+
+def _sorted_intakes_str(intakes:List[Dict], query:str) -> List[Dict]:
+    results = [
+        intake for intake in intakes if
+        query in intake['ticket_group_name'].lower()
+    ]
+    sorted_results = sorted(
+        results,
+        key=lambda intake: intake['ticket_group_name']
+    )
+    return sorted_results
 
 @tk.side_effect_free
 def detail_new_intake(context, data_dict):
