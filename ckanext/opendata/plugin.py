@@ -1,4 +1,5 @@
-from . import api, schema, utils
+from .util import utils
+from . import api, schema
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
