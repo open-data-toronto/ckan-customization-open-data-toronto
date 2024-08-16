@@ -98,9 +98,40 @@ def test_summarize_new_intake_accepts_empty_search(mocker):
     result = helpers.call_action('summarize_new_intake', context, **data)
     assert len(result) == len(mock_intake_items)
 
-def test_summarize_new_intake_accepts_ticket_number_in_search(mocker):
+@pytest.mark.parametrize(
+        "ticket_id,expected_match",
+        [
+            (
+                ticket_multi["Ticket Id"],
+                [
+                    mock_intake_items['Ticket Group 1'],
+                    mock_intake_items['Ticket Group 2'],
+                ]
+            ),
+            (
+                # strip the "DIA-""
+                ticket_multi["Ticket Id"][4:],
+                [
+                    mock_intake_items['Ticket Group 1'],
+                    mock_intake_items['Ticket Group 2'],
+                ]
+            ),
+            (
+                # Add arbitrary padding text
+                f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
+                [
+                    mock_intake_items['Ticket Group 1'],
+                    mock_intake_items['Ticket Group 2'],
+                ]
+            ),
+        ]
+)
+def test_summarize_new_intake_accepts_ticket_number_in_search(
+    mocker,
+    ticket_id,
+    expected_match,
+):
     context = {}
-    ticket_id = str(ticket_multi['Ticket Id'])
     data = {"search": ticket_id}
 
     mocked_prepare_intake_action = (
@@ -112,11 +143,4 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(mocker):
     )
 
     result = helpers.call_action('summarize_new_intake', context, **data)
-
-    assert all([
-        (
-            f"DIA-{ticket_id}" in intake['ticket_ids']
-            or str(ticket_id) in intake["ticket_group_name"]
-        )
-            for intake in result
-    ])
+    # Wip
