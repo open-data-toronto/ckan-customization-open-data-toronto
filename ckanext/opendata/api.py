@@ -70,7 +70,6 @@ def build_query(query):
 
     return q
 
-
 @tk.side_effect_free
 def quality_show(context, data_dict):
     """Receives package_id as input
