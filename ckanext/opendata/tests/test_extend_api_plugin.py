@@ -66,12 +66,12 @@ mock_intake_items = {
     }
 
 @pytest.mark.parametrize(
-        "query",
+        "search",
         ["Ticket","ticket","TiCkEt"]
 )
-def test_summarize_new_intake_uses_query(query, mocker):
+def test_summarize_new_intake_search_str(search, mocker):
     context = {}
-    data = {"query": query}
+    data = {"search": search}
 
     mocked_prepare_intake_action = (
         lambda *args, **kwargs: {"new": mock_intake_items}
@@ -85,7 +85,7 @@ def test_summarize_new_intake_uses_query(query, mocker):
     assert len(result) == 3
     assert all(t['ticket_group_name'].startswith("Ticket Group ") for t in result)
 
-def test_summarize_new_intake_accepts_no_query(mocker):
+def test_summarize_new_intake_accepts_empty_search(mocker):
     context = {}
     data = {}
     mocked_prepare_intake_action = (
@@ -98,10 +98,10 @@ def test_summarize_new_intake_accepts_no_query(mocker):
     result = helpers.call_action('summarize_new_intake', context, **data)
     assert len(result) == len(mock_intake_items)
 
-def test_summarize_new_intake_accepts_ticket_number_query(mocker):
+def test_summarize_new_intake_accepts_ticket_number_in_search(mocker):
     context = {}
     ticket_id = str(ticket_multi['Ticket Id'])
-    data = {"query": ticket_id}
+    data = {"search": ticket_id}
 
     mocked_prepare_intake_action = (
         lambda *args, **kwargs: {"new": mock_intake_items}

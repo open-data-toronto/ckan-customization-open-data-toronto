@@ -228,10 +228,10 @@ def summarize_new_intake(context, data_dict):
             "ticket_count": len(set(x["Ticket Id"] for x in records)),
         })
 
-    query_cleaned = data_dict.get('query','').lower().strip()
+    search_cleaned = data_dict.get('search','').lower().strip()
 
-    if query_cleaned:
-        results = _sort_intakes(output, query_cleaned)
+    if search_cleaned:
+        results = _sort_intakes(output, search_cleaned)
     else:
         results = sorted(output, key=lambda x: x["ticket_group_name"])
 
