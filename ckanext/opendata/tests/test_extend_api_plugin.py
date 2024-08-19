@@ -99,37 +99,32 @@ def test_summarize_new_intake_accepts_empty_search(mocker):
     assert len(result) == len(mock_intake_items)
 
 @pytest.mark.parametrize(
-        "ticket_id,expected_match",
+        "ticket_id,expected_ticket_groups",
         [
             (
                 ticket_multi["Ticket Id"],
-                [
-                    mock_intake_items['Ticket Group 1'],
-                    mock_intake_items['Ticket Group 2'],
-                ]
+                {'Ticket Group 1', 'Ticket Group 2'},
             ),
             (
                 # strip the "DIA-""
                 ticket_multi["Ticket Id"][4:],
-                [
-                    mock_intake_items['Ticket Group 1'],
-                    mock_intake_items['Ticket Group 2'],
-                ]
+                {'Ticket Group 1', 'Ticket Group 2'},
             ),
             (
                 # Add arbitrary padding text
                 f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
-                [
-                    mock_intake_items['Ticket Group 1'],
-                    mock_intake_items['Ticket Group 2'],
-                ]
+                {'Ticket Group 1', 'Ticket Group 2'},
             ),
+            (
+                "9999999",
+                set(),
+            )
         ]
 )
 def test_summarize_new_intake_accepts_ticket_number_in_search(
     mocker,
     ticket_id,
-    expected_match,
+    expected_ticket_groups,
 ):
     context = {}
     data = {"search": ticket_id}
@@ -143,4 +138,6 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
     )
 
     result = helpers.call_action('summarize_new_intake', context, **data)
-    # Wip
+
+    result_ticket_names = [intake["ticket_group_name"] for intake in result]
+    assert set(result_ticket_names) == expected_ticket_groups
