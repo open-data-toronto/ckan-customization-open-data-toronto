@@ -4,7 +4,7 @@ import json
 import csv
 import re
 import codecs
-
+from typing import List, Dict
 
 def string_to_hex(s):
     return codecs.encode(s.encode("utf-8"), "hex")
@@ -398,6 +398,39 @@ def get_non_empty_var(input_dict, var1, var2):
 	         return input_dict[var1]
 
 
+def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:
+    divisions = set(
+        rec.get("Division") for rec in intake
+        if rec.get('Division') != '' and rec.get('Division') is not None
+    )
+    return list(divisions)
+
+
+def get_mock_ticket_description(ticket_group_name:str) -> str:
+    import hashlib
+    lorem_ipsum = (
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed "
+        "ullamcorper non orci vitae pretium. Sed faucibus nulla tempus, "
+        "commodo lacus eget, condimentum nulla. Donec at luctus ipsum. "
+        "Vestibulum nec fringilla turpis. Etiam interdum scelerisque tellus "
+        "sit amet facilisis. Donec efficitur convallis ipsum a lobortis. "
+        "Suspendisse ut massa at dolor sagittis ornare vulputate at libero. "
+        "Integer tristique neque at mauris luctus, id tincidunt arcu imperdiet."
+        " Aliquam blandit accumsan tincidunt. Sed sed ultrices arcu, vel "
+        "maximus lectus. Sed quis pellentesque erat. Mauris eleifend ex eget "
+        "massa luctus tempus. Nam eget orci euismod, varius tellus sed, "
+        "efficitur libero. Quisque congue tincidunt sem ut."
+    )
+    options = [
+            lorem_ipsum[:56],
+            lorem_ipsum[:96],
+            lorem_ipsum[:490],
+            None,
+    ]
+    hash = int(hashlib.md5(ticket_group_name.encode()).hexdigest(), 16) % len(options)
+    return options[hash]
+
+
 def detail_intake(intake):
     """Presents details of ticket group to be rendered on the frontend.
     Attribute of output include:
@@ -579,11 +612,17 @@ def detail_intake(intake):
                             })
                             break
     
+    divisions = get_divisions_from_intake_tickets(intake)
+
+    description = get_mock_ticket_description(ticket_group_name)
+
     # remove problematic details
     for i in to_remove:
         details.pop(i)
 
     return  {
+        "divisions": divisions,
+        "description": description,
         "ticket_group_name": ticket_group_name,
         "last_update": last_update,
         "jira_ticket_ids": jira_ticket_ids,

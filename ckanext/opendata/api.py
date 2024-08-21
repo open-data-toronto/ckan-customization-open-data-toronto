@@ -195,30 +195,6 @@ def prepare_intake(context, data_dict):
 
     return output
 
-def _get_mock_ticket_description(ticket_group_name:str) -> str:
-    import hashlib
-    lorem_ipsum = (
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed "
-        "ullamcorper non orci vitae pretium. Sed faucibus nulla tempus, "
-        "commodo lacus eget, condimentum nulla. Donec at luctus ipsum. "
-        "Vestibulum nec fringilla turpis. Etiam interdum scelerisque tellus "
-        "sit amet facilisis. Donec efficitur convallis ipsum a lobortis. "
-        "Suspendisse ut massa at dolor sagittis ornare vulputate at libero. "
-        "Integer tristique neque at mauris luctus, id tincidunt arcu imperdiet."
-        " Aliquam blandit accumsan tincidunt. Sed sed ultrices arcu, vel "
-        "maximus lectus. Sed quis pellentesque erat. Mauris eleifend ex eget "
-        "massa luctus tempus. Nam eget orci euismod, varius tellus sed, "
-        "efficitur libero. Quisque congue tincidunt sem ut."
-    )
-    options = [
-            lorem_ipsum[:56],
-            lorem_ipsum[:96],
-            lorem_ipsum[:490],
-            None,
-    ]
-    hash = int(hashlib.md5(ticket_group_name.encode()).hexdigest(), 16) % len(options)
-    return options[hash]
-
 
 @tk.side_effect_free
 def summarize_new_intake(
@@ -245,16 +221,11 @@ def summarize_new_intake(
         if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in records]) and age.days > 30:
             continue
 
-        divisions = list(
-            set(
-                rec.get("Division") for rec in records
-                if rec.get('Division','') != ''
-            )
-        )
+        divisions = utils.get_divisions_from_intake_tickets(records)
 
         # add summary to output
         output.append({
-            "description": _get_mock_ticket_description(ticket_group_name),
+            "description": utils.get_mock_ticket_description(ticket_group_name),
             "divisions": divisions,
             "last_updated": last_updated,
             "inquiry_source": records[-1]["Inquiry Source"],
