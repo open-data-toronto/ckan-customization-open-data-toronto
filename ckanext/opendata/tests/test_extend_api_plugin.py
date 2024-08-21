@@ -19,6 +19,8 @@ class MockIntake:
             to_status:str='',
             status_timestamp:str='1970-01-01T12:00:00',
             linked_ticket_id:str='',
+            division:str='',
+            description:str='',
         ):
         if _id is None:
             self._id = self.__count
@@ -35,6 +37,8 @@ class MockIntake:
         self.to_status = to_status
         self.status_timestamp = status_timestamp
         self.linked_ticket_id = linked_ticket_id
+        self.division = division
+        self.description = description
 
     def to_dict(self) -> Dict:
         return {
@@ -49,6 +53,8 @@ class MockIntake:
             "To Status": self.to_status,
             "Status Timestamp": self.status_timestamp,
             "Linked Ticket Id": self.linked_ticket_id,
+            "Division": self.division,
+            "Description": self.description,
         }
 
 ticket_1 = MockIntake(ticket_id="DIA-1", ticket_name="Ticket 1").to_dict()
