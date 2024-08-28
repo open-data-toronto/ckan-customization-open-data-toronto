@@ -616,6 +616,11 @@ def detail_intake(intake):
 
     description = get_mock_ticket_description(ticket_group_name)
 
+    # TODO: DO NOT LET THIS PASS PR, PLEASE REMOVE
+    if ticket_group_name == 'Topographic Mapping – Waterbodies & Rivers':
+        description = "<script>alert('html injection example!')</script>"
+        ticket_group_name += "/stuff to break the url?redirect_to=somewhere&other_param=2"
+
     # remove problematic details
     for i in to_remove:
         details.pop(i)

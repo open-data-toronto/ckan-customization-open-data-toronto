@@ -3,7 +3,9 @@
 from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
-from .util.intake import search_intakes, Intake, SummarizeIntakesData
+from .util.intake import (
+    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep
+)
 from .util import utils
 from datetime import datetime
 
@@ -129,7 +131,7 @@ def query_facet(context, data_dict):
     return output
 
 @tk.side_effect_free
-def prepare_intake(context, data_dict):
+def prepare_intake(context, data_dict) -> PreparedIntake:
     """Returns a dict where keys are ticket family names, values are tickets"""
     pid = "open-data-intake"
     working = {}
@@ -188,11 +190,14 @@ def prepare_intake(context, data_dict):
         if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
             for record in records:
                 if record["Request Type"] == "Update Existing Open Dataset Page":
+                    # output["existing"][record['Ticket Id']] = records
                     output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
                     continue
         else:
+            # output["new"][records[0]["Ticket Id"]] = records
             output["new"][records[0]["Ticket Name"].strip()] = records
-
+    breakpoint()
+    Prep(**output)
     return output
 
 
@@ -203,7 +208,7 @@ def summarize_new_intake(
     ) -> List[Intake]:
     '''Returns summaries of all new, active ticket groups'''
     output = []
-    intake = tk.get_action("prepare_intake")(context, data_dict)["new"]
+    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"]
     for ticket_group_name, records in intake.items():
         # skip published datasets
         if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
@@ -222,6 +227,12 @@ def summarize_new_intake(
             continue
 
         divisions = utils.get_divisions_from_intake_tickets(records)
+
+        # TODO: DO NOT LET THIS PASS PR, PLEASE REMOVE
+        if ticket_group_name == 'Topographic Mapping – Waterbodies & Rivers':
+            # description = "<script>alert('html injection example!')</script>"
+            # ticket_group_name += "/stuff to break the url?redirect_to=somewhere&other_param=2"
+            ticket_group_name += "/../../wp-content/uploads/2020/01/team.jpg"
 
         # add summary to output
         output.append({
@@ -261,7 +272,7 @@ def detail_new_intake(context, data_dict):
 
     ticket_group_name = data_dict["ticket_group_name"]
 
-    intake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_name, None)
+    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_name, None)
     if not intake:
         raise tk.ValidationError({"constraints": [
             "Ticket Group Name {} does not exist".format(ticket_group_name)
@@ -287,7 +298,7 @@ def detail_existing_intake(context, data_dict):
 
     ticket_group_name = data_dict["ticket_group_name"]
 
-    intake = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_name, None)
+    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_name, None)
     if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake]): 
         return "There is no active update ticket group associated with {}".format(ticket_group_name)    
 
@@ -316,7 +327,7 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake = tk.get_action("prepare_intake")(context, data_dict)["existing"]
+    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["existing"]
 
     for i in range(len(output["results"])):
         if output["results"][i]["name"] in intake.keys():
