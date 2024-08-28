@@ -22,16 +22,24 @@ Entry = TypedDict(
     },
 )
 
-New = Dict[str, List[Entry]]
-Existing = Dict[str, List[Entry]]
+GroupedEntry = TypedDict(
+    "GroupedEntry",{
+        "ticket_group_name": str,
+        "parent_ticket_id": str,
+        "records": List[Entry]
+    }
+)
 
-PreparedIntake = TypedDict("PreparedIntake", {"new": New, "existing": Existing})
+# New = Dict[str, List[Entry]]
+# Existing = Dict[str, List[Entry]]
+
+PreparedIntake = TypedDict("PreparedIntake", {"new": List[GroupedEntry], "existing": List[GroupedEntry]})
 
 from pydantic import BaseModel
 
 class Prep(BaseModel):
-    new: New
-    existing: Existing
+    new: List[GroupedEntry]
+    existing: List[GroupedEntry]
 
 
 class SummarizeIntakesData(TypedDict):

@@ -136,7 +136,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     pid = "open-data-intake"
     working = {}
     grouped = {}
-    output = {"new":{}, "existing": {}}
+    output = {"new":[], "existing": []}
 
     package = tk.get_action("package_show")(context, {"id": pid})
 
@@ -191,11 +191,24 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             for record in records:
                 if record["Request Type"] == "Update Existing Open Dataset Page":
                     # output["existing"][record['Ticket Id']] = records
-                    output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
+                    # output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
+                    breakpoint()
+                    output["existing"].append({
+                        "ticket_group_name": record["Ticket Name"][32:].replace("/","").strip(),
+                        "parent_ticket_id": record["Ticket Id"],
+                        "records": records,
+                    })
                     continue
         else:
             # output["new"][records[0]["Ticket Id"]] = records
-            output["new"][records[0]["Ticket Name"].strip()] = records
+            # output["new"][records[0]["Ticket Name"].strip()] = records
+
+            output["new"].append({
+                "ticket_group_name": records[0]["Ticket Name"].strip(),
+                "parent_ticket_id": records[0]["Ticket Id"],
+                "records": records,
+            })
+
     breakpoint()
     Prep(**output)
     return output
