@@ -1,6 +1,39 @@
 from typing import List, TypedDict, Optional
 import re
 
+from typing import List, Dict, Optional
+from typing_extensions import TypedDict
+
+Entry = TypedDict(
+    "NewEntry",
+    {
+        "_id": int,
+        "Ticket Id": str,
+        "Ticket Name": str,
+        "Inquiry Source": str,
+        "Division": Optional[str],
+        "Request Type": str,
+        "Created": str,
+        "First Response": Optional[str],
+        "From Status": Optional[str],
+        "To Status": Optional[str],
+        "Status Timestamp": Optional[str],
+        "Linked Ticket Id": str,
+    },
+)
+
+New = Dict[str, List[Entry]]
+Existing = Dict[str, List[Entry]]
+
+PreparedIntake = TypedDict("PreparedIntake", {"new": New, "existing": Existing})
+
+from pydantic import BaseModel
+
+class Prep(BaseModel):
+    new: New
+    existing: Existing
+
+
 class SummarizeIntakesData(TypedDict):
     search: Optional[str]
 
