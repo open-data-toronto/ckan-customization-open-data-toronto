@@ -406,13 +406,13 @@ def _subset_dict_by(
         k:v for k,v in dictionary.items() if predicate(k, v)
     }
 
-def _filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+def filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
     return _subset_dict_by(
         grouped_tickets,
         predicate=lambda _,tickets: not any(is_closed_ticket(ticket) for ticket in tickets)
     )
 
-def _join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+def join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
     # join linked ticket objects together
     joined = {}
     ticket_ids = set(grouped_tickets.keys())
@@ -469,17 +469,6 @@ def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
         ticket["Request Type"] in _CLOSED_REQUEST_TYPES
         and ticket["To Status"] in _CLOSED_STATUSES
     )
-
-# TODO remove
-def get_non_empty_var(input_dict, var1, var2):
-    assert isinstance(input_dict, dict)
-    assert isinstance(var1, str)
-    assert isinstance(var2, str)
- 
-    if not input_dict[var1]:
-        return input_dict[var2]
-    else:
-        return input_dict[var1]
 
 
 def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:

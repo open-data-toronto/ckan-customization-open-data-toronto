@@ -153,8 +153,8 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     for ticket_id in ticket_ids:
         grouped_tickets[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
     
-    linked_tickets = utils._join_linked_tickets(grouped_tickets)
-    filtered_tickets = utils._filter_out_closed_tickets(linked_tickets)
+    linked_tickets = utils.join_linked_tickets(grouped_tickets)
+    filtered_tickets = utils.filter_out_closed_tickets(linked_tickets)
     
     UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
     
