@@ -388,7 +388,11 @@ def get_dqs(input_package, input_resource):
 
 
 def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
-    assert isinstance(in_dict, dict)
+    try:
+        assert isinstance(in_dict, dict)
+    except AssertionError:
+        breakpoint()
+        raise
     for key in keys:
         val = in_dict[key]
         if val:
@@ -400,12 +404,12 @@ def get_first_datetime(in_dict:Dict[str, str], *keys) -> datetime:
         "%Y-%m-%dT%H:%M:%S",
     )
 
-_IGNORE_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
-_IGNORE_STATUSES = ["Closed", "Published", "Retired"]
+_CLOSED_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
+_CLOSED_STATUSES = ["Closed", "Published", "Retired"]
 def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
     return (
-        ticket["Request Type"] in _IGNORE_REQUEST_TYPES
-        and ticket["To Status"] in _IGNORE_STATUSES
+        ticket["Request Type"] in _CLOSED_REQUEST_TYPES
+        and ticket["To Status"] in _CLOSED_STATUSES
     )
 
 # def _get_non_empty_var(input_dict, var1, var2):

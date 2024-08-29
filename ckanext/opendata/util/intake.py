@@ -4,6 +4,23 @@ import re
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 
+Ticket = TypedDict(
+    "Ticket",
+    {
+    "_id": str,
+    "Ticket Id": str,
+    "Ticket Name": str,
+    "Inquiry Source": str,
+    "Request Type": str,
+    "Created": str,
+    "First Response": str,
+    "From Status": str,
+    "To Status": str,
+    "Status Timestamp": str,
+    "Linked Ticket Id": str,
+    }
+)
+
 Entry = TypedDict(
     "NewEntry",
     {
@@ -22,6 +39,14 @@ Entry = TypedDict(
     },
 )
 
+# GroupedEntry = TypedDict(
+#     "GroupedEntry",{
+#         "ticket_group_name": str,
+#         # "parent_ticket_id": str,
+#         "records": List[Entry]
+#     }
+# )
+
 GroupedEntry = TypedDict(
     "GroupedEntry",{
         "ticket_group_name": str,
@@ -30,18 +55,19 @@ GroupedEntry = TypedDict(
     }
 )
 
+
 # New = Dict[str, List[Entry]]
 # Existing = Dict[str, List[Entry]]
 
-Intakes = Dict[str, GroupedEntry]
+Intakes = Dict[str, List[Entry]]
 PreparedIntake = TypedDict("PreparedIntake", {"new": Intakes, "existing": Intakes})
 
 from pydantic import BaseModel, create_model
 
 
 class Prep(BaseModel):
-    new: List[GroupedEntry]
-    existing: List[GroupedEntry]
+    new: Intakes
+    existing: Intakes
 
 
 class SummarizeIntakesData(TypedDict):

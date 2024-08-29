@@ -4,7 +4,7 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep
+    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep, Ticket
 )
 from .util import utils
 from datetime import datetime
@@ -131,10 +131,94 @@ def query_facet(context, data_dict):
     return output
 
 from typing import Dict, Any
+
 from functools import reduce
+
 
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
+    pid = "open-data-intake"
+
+    package = tk.get_action("package_show")(context, {"id": pid})
+
+    try:
+        resource_id = next(r['id'] for r in package['resources'] if r['name'] == "Open Data Intake Records")
+    except StopIteration:
+        raise ValueError("Could not find Open Data Intake Resource")
+    
+    # get raw open data intake data from datastore
+    raw = tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
+
+    # get unique ticket names
+    ticket_ids = {row["Ticket Id"] for row in raw}
+
+    # group records by ticket id
+    # working: Dict[ticket_id, records with that id]
+    grouped_tickets:Dict[str, List[Dict]] = {}
+    for ticket_id in ticket_ids:
+        grouped_tickets[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
+
+    linked_tickets = _join_linked_tickets(grouped_tickets)
+    filtered_tickets = _filter_out_closed_tickets(linked_tickets)
+    
+    UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
+    
+    new_dataset_tickets = _subset_dict_by(
+        filtered_tickets,
+        lambda _,tickets: UPDATE_TICKET_REQUEST_TYPE not in [rec["Request Type"] for rec in tickets]
+    )
+
+    existing_dataset_tickets = _subset_dict_by(
+        filtered_tickets,
+        lambda _,tickets: UPDATE_TICKET_REQUEST_TYPE in [rec["Request Type"] for rec in tickets]
+    )
+
+    result = {
+        "new": new_dataset_tickets,
+        "existing": existing_dataset_tickets,
+    }
+    Prep(**result)
+    return result
+
+
+from typing import TypeVar, Callable
+DictKey = TypeVar('DictKey')
+DictValue = TypeVar('DictValue')
+
+def _subset_dict_by(
+        dictionary:Dict[DictKey, DictValue],
+        predicate: Callable[[DictKey, DictValue],bool]
+    ) -> Dict[DictKey, DictValue]:
+    return {
+        k:v for k,v in dictionary.items() if predicate(k, v)
+    }
+
+def _filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    return _subset_dict_by(
+        grouped_tickets,
+        predicate=lambda _,tickets: any(utils.is_closed_ticket(ticket) for ticket in tickets)
+    )
+
+def _join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    result = {}
+    for group_name, tickets in grouped_tickets.items():
+        if group_name in result:
+            continue
+        linked_ticket_ids = [ticket['Linked Ticket Id'].split(",") for ticket in tickets if ticket["Linked Ticket Id"]]
+        linked_ticket_ids = set(reduce(lambda list,next_list: list + next_list, linked_ticket_ids, []))
+        linked_tickets = reduce(
+            lambda list, next_list: list+next_list,
+            [grouped_tickets[ticket_id] for ticket_id in linked_ticket_ids],
+            []
+        )
+        result[group_name] = sorted(
+            tickets + linked_tickets,
+            key=lambda x: utils.get_first_datetime(x, "Status Timestamp", "Created")
+        )
+    return result
+
+# @tk.side_effect_free
+def _prepare_intake(context, data_dict) -> PreparedIntake:
     """Returns a dict where keys are ticket family names, values are tickets"""
     pid = "open-data-intake"
     grouped = {}
@@ -152,6 +236,8 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
     # get unique ticket names
     ticket_ids = {row["Ticket Id"] for row in raw}
+
+
 
     # group records by ticket id
     # working: Dict[ticket_id, records with that id]
