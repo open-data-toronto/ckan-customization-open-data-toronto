@@ -4,7 +4,7 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep, Ticket
+    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep
 )
 from .util import utils
 from datetime import datetime
@@ -12,10 +12,7 @@ from datetime import datetime
 import os
 import io
 import logging
-from typing import List
-
-from typing import TypeVar, Callable, Dict
-from functools import reduce
+from typing import List, Dict
 
 def build_query(query):
     """
@@ -133,8 +130,6 @@ def query_facet(context, data_dict):
     return output
 
 
-
-
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
     pid = "open-data-intake"
@@ -158,8 +153,8 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     for ticket_id in ticket_ids:
         grouped_tickets[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
     
-    linked_tickets = _join_linked_tickets(grouped_tickets)
-    filtered_tickets = _filter_out_closed_tickets(linked_tickets)
+    linked_tickets = utils._join_linked_tickets(grouped_tickets)
+    filtered_tickets = utils._filter_out_closed_tickets(linked_tickets)
     
     UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
     
@@ -173,281 +168,6 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
     Prep(**result)
     return result
-
-DictKey = TypeVar('DictKey')
-DictValue = TypeVar('DictValue')
-
-
-def _subset_dict_by(
-        dictionary:Dict[DictKey, DictValue],
-        predicate: Callable[[DictKey, DictValue],bool]
-    ) -> Dict[DictKey, DictValue]:
-    return {
-        k:v for k,v in dictionary.items() if predicate(k, v)
-    }
-
-def _filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
-    return _subset_dict_by(
-        grouped_tickets,
-        predicate=lambda _,tickets: not any(utils.is_closed_ticket(ticket) for ticket in tickets)
-    )
-
-def _join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
-    # join linked ticket objects together
-    joined = {}
-    ticket_ids = set(grouped_tickets.keys())
-    for ticket_id in ticket_ids:
-        
-        # if there are any linked tickets, combine their records
-        if grouped_tickets.get(ticket_id, False):
-            
-            # If this ticket has any linked tickets and hasn't already been popped we're going to add it to `grouped`
-            if any([x["Linked Ticket Id"] for x in grouped_tickets[ticket_id]]):
-                
-                #  pop it's associated records (ticket_id no longer in working)
-                # This ticket id will no longer be considered in linked tickets
-                records = grouped_tickets.pop(ticket_id)
-                
-                #  grab the linked tickets of the first record (maybe its consistent between all records)
-                #  for all linked tickets that haven't already been
-                for linked_id in records[0]["Linked Ticket Id"].split(","):
-                    if linked_id == 'DIA-236' and ticket_id == 'DIA-38':
-                        pass
-                    # if it hasn't already been popped, grab that linked' ticket's records and append them to this records
-                    if grouped_tickets.get(linked_id, False):
-                        this = grouped_tickets.pop(linked_id)
-                        for item in this:
-                            records.append(item)
-
-                joined[ticket_id] = records
-    # adding records that dont have linked tickets   
-    for k, v in grouped_tickets.items():
-        joined[k] = v
-    return joined
-
-
-@tk.side_effect_free
-def prepare_intake_original(context, data_dict):
-    """Returns a dict where keys are ticket family names, values are tickets"""
-    pid = "open-data-intake"
-    working = {}
-    grouped = {}
-    output = {"new":{}, "existing": {}}
-
-    package = tk.get_action("package_show")(context, {"id": pid})
-
-    for r in package["resources"]:
-        if r["name"] == "Open Data Intake Records":
-            rid = r["id"]
-            break
-
-    # Jamie: we should throw an exception if rid is None
-    
-    # get raw open data intake data from datastore
-    if rid is not None:
-        raw = tk.get_action("datastore_search")(context, {"resource_id": rid, "limit": 32000})["records"]
-
-        # get unique ticket names
-        ids = {row["Ticket Id"] for row in raw}
-    
-        # group records by ticket id
-        for ticket_id in ids:
-
-            record_group = []
-            for record in raw:
-                if record["Ticket Id"] == ticket_id:
-                    record_group.append(record)
-            
-            working[ticket_id] = record_group
-
-    # join linked ticket objects together
-    for ticket_id in ids:
-        
-        # if there are any linked tickets, combine their records
-        if working.get(ticket_id, False):
-            
-            # If this ticket has any linked tickets and hasn't already been popped we're going to add it to `grouped`
-            if any([x["Linked Ticket Id"] for x in working[ticket_id]]):
-                
-                #  pop it's associated records (ticket_id no longer in working)
-                # This ticket id will no longer be considered in linked tickets
-                records = working.pop(ticket_id)
-                
-                #  grab the linked tickets of the first record (maybe its consistent between all records)
-                #  for all linked tickets that haven't already been
-                for linked_id in records[0]["Linked Ticket Id"].split(","):
-                    if linked_id == 'DIA-236' and ticket_id == 'DIA-38':
-                        pass
-                    # if it hasn't already been popped, grab that linked' ticket's records and append them to this records
-                    if working.get(linked_id, False):
-                        this = working.pop(linked_id)
-                        for item in this:
-                            records.append(item)
-
-                grouped[ticket_id] = records
-    # adding records that dont have linked tickets   
-    for k, v in working.items():
-        grouped[k] = v
-
-    # one last loop to rename keys, sort them into tickets for new or existing datasets, and exclude resolved ticket groups
-    for k, records in grouped.items():
-        records = sorted(records, key=lambda x: datetime.strptime(utils.get_non_empty_var(x, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"))
-        if any([rec["Request Type"] in ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"] and rec["To Status"] in ["Closed", "Published", "Retired"] for rec in records]):
-            continue
-        # identify tickets for existing data
-        # grab tickets groups where theres an "update" ticket record
-        if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
-            for record in records:
-                if record["Request Type"] == "Update Existing Open Dataset Page":
-                    output["existing"][record["Ticket Id"]] = records
-                    # output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
-                    continue
-        else:
-            output["new"][records[0]["Ticket Id"]] = records
-            # output["new"][records[0]["Ticket Name"].strip()] = records
-
-    return output
-
-
-
-def _join_linked_tickets_old(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
-    with_linked = {}
-    not_linked = []
-    for group_name, tickets in grouped_tickets.items():
-        linked_ticket_ids = [ticket['Linked Ticket Id'].split(",") for ticket in tickets if ticket["Linked Ticket Id"]]
-        
-        if not linked_ticket_ids:
-            not_linked.append(group_name)
-            continue
-
-        if group_name in with_linked:
-            continue
-        
-        linked_ticket_ids = set(reduce(lambda list,next_list: list + next_list, linked_ticket_ids, []))
-        linked_tickets = reduce(
-            lambda list, next_list: list+next_list,
-            [grouped_tickets[ticket_id] for ticket_id in linked_ticket_ids],
-            []
-        )
-        with_linked[group_name] = sorted(
-            tickets + linked_tickets,
-            key=lambda x: utils.get_first_datetime(x, "Status Timestamp", "Created")
-        )
-    without_linked = {
-        ticket_id: grouped_tickets[ticket_id] for ticket_id in not_linked
-    }
-    result = {**with_linked, **without_linked}
-    return result
-
-
-# @tk.side_effect_free
-def prepare_intake_refactor_1(context, data_dict) -> PreparedIntake:
-    """Returns a dict where keys are ticket family names, values are tickets"""
-    pid = "open-data-intake"
-    grouped = {}
-    output = {"new":{}, "existing": {}}
-
-    package = tk.get_action("package_show")(context, {"id": pid})
-
-    try:
-        resource_id = next(r['id'] for r in package['resources'] if r['name'] == "Open Data Intake Records")
-    except StopIteration:
-        raise ValueError("Could not find Open Data Intake Resource")
-    
-    # get raw open data intake data from datastore
-    raw = tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
-
-    # get unique ticket names
-    ticket_ids = {row["Ticket Id"] for row in raw}
-
-
-
-    # group records by ticket id
-    # working: Dict[ticket_id, records with that id]
-    # working:Dict[str, Any] = reduce(
-    #     lambda acc,ticket: {
-    #         **acc,
-    #         ticket['Ticket Id']: [rec for rec in raw if rec['Ticket Id'] == ticket['Ticket Id']]
-    #     },
-    #     raw,
-    #     dict()
-    # )
-    working = {}
-    for ticket in raw:
-        ticket_id = ticket['Ticket Id']
-        working[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
-
-    # join linked ticket objects together
-    for ticket_id in ticket_ids:
-        # if there are any linked tickets, combine their records
-        if working.get(ticket_id, False):
-            if any([x["Linked Ticket Id"] for x in working[ticket_id]]):
-                records = working.pop(ticket_id)
-                # TODO why just the 0th?
-                for linked_id in records[0]["Linked Ticket Id"].split(","):
-                    if linked_id in working:
-                        linked_records = working.pop(linked_id)
-                        records += linked_records
-
-                grouped[ticket_id] = records
-
-    # adding records that dont have linked tickets   
-    for k, v in working.items():
-        grouped[k] = v
-
-    # one last loop to rename keys, sort them into tickets for new or existing datasets, and exclude resolved ticket groups
-    for _, records in grouped.items():
-        records = sorted(
-            records,
-            key=lambda x: utils.get_first_datetime(x, "Status Timestamp", "Created")
-        )
-
-        # TODO -> why are we exiting if _one_ of the related tickets is closed?
-        if any([utils.is_closed_ticket(rec) for rec in records]):
-            continue
-        
-        UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
-        update_tickets = [rec for rec in records if rec["Request Type"] == UPDATE_TICKET_REQUEST_TYPE]
-
-        for update_ticket in update_tickets:
-            key = update_ticket["Ticket Name"][32:].replace("/","").strip()
-            
-            if key == "motor-vehicle-collisions-involving-killed-or-seriously-injured-persons":
-                print(records)
-                breakpoint()
-            print(key)
-            # Should this not be +=?
-            # why are we setting this X times per update ticket?
-            output["existing"][key] = records
-
-        if not update_tickets:
-            output["new"][records[0]["Ticket Name"].strip()] = records
-
-        # if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
-        #     for record in records:
-        #         if record["Request Type"] == "Update Existing Open Dataset Page":
-        #             # output["existing"][record['Ticket Id']] = records
-        #             output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
-        #             # output["existing"].append({
-        #             #     "ticket_group_name": record["Ticket Name"][32:].replace("/","").strip(),
-        #             #     "parent_ticket_id": record["Ticket Id"],
-        #             #     "records": records,
-        #             # })
-        #             continue
-        # else:
-            # output["new"][records[0]["Ticket Id"]] = records
-            # output["new"][records[0]["Ticket Name"].strip()] = records
-
-            # output["new"].append({
-            #     "ticket_group_name": records[0]["Ticket Name"].strip(),
-            #     "parent_ticket_id": records[0]["Ticket Id"],
-            #     "records": records,
-            # })
-
-    # Prep(**output)
-    return output
-
-
 
 
 @tk.side_effect_free

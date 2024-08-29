@@ -30,7 +30,6 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "detail_new_intake": api.detail_new_intake,
             "detail_existing_intake": api.detail_existing_intake,
             "prepare_intake": api.prepare_intake,
-            "prepare_intake_original": api.prepare_intake_original,
         }
 
 

@@ -4,7 +4,10 @@ import json
 import csv
 import re
 import codecs
-from typing import List, Dict, Any
+from typing import List, Dict, Any, TypeVar, Callable
+import ckan.plugins.toolkit as tk
+from .intake import Ticket
+
 
 def string_to_hex(s):
     return codecs.encode(s.encode("utf-8"), "hex")
@@ -386,6 +389,61 @@ def get_dqs(input_package, input_resource):
     
     return output
 
+
+################################################################################
+# Intake
+################################################################################
+
+DictKey = TypeVar('DictKey')
+DictValue = TypeVar('DictValue')
+
+
+def _subset_dict_by(
+        dictionary:Dict[DictKey, DictValue],
+        predicate: Callable[[DictKey, DictValue],bool]
+    ) -> Dict[DictKey, DictValue]:
+    return {
+        k:v for k,v in dictionary.items() if predicate(k, v)
+    }
+
+def _filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    return _subset_dict_by(
+        grouped_tickets,
+        predicate=lambda _,tickets: not any(is_closed_ticket(ticket) for ticket in tickets)
+    )
+
+def _join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    # join linked ticket objects together
+    joined = {}
+    ticket_ids = set(grouped_tickets.keys())
+    for ticket_id in ticket_ids:
+        
+        # if there are any linked tickets, combine their records
+        if grouped_tickets.get(ticket_id, False):
+            
+            # If this ticket has any linked tickets and hasn't already been popped we're going to add it to `grouped`
+            if any([x["Linked Ticket Id"] for x in grouped_tickets[ticket_id]]):
+                
+                #  pop it's associated records (ticket_id no longer in working)
+                # This ticket id will no longer be considered in linked tickets
+                records = grouped_tickets.pop(ticket_id)
+                
+                #  grab the linked tickets of the first record (maybe its consistent between all records)
+                #  for all linked tickets that haven't already been
+                for linked_id in records[0]["Linked Ticket Id"].split(","):
+                    if linked_id == 'DIA-236' and ticket_id == 'DIA-38':
+                        pass
+                    # if it hasn't already been popped, grab that linked' ticket's records and append them to this records
+                    if grouped_tickets.get(linked_id, False):
+                        this = grouped_tickets.pop(linked_id)
+                        for item in this:
+                            records.append(item)
+
+                joined[ticket_id] = records
+    # adding records that dont have linked tickets   
+    for k, v in grouped_tickets.items():
+        joined[k] = v
+    return joined
 
 def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
     try:
