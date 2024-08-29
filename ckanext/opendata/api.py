@@ -4,11 +4,11 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, Prep
+    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, PreparedIntake
 )
 from .util import utils
 from datetime import datetime
-from .util.intake import Ticket
+from .util.intake import Ticket, UPDATE_TICKET_REQUEST_TYPE, GroupedEntry
 
 import os
 import io
@@ -131,6 +131,7 @@ def query_facet(context, data_dict):
     return output
 
 def _get_intake_tickets(context) -> List[Ticket]:
+    breakpoint()
     pid = "open-data-intake"
     package = tk.get_action("package_show")(context, {"id": pid})
     try:
@@ -156,16 +157,16 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     
     linked_tickets = utils.join_linked_tickets(grouped_tickets)
     filtered_tickets = utils.filter_out_closed_tickets(linked_tickets)
-    
-    UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
+    named_ticket_groups = utils.name_ticket_groups(filtered_tickets)
     
     # partition by new/existing
     result = {"new":{}, "existing":{}}
-    for ticket_id, tickets in filtered_tickets.items():
-        if UPDATE_TICKET_REQUEST_TYPE in [ticket['Request Type'] for ticket in tickets]:
-            result["existing"][ticket_id] = tickets 
+    for ticket_id, ticket_group in named_ticket_groups.items():
+        ticket_request_types = [ticket['Request Type'] for ticket in ticket_group["tickets"]]
+        if UPDATE_TICKET_REQUEST_TYPE in ticket_request_types:
+            result["existing"][ticket_id] = ticket_group 
         else:
-            result["new"][ticket_id] = tickets
+            result["new"][ticket_id] = ticket_group
 
     return result
 
@@ -257,14 +258,14 @@ def detail_existing_intake(context, data_dict):
     - Ordered list of milestones and their date
     """
     
-    if "ticket_group_name" not in data_dict.keys():
-        raise tk.ValidationError({"constraints": ["ticket_group_name required as input"]}) 
+    if "ticket_group_id" not in data_dict.keys():
+        raise tk.ValidationError({"constraints": ["ticket_group_id required as input"]}) 
 
-    ticket_group_name = data_dict["ticket_group_name"]
+    ticket_group_id = data_dict["ticket_group_id"]
 
-    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_name, None)
-    if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake]): 
-        return "There is no active update ticket group associated with {}".format(ticket_group_name)    
+    intake:GroupedEntry = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_id, None)
+    if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake["tickets"]]): 
+        return "There is no active update ticket group associated with {}".format(ticket_group_id)    
 
     return utils.detail_intake(intake)
 

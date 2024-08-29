@@ -4,27 +4,31 @@ import re
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 
-Ticket = TypedDict(
-    "Ticket",
-    {
-        "_id": str,
-        "Ticket Id": str,
-        "Ticket Name": str,
-        "Inquiry Source": str,
-        "Request Type": str,
-        "Created": str,
-        "First Response": str,
-        "From Status": str,
-        "To Status": str,
-        "Status Timestamp": str,
-        "Linked Ticket Id": str,
-    },
-)
 
-Entry = TypedDict(
+
+# Ticket = TypedDict(
+#     "Ticket",
+#     {
+#         "_id": str,
+#         "Ticket Id": str,
+#         "Ticket Name": str,
+#         "Inquiry Source": str,
+#         "Request Type": str,
+#         "Created": str,
+#         "First Response": str,
+#         "From Status": str,
+#         "To Status": str,
+#         "Status Timestamp": str,
+#         "Linked Ticket Id": str,
+#     },
+# )
+
+UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
+
+Ticket = TypedDict(
     "NewEntry",
     {
-        "_id": int,
+        "_id": str,
         "Ticket Id": str,
         "Ticket Name": str,
         "Inquiry Source": str,
@@ -49,23 +53,27 @@ Entry = TypedDict(
 
 GroupedEntry = TypedDict(
     "GroupedEntry",
-    {"ticket_group_name": str, "ticket_group_id": str, "records": List[Entry]},
+    {"ticket_group_name": str, "ticket_group_id": str, "tickets": List[Ticket]},
 )
 
 
 # New = Dict[str, List[Entry]]
 # Existing = Dict[str, List[Entry]]
 
-# Intakes = Dict[str, GroupedEntry]
-Intakes = Dict[str, List[Entry]]
+Intakes = Dict[str, GroupedEntry]
+# Intakes = Dict[str, List[Ticket]]
 PreparedIntake = TypedDict("PreparedIntake", {"new": Intakes, "existing": Intakes})
 
 from pydantic import BaseModel, create_model
 
-
-class Prep(BaseModel):
+class PreparedIntake(TypedDict):
     new: Intakes
     existing: Intakes
+
+
+# class PreparedIntake(BaseModel):
+#     new: Intakes = Field(default_factory)
+#     existing: Intakes = Field(default_factory)
 
 
 class SummarizeIntakesData(TypedDict):
@@ -111,3 +119,18 @@ def search_intakes(intakes: List[Intake], search: str) -> List[Intake]:
     sorted_intakes = sorted(filtered_intakes, key=lambda x: x["ticket_group_name"])
 
     return sorted_intakes
+
+from datetime import datetime
+
+
+class DetailedIntake(TypedDict):
+    divisions: List[str]
+    description: Optional[str]
+    ticket_group_name: str
+    last_update: datetime
+    jira_ticket_ids: List[str]
+    inquiry_source: List[str]
+    request_types: List
+    to_statuses: List
+    from_statuses: List
+    details: List

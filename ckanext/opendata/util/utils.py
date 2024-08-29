@@ -6,7 +6,7 @@ import re
 import codecs
 from typing import List, Dict, Any, TypeVar, Callable
 import ckan.plugins.toolkit as tk
-from .intake import Ticket
+from .intake import Ticket, Intakes, GroupedEntry, DetailedIntake
 
 
 def string_to_hex(s):
@@ -445,6 +445,22 @@ def join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, Lis
         joined[k] = v
     return joined
 
+def _get_ticket_group_name(ticket_group_id:str, tickets: List[Ticket])->str:
+    for ticket in tickets:
+        if ticket["Ticket Id"] == ticket_group_id:
+            return ticket["Ticket Name"]
+    raise ValueError(f"Ticket with id {ticket_group_id} not found")
+
+def name_ticket_groups(grouped_tickets:Dict[str, List[Ticket]]) -> Intakes:
+    return {
+        ticket_group_id: {
+            "tickets": tickets,
+            "ticket_group_id": ticket_group_id,
+            "ticket_group_name": _get_ticket_group_name(ticket_group_id, tickets)
+        }
+        for ticket_group_id, tickets in grouped_tickets.items()
+    }
+
 def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
     try:
         assert isinstance(in_dict, dict)
@@ -503,8 +519,7 @@ def get_mock_ticket_description(ticket_group_name:str) -> str:
     hash = int(hashlib.md5(ticket_group_name.encode()).hexdigest(), 16) % len(options)
     return options[hash]
 
-
-def detail_intake(intake):
+def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     """Presents details of ticket group to be rendered on the frontend.
     Attribute of output include:
     - Most recent update date
@@ -520,9 +535,10 @@ def detail_intake(intake):
     - subtext
     - activity_state (done, active, future)
     """
+    tickets = grouped_entry["tickets"]
 
-    assert isinstance(intake, list), f"Input must be a list of dicts!"
-    assert len(intake), f"Input must be populated!"
+    assert isinstance(tickets, list), f"Input must be a list of dicts!"
+    assert len(tickets), f"Input must be populated!"
 
     # Let's make high level info for this ticket group
     last_update = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
@@ -533,7 +549,7 @@ def detail_intake(intake):
     to_statuses = []
     from_statuses = []
     
-    for rec in intake:
+    for rec in tickets:
         ticket_group_name = rec["Ticket Name"]
 
         # last update
@@ -608,8 +624,8 @@ def detail_intake(intake):
                 "timestamp": datetime.strptime("9999-12-31T00:00:00", "%Y-%m-%dT%H:%M:%S"),
                 "match": False
             }
-            for i in range(len(intake)):
-                rec = intake[i]
+            for i in range(len(tickets)):
+                rec = tickets[i]
                 # skip irrelevant tickets in this loop
                 if rec["Request Type"] not in order["request_types"]:
                     continue
@@ -685,7 +701,7 @@ def detail_intake(intake):
                             })
                             break
     
-    divisions = get_divisions_from_intake_tickets(intake)
+    divisions = get_divisions_from_intake_tickets(tickets)
 
     description = get_mock_ticket_description(ticket_group_name)
 
