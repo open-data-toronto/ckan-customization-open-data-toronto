@@ -462,9 +462,9 @@ def get_first_datetime(in_dict:Dict[str, str], *keys) -> datetime:
         "%Y-%m-%dT%H:%M:%S",
     )
 
-_CLOSED_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
-_CLOSED_STATUSES = ["Closed", "Published", "Retired"]
 def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
+    _CLOSED_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
+    _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
     return (
         ticket["Request Type"] in _CLOSED_REQUEST_TYPES
         and ticket["To Status"] in _CLOSED_STATUSES
