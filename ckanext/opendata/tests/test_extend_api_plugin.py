@@ -1,27 +1,27 @@
 import ckan.tests.helpers as helpers
 import pytest
-from typing import Dict, Optional
-
+from typing import Dict, Optional, List
+from ckanext.opendata.util.intake import Ticket, Prep
 
 class MockIntake:
     __count = 0
 
     def __init__(
-            self,
-            ticket_id:str,
-            ticket_name:str,
-            _id:Optional[int]=None,
-            inquiry_source:str='',
-            request_type:str='',
-            created:str='1970-01-01T12:00:00',
-            first_response:str='',
-            from_status:str='',
-            to_status:str='',
-            status_timestamp:str='1970-01-01T12:00:00',
-            linked_ticket_id:str='',
-            division:str='',
-            description:str='',
-        ):
+        self,
+        ticket_id: str,
+        ticket_name: str,
+        _id: Optional[int] = None,
+        inquiry_source: str = "",
+        request_type: str = "",
+        created: str = "1970-01-01T12:00:00",
+        first_response: str = "",
+        from_status: str = "",
+        to_status: str = "",
+        status_timestamp: str = "1970-01-01T12:00:00",
+        linked_ticket_id: str = "",
+        division: str = "",
+        description: str = "",
+    ):
         if _id is None:
             self._id = self.__count
         else:
@@ -57,6 +57,7 @@ class MockIntake:
             "Description": self.description,
         }
 
+
 ticket_1 = MockIntake(ticket_id="DIA-1", ticket_name="Ticket 1").to_dict()
 ticket_1a = MockIntake(ticket_id="DIA-1a", ticket_name="Ticket 1").to_dict()
 ticket_1b = MockIntake(ticket_id="DIA-1b", ticket_name="Ticket 1").to_dict()
@@ -65,67 +66,61 @@ ticket_3 = MockIntake(ticket_id="DIA-3", ticket_name="Ticket 3").to_dict()
 ticket_multi = MockIntake(ticket_id="DIA-4", ticket_name="Ticket Multi").to_dict()
 
 mock_intake_items = {
-        "Ticket Group 1": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
-        "Ticket Group 2": [ticket_2, ticket_multi],
-        "Ticket Group 3": [ticket_3],
-        "Other Group 3": [ticket_3],
-    }
+    "Ticket Group 1": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
+    "Ticket Group 2": [ticket_2, ticket_multi],
+    "Ticket Group 3": [ticket_3],
+    "Other Group 3": [ticket_3],
+}
 
-@pytest.mark.parametrize(
-        "search",
-        ["Ticket","ticket","TiCkEt"]
-)
+
+@pytest.mark.parametrize("search", ["Ticket", "ticket", "TiCkEt"])
 def test_summarize_new_intake_search_str(search, mocker):
     context = {}
     data = {"search": search}
 
-    mocked_prepare_intake_action = (
-        lambda *args, **kwargs: {"new": mock_intake_items}
-    )
+    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
 
     mocker.patch(
-        'opendata.api.tk.get_action',
-        return_value = mocked_prepare_intake_action
+        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
     )
-    result = helpers.call_action('summarize_new_intake', context, **data)
+    result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == 3
-    assert all(t['ticket_group_name'].startswith("Ticket Group ") for t in result)
+    assert all(t["ticket_group_name"].startswith("Ticket Group ") for t in result)
+
 
 def test_summarize_new_intake_accepts_empty_search(mocker):
     context = {}
     data = {}
-    mocked_prepare_intake_action = (
-        lambda *args, **kwargs: {"new": mock_intake_items}
-    )
+    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
     mocker.patch(
-        'opendata.api.tk.get_action',
-        return_value = mocked_prepare_intake_action
+        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
     )
-    result = helpers.call_action('summarize_new_intake', context, **data)
+    result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == len(mock_intake_items)
 
+
 @pytest.mark.parametrize(
-        "ticket_id,expected_ticket_groups",
-        [
-            (
-                ticket_multi["Ticket Id"],
-                {'Ticket Group 1', 'Ticket Group 2'},
-            ),
-            (
-                # strip the "DIA-""
-                ticket_multi["Ticket Id"][4:],
-                {'Ticket Group 1', 'Ticket Group 2'},
-            ),
-            (
-                # Add arbitrary padding text
-                f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
-                {'Ticket Group 1', 'Ticket Group 2'},
-            ),
-            (
-                "9999999",
-                set(),
-            )
-        ]
+    "ticket_id,expected_ticket_groups",
+    [
+        (
+            ticket_multi["Ticket Id"],
+            {"Ticket Group 1", "Ticket Group 2"},
+        ),
+        (
+            # strip the "DIA-""
+            ticket_multi["Ticket Id"][4:],
+            {"Ticket Group 1", "Ticket Group 2"},
+        ),
+        (
+            # Add arbitrary padding text
+            f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
+            {"Ticket Group 1", "Ticket Group 2"},
+        ),
+        (
+            "9999999",
+            set(),
+        ),
+    ],
 )
 def test_summarize_new_intake_accepts_ticket_number_in_search(
     mocker,
@@ -135,15 +130,60 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
     context = {}
     data = {"search": ticket_id}
 
-    mocked_prepare_intake_action = (
-        lambda *args, **kwargs: {"new": mock_intake_items}
-    )
+    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
     mocker.patch(
-        'opendata.api.tk.get_action',
-        return_value = mocked_prepare_intake_action
+        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
     )
 
-    result = helpers.call_action('summarize_new_intake', context, **data)
+    result = helpers.call_action("summarize_new_intake", context, **data)
 
     result_ticket_names = [intake["ticket_group_name"] for intake in result]
     assert set(result_ticket_names) == expected_ticket_groups
+
+
+class TicketFactory:
+    _n = 0
+
+    def __init__(self, **kwargs:Ticket):
+        _id = self._n
+        self._n +=1
+        defaults = {
+            "_id": f"{_id}",
+            "Ticket Id": f"DIA-{_id}",
+            "Ticket Name": f"Ticket Name {_id}",
+            "Inquiry Source": "Inq Source",
+            "Request Type": "Publish New Open Dataset Page",
+            "Created": "2024-01-01T11:00:0",
+            "First Response": "2024-01-01T11:00:0",
+            "From Status": None,
+            "To Status": None,
+            "Status Timestamp": None,
+            "Linked Ticket Id": "",
+        }
+        self._value = {**defaults, **kwargs}
+    
+    def to_dict(self) -> Ticket:
+        return self._value
+
+class TestIntakeActions:
+    def test_summarize_new_intake(self):
+        pass
+
+    def test_detail_new_intake(self):
+        pass
+
+    def test_detail_existing_intake(self):
+        pass
+
+    def test_prepare_intake(self, mocker):
+        mock_tickets: List[Ticket] = [
+            TicketFactory().to_dict(),
+            TicketFactory().to_dict(),
+            TicketFactory().to_dict(),
+            TicketFactory().to_dict(),
+            TicketFactory().to_dict(),
+        ]
+        mocker.patch("opendata.api._get_intake_tickets", return_value=mock_tickets)
+        result = helpers.call_action("prepare_intake", {})
+
+        Prep(**result)

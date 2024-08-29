@@ -7,18 +7,18 @@ from typing_extensions import TypedDict
 Ticket = TypedDict(
     "Ticket",
     {
-    "_id": str,
-    "Ticket Id": str,
-    "Ticket Name": str,
-    "Inquiry Source": str,
-    "Request Type": str,
-    "Created": str,
-    "First Response": str,
-    "From Status": str,
-    "To Status": str,
-    "Status Timestamp": str,
-    "Linked Ticket Id": str,
-    }
+        "_id": str,
+        "Ticket Id": str,
+        "Ticket Name": str,
+        "Inquiry Source": str,
+        "Request Type": str,
+        "Created": str,
+        "First Response": str,
+        "From Status": str,
+        "To Status": str,
+        "Status Timestamp": str,
+        "Linked Ticket Id": str,
+    },
 )
 
 Entry = TypedDict(
@@ -48,17 +48,15 @@ Entry = TypedDict(
 # )
 
 GroupedEntry = TypedDict(
-    "GroupedEntry",{
-        "ticket_group_name": str,
-        # "parent_ticket_id": str,
-        "records": List[Entry]
-    }
+    "GroupedEntry",
+    {"ticket_group_name": str, "ticket_group_id": str, "records": List[Entry]},
 )
 
 
 # New = Dict[str, List[Entry]]
 # Existing = Dict[str, List[Entry]]
 
+# Intakes = Dict[str, GroupedEntry]
 Intakes = Dict[str, List[Entry]]
 PreparedIntake = TypedDict("PreparedIntake", {"new": Intakes, "existing": Intakes})
 
@@ -73,6 +71,7 @@ class Prep(BaseModel):
 class SummarizeIntakesData(TypedDict):
     search: Optional[str]
 
+
 class Intake(TypedDict):
     ticket_group_name: str
     ticket_ids: List[str]
@@ -81,7 +80,8 @@ class Intake(TypedDict):
     inquiry_source: str
     ticket_count: int
 
-def search_intakes(intakes:List[Intake], search:str) -> List[Intake]:
+
+def search_intakes(intakes: List[Intake], search: str) -> List[Intake]:
     """_serach_intakes
 
     Args:
@@ -91,25 +91,23 @@ def search_intakes(intakes:List[Intake], search:str) -> List[Intake]:
     Returns:
         List[Intake]: intakes filtered and sorted based on search term
     """
-  
+
     # "0asdf12 other_things!@#$ 34" -> [0, 12, 34]
     ticket_ids_in_search = [
-        f"DIA-{ticket_id}" for ticket_id in re.findall(r'\d+', search)
+        f"DIA-{ticket_id}" for ticket_id in re.findall(r"\d+", search)
     ]
 
     intake_matches_ticket_id = lambda intake: any(
-        ticket in intake['ticket_ids']
-        for ticket in ticket_ids_in_search
+        ticket in intake["ticket_ids"] for ticket in ticket_ids_in_search
     )
 
     filtered_intakes = [
-        intake for intake in intakes if 
-        intake_matches_ticket_id(intake)
-        or search in intake['ticket_group_name'].lower()
+        intake
+        for intake in intakes
+        if intake_matches_ticket_id(intake)
+        or search in intake["ticket_group_name"].lower()
     ]
 
-    sorted_intakes = sorted(
-        filtered_intakes, key= lambda x: x['ticket_group_name']
-    )
+    sorted_intakes = sorted(filtered_intakes, key=lambda x: x["ticket_group_name"])
 
     return sorted_intakes

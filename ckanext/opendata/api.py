@@ -8,6 +8,7 @@ from .util.intake import (
 )
 from .util import utils
 from datetime import datetime
+from .util.intake import Ticket
 
 import os
 import io
@@ -129,20 +130,20 @@ def query_facet(context, data_dict):
         )
     return output
 
-
-@tk.side_effect_free
-def prepare_intake(context, data_dict) -> PreparedIntake:
+def _get_intake_tickets(context) -> List[Ticket]:
     pid = "open-data-intake"
-
     package = tk.get_action("package_show")(context, {"id": pid})
-
     try:
         resource_id = next(r['id'] for r in package['resources'] if r['name'] == "Open Data Intake Records")
     except StopIteration:
         raise ValueError("Could not find Open Data Intake Resource")
-    
+    return tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
+
+
+@tk.side_effect_free
+def prepare_intake(context, data_dict) -> PreparedIntake:
     # get raw open data intake data from datastore
-    raw = tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
+    raw = _get_intake_tickets(context)
 
     # get unique ticket names
     ticket_ids = {row["Ticket Id"] for row in raw}
@@ -166,7 +167,6 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         else:
             result["new"][ticket_id] = tickets
 
-    Prep(**result)
     return result
 
 
@@ -178,7 +178,7 @@ def summarize_new_intake(
     '''Returns summaries of all new, active ticket groups'''
     output = []
     intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"]
-    for ticket_group_name, records in intake.items():
+    for ticket_group_id, records in intake.items():
         # skip published datasets
         if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
             continue
@@ -204,6 +204,7 @@ def summarize_new_intake(
             "last_updated": last_updated,
             "inquiry_source": records[-1]["Inquiry Source"],
             "ticket_group_name": ticket_group_name,
+            "ticket_group_id": ticket_group_id,
             "ticket_ids": list(set([r["Ticket Id"] for r in records])),
             "status": records[-1]["To Status"] or "Identified",
             "ticket_count": len(set(x["Ticket Id"] for x in records)),
