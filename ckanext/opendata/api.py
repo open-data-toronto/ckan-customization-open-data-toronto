@@ -130,49 +130,55 @@ def query_facet(context, data_dict):
         )
     return output
 
+from typing import Dict, Any
+from functools import reduce
+
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
     """Returns a dict where keys are ticket family names, values are tickets"""
     pid = "open-data-intake"
-    working = {}
     grouped = {}
-    output = {"new":[], "existing": []}
+    output = {"new":{}, "existing": {}}
 
     package = tk.get_action("package_show")(context, {"id": pid})
 
-    for r in package["resources"]:
-        if r["name"] == "Open Data Intake Records":
-            rid = r["id"]
-            break
-
-    # get raw open data intake data from datastore
-    if rid is not None:
-        raw = tk.get_action("datastore_search")(context, {"resource_id": rid, "limit": 32000})["records"]
-
-        # get unique ticket names
-        ids = {row["Ticket Id"] for row in raw}
+    try:
+        resource_id = next(r['id'] for r in package['resources'] if r['name'] == "Open Data Intake Records")
+    except StopIteration:
+        raise ValueError("Could not find Open Data Intake Resource")
     
-        # group records by ticket id
-        for ticket_id in ids:
+    # get raw open data intake data from datastore
+    raw = tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
 
-            record_group = []
-            for record in raw:
-                if record["Ticket Id"] == ticket_id:
-                    record_group.append(record)
-            
-            working[ticket_id] = record_group
+    # get unique ticket names
+    ticket_ids = {row["Ticket Id"] for row in raw}
+
+    # group records by ticket id
+    # working: Dict[ticket_id, records with that id]
+    # working:Dict[str, Any] = reduce(
+    #     lambda acc,ticket: {
+    #         **acc,
+    #         ticket['Ticket Id']: [rec for rec in raw if rec['Ticket Id'] == ticket['Ticket Id']]
+    #     },
+    #     raw,
+    #     dict()
+    # )
+    working = {}
+    for ticket in raw:
+        ticket_id = ticket['Ticket Id']
+        working[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
 
     # join linked ticket objects together
-    for ticket_id in ids:
+    for ticket_id in ticket_ids:
         # if there are any linked tickets, combine their records
         if working.get(ticket_id, False):
             if any([x["Linked Ticket Id"] for x in working[ticket_id]]):
                 records = working.pop(ticket_id)
+                # TODO why just the 0th?
                 for linked_id in records[0]["Linked Ticket Id"].split(","):
-                    if working.get(linked_id, False):
-                        this = working.pop(linked_id)
-                        for item in this:
-                            records.append(item)
+                    if linked_id in working:
+                        linked_records = working.pop(linked_id)
+                        records += linked_records
 
                 grouped[ticket_id] = records
 
@@ -181,36 +187,55 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         grouped[k] = v
 
     # one last loop to rename keys, sort them into tickets for new or existing datasets, and exclude resolved ticket groups
-    for k, records in grouped.items():
-        records = sorted(records, key=lambda x: datetime.strptime(utils.get_non_empty_var(x, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"))
-        if any([rec["Request Type"] in ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"] and rec["To Status"] in ["Closed", "Published", "Retired"] for rec in records]):
+    for _, records in grouped.items():
+        records = sorted(
+            records,
+            key=lambda x: utils.get_first_datetime(x, "Status Timestamp", "Created")
+        )
+
+        # TODO -> why are we exiting if _one_ of the related tickets is closed?
+        if any([utils.is_closed_ticket(rec) for rec in records]):
             continue
-        # identify tickets for existing data
-        # grab tickets groups where theres an "update" ticket record
-        if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
-            for record in records:
-                if record["Request Type"] == "Update Existing Open Dataset Page":
-                    # output["existing"][record['Ticket Id']] = records
-                    # output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
-                    breakpoint()
-                    output["existing"].append({
-                        "ticket_group_name": record["Ticket Name"][32:].replace("/","").strip(),
-                        "parent_ticket_id": record["Ticket Id"],
-                        "records": records,
-                    })
-                    continue
-        else:
+        
+        UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
+        update_tickets = [rec for rec in records if rec["Request Type"] == UPDATE_TICKET_REQUEST_TYPE]
+
+        for update_ticket in update_tickets:
+            key = update_ticket["Ticket Name"][32:].replace("/","").strip()
+            
+            if key == "motor-vehicle-collisions-involving-killed-or-seriously-injured-persons":
+                print(records)
+                breakpoint()
+            print(key)
+            # Should this not be +=?
+            # why are we setting this X times per update ticket?
+            output["existing"][key] = records
+
+        if not update_tickets:
+            output["new"][records[0]["Ticket Name"].strip()] = records
+
+        # if any([rec["Request Type"] == "Update Existing Open Dataset Page" for rec in records]):
+        #     for record in records:
+        #         if record["Request Type"] == "Update Existing Open Dataset Page":
+        #             # output["existing"][record['Ticket Id']] = records
+        #             output["existing"][record["Ticket Name"][32:].replace("/","").strip()] = records
+        #             # output["existing"].append({
+        #             #     "ticket_group_name": record["Ticket Name"][32:].replace("/","").strip(),
+        #             #     "parent_ticket_id": record["Ticket Id"],
+        #             #     "records": records,
+        #             # })
+        #             continue
+        # else:
             # output["new"][records[0]["Ticket Id"]] = records
             # output["new"][records[0]["Ticket Name"].strip()] = records
 
-            output["new"].append({
-                "ticket_group_name": records[0]["Ticket Name"].strip(),
-                "parent_ticket_id": records[0]["Ticket Id"],
-                "records": records,
-            })
+            # output["new"].append({
+            #     "ticket_group_name": records[0]["Ticket Name"].strip(),
+            #     "parent_ticket_id": records[0]["Ticket Id"],
+            #     "records": records,
+            # })
 
-    breakpoint()
-    Prep(**output)
+    # Prep(**output)
     return output
 
 
@@ -228,7 +253,7 @@ def summarize_new_intake(
             continue
 
         # prepare to skip old and finished ticket groups
-        last_updated = max([datetime.strptime(utils.get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") for rec in records])
+        last_updated = max([utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in records])
         age = datetime.today() - last_updated
         
         # skip closed standalone inquiry tickets

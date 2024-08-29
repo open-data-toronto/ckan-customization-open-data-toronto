@@ -4,7 +4,7 @@ import json
 import csv
 import re
 import codecs
-from typing import List, Dict
+from typing import List, Dict, Any
 
 def string_to_hex(s):
     return codecs.encode(s.encode("utf-8"), "hex")
@@ -387,15 +387,36 @@ def get_dqs(input_package, input_resource):
     return output
 
 
-def get_non_empty_var(input_dict, var1, var2):
-     assert isinstance(input_dict, dict)
-     assert isinstance(var1, str)
-     assert isinstance(var2, str)
+def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
+    assert isinstance(in_dict, dict)
+    for key in keys:
+        val = in_dict[key]
+        if val:
+            return val
+
+def get_first_datetime(in_dict:Dict[str, str], *keys) -> datetime:
+    return datetime.strptime(
+        _get_first_is_truthy(in_dict, *keys),
+        "%Y-%m-%dT%H:%M:%S",
+    )
+
+_IGNORE_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
+_IGNORE_STATUSES = ["Closed", "Published", "Retired"]
+def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
+    return (
+        ticket["Request Type"] in _IGNORE_REQUEST_TYPES
+        and ticket["To Status"] in _IGNORE_STATUSES
+    )
+
+# def _get_non_empty_var(input_dict, var1, var2):
+#     assert isinstance(input_dict, dict)
+#     assert isinstance(var1, str)
+#     assert isinstance(var2, str)
  
-     if not input_dict[var1]:
-         return input_dict[var2]
-     else:
-	         return input_dict[var1]
+#     if not input_dict[var1]:
+#         return input_dict[var2]
+#     else:
+#         return input_dict[var1]
 
 
 def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:
@@ -464,8 +485,8 @@ def detail_intake(intake):
         ticket_group_name = rec["Ticket Name"]
 
         # last update
-        if datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") > last_update:
-            last_update = datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S")    
+        if get_first_datetime(rec, "Status Timestamp", "Created") > last_update:
+            last_update = get_first_datetime(rec, "Status Timestamp", "Created")    
             latest_record = rec
 
         # start date
@@ -542,10 +563,10 @@ def detail_intake(intake):
                     continue
                 
                 # if we make a match and its the earliest timestamp, it will be included in the output
-                if rec["To Status"] == order_status and detail["timestamp"] > datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"):
+                if rec["To Status"] == order_status and (detail["timestamp"] > get_first_datetime(rec, "Status Timestamp", "Created")):
                     detail = {
                         "title": order_detail["title"],
-                        "timestamp": datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"),
+                        "timestamp": get_first_datetime(rec, "Status Timestamp", "Created"),
                         "text": order_detail["text"],
                         "activity_state": "done",
                         "order": order_detail["order"]
