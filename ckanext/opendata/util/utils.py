@@ -412,15 +412,16 @@ def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
         and ticket["To Status"] in _CLOSED_STATUSES
     )
 
-# def _get_non_empty_var(input_dict, var1, var2):
-#     assert isinstance(input_dict, dict)
-#     assert isinstance(var1, str)
-#     assert isinstance(var2, str)
+# TODO remove
+def get_non_empty_var(input_dict, var1, var2):
+    assert isinstance(input_dict, dict)
+    assert isinstance(var1, str)
+    assert isinstance(var2, str)
  
-#     if not input_dict[var1]:
-#         return input_dict[var2]
-#     else:
-#         return input_dict[var1]
+    if not input_dict[var1]:
+        return input_dict[var2]
+    else:
+        return input_dict[var1]
 
 
 def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:
