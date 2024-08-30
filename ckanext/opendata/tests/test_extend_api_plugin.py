@@ -4,6 +4,7 @@ from typing import Dict, Optional, List
 from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
 from datetime import datetime
 from ckan.logic import NotFound
+from ckanext.opendata.util.utils import _extract_ticket_name
 
 class MockIntake:
     __count = 0
@@ -333,3 +334,17 @@ class TestIntakeActions:
         )
         result = helpers.call_action("prepare_intake", {})
         _validate_prepared_intake(result)
+
+
+
+ODP_ADDR = "https://open.toronto.ca/dataset"
+@pytest.mark.parametrize("test,expected",[
+    (f"{ODP_ADDR}/something/", "something"),
+    (f"{ODP_ADDR}/something", "something"),
+    (f"/something", "/something"),
+    (f"/something/", "/something/"),
+    (f"anything here <asdf;lkj", "anything here <asdf;lkj"),
+])
+def test_extract_ticket_name(test, expected):
+    result = _extract_ticket_name(test)
+    assert result == expected

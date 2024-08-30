@@ -445,10 +445,16 @@ def join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, Lis
         joined[k] = v
     return joined
 
+def _extract_ticket_name(s:str)->str:
+    match = re.search(r'^https://open.toronto.ca/dataset/([^/]+)/?$', s)
+    if match:
+        return match.group(1)
+    return s
+
 def _get_ticket_group_name(ticket_group_id:str, tickets: List[Ticket])->str:
     for ticket in tickets:
         if ticket["Ticket Id"] == ticket_group_id:
-            return ticket["Ticket Name"]
+            return _extract_ticket_name(ticket["Ticket Name"])
     raise ValueError(f"Ticket with id {ticket_group_id} not found")
 
 def name_ticket_groups(grouped_tickets:Dict[str, List[Ticket]]) -> Intakes:

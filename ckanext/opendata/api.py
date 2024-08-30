@@ -292,12 +292,13 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["existing"]
+    intake:Intakes = tk.get_action("prepare_intake")(context, data_dict)["existing"]
 
+    intake_names = [intake["ticket_group_name"] for _, intake in intake.items()]
+    
     for i in range(len(output["results"])):
-        if output["results"][i]["name"] in intake.keys():
+        if output["results"][i]["name"] in intake_names:
             output["results"][i]["updating"] = True
-            continue
         else:
             output["results"][i]["updating"] = False
 
