@@ -265,7 +265,8 @@ def detail_existing_intake(context, data_dict) -> DetailedIntake:
     intake = search_func(existing_intakes)
 
     if intake is None or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake["tickets"]]):
-        raise NotFound()
+        return "Not found"
+        # raise NotFound()
 
     return utils.detail_intake(intake)
 
