@@ -545,8 +545,6 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     from_statuses = []
     
     for rec in tickets:
-        ticket_group_name = rec["Ticket Name"]
-
         # last update
         if get_first_datetime(rec, "Status Timestamp", "Created") > last_update:
             last_update = get_first_datetime(rec, "Status Timestamp", "Created")    
@@ -609,9 +607,6 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     ]
 
     # sort out the last ticket type
-    latest_type = latest_record.get("Request Type")
-    latest_status = latest_record.get("To Status", None)
-    
     for order in orders:
         # for each status, we'll get all relevant ticket records and choose the earliest
         for order_status, order_detail in order["order"].items():
@@ -696,11 +691,10 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                             })
                             break
     
-    divisions = get_divisions_from_intake_tickets(tickets)
-
-    description = get_mock_ticket_description(ticket_group_name)
-
     ticket_group_id = grouped_entry["ticket_group_id"]
+    ticket_group_name = grouped_entry["ticket_group_name"]
+    description = get_mock_ticket_description(ticket_group_name)
+    divisions = get_divisions_from_intake_tickets(tickets)
 
     # remove problematic details
     for i in to_remove:

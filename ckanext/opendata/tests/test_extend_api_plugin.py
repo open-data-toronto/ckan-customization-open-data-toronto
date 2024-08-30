@@ -3,6 +3,7 @@ import pytest
 from typing import Dict, Optional, List
 from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
 from datetime import datetime
+from ckan.logic import NotFound
 
 class MockIntake:
     __count = 0
@@ -281,7 +282,7 @@ class TestIntakeActions:
         )
         _validate_detailed_intake(result)
 
-    def test_detail_existing_intake(self, mocker):
+    def test_detail_existing_intake_by_group_id(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
             {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
@@ -297,6 +298,33 @@ class TestIntakeActions:
             ticket_group_id=ticket_group_id
         )
         _validate_detailed_intake(result)
+    
+    def test_detail_existing_intake_by_group_id(self, mocker):
+        tickets = self._mock_tickets(
+            # ensure there are mocked 'existing' tickets
+            {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
+        )
+        mocker.patch(
+            "ckanext.opendata.api._get_intake_tickets",
+            return_value=tickets
+        )
+        ticket_group_name = tickets[0]["Ticket Name"]
+        result:DetailedIntake = helpers.call_action(
+            "detail_existing_intake",
+            {},
+            ticket_group_name=ticket_group_name
+        )
+        _validate_detailed_intake(result)
+
+    def test_detail_existing_intake_by_group_id(self, mocker):
+        mocker.patch("ckanext.opendata.api._get_intake_tickets", return_value=[])
+        ticket_group_name = 'dne'
+        with pytest.raises(NotFound):
+            helpers.call_action(
+                "detail_existing_intake",
+                {},
+                ticket_group_name=ticket_group_name
+            )
 
     def test_prepare_intake(self, mocker):
         mocker.patch(

@@ -1,15 +1,14 @@
 """'Logic for multiple Open Data Toronto-specific CKAN actions"""
 
-from ckan.logic import ValidationError
+from ckan.logic import ValidationError, NotFound
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake
+    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake, Optional
 )
 from .util import utils
 from datetime import datetime
 from .util.intake import Ticket, UPDATE_TICKET_REQUEST_TYPE, GroupedEntry
-
 import os
 import io
 import logging
@@ -222,14 +221,8 @@ def summarize_new_intake(
 
 @tk.side_effect_free
 def detail_new_intake(context, data_dict) -> DetailedIntake:
-    """input a ticket group name, output a dict with all info needed on coming soon dataset detail page
-    Outputs include:
-    - Most recent update date
-    - Jira Ticket IDs
-    - Inquiry Source
-    - Request Type(s)
-    - Ticket Group Name
-    - Ordered list of milestones and their date
+    """
+    input a ticket group name, output a dict with all info needed on coming soon dataset detail page
     """
     
     if "ticket_group_id" not in data_dict.keys():
@@ -248,24 +241,31 @@ def detail_new_intake(context, data_dict) -> DetailedIntake:
         
 @tk.side_effect_free
 def detail_existing_intake(context, data_dict) -> DetailedIntake:
-    """input a ticket group name, output a dict with all info needed on coming soon dataset detail page
-    Outputs include:
-    - Most recent update date
-    - Jira Ticket IDs
-    - Inquiry Source
-    - Request Type(s)
-    - Ticket Group Name
-    - Ordered list of milestones and their date
+    """
+    input a ticket group name, output a dict with all info needed on coming soon dataset detail page
     """
     
-    if "ticket_group_id" not in data_dict.keys():
-        raise tk.ValidationError({"constraints": ["ticket_group_id required as input"]})
+    if "ticket_group_id" in data_dict:
+        def search_func(intakes:Intakes) -> Optional[GroupedEntry]:
+            return intakes.get(data_dict["ticket_group_id"])
+    elif "ticket_group_name" in data_dict:
+        def search_func(intakes:Intakes) -> Optional[GroupedEntry]:
+            filtered = [
+                intake for _, intake in intakes.items()
+                if intake["ticket_group_name"] == data_dict["ticket_group_name"]
+            ]
+            if filtered:
+                return filtered[0]
+            return None
+    else:
+        raise tk.ValidationError({"constraints": ["one of ticket_group_id or ticket_group_name are required"]})
 
-    ticket_group_id = data_dict["ticket_group_id"]
 
-    intake:GroupedEntry = tk.get_action("prepare_intake")(context, data_dict)["existing"].get(ticket_group_id, None)
-    if not intake or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake["tickets"]]):
-        return "There is no active update ticket group associated with {}".format(ticket_group_id)
+    existing_intakes = tk.get_action("prepare_intake")(context, data_dict)["existing"]
+    intake = search_func(existing_intakes)
+
+    if intake is None or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake["tickets"]]):
+        raise NotFound()
 
     return utils.detail_intake(intake)
 
