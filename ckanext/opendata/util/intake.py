@@ -1,6 +1,6 @@
 from typing import List, TypedDict, Optional
 import re
-
+from datetime import datetime
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 
@@ -80,16 +80,16 @@ class SummarizeIntakesData(TypedDict):
     search: Optional[str]
 
 
-class Intake(TypedDict):
+class SummarizedIntake(TypedDict):
     ticket_group_name: str
     ticket_ids: List[str]
-    last_updated: str
+    last_updated: datetime
     status: str
     inquiry_source: str
     ticket_count: int
 
 
-def search_intakes(intakes: List[Intake], search: str) -> List[Intake]:
+def search_intakes(intakes: List[SummarizedIntake], search: str) -> List[SummarizedIntake]:
     """_serach_intakes
 
     Args:

@@ -1,7 +1,7 @@
 import ckan.tests.helpers as helpers
 import pytest
 from typing import Dict, Optional, List
-from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake
+from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
 from datetime import datetime
 
 class MockIntake:
@@ -148,8 +148,7 @@ class TicketFactory:
     def __init__(self, ticket_values:Ticket=None):
         if ticket_values is None:
             ticket_values = {}
-        _id = self._n
-        self._n +=1
+        _id = self._get_id()
         defaults = {
             "_id": f"{_id}",
             "Ticket Id": f"DIA-{_id}",
@@ -165,6 +164,12 @@ class TicketFactory:
         }
         self._value = {**defaults, **ticket_values}
     
+    @classmethod
+    def _get_id(cls) -> int:
+        id_value = cls._n
+        cls._n += 1
+        return id_value
+
     def to_dict(self) -> Ticket:
         return self._value
 
@@ -201,6 +206,28 @@ def _validate_prepared_intake(prepared_intake:PreparedIntake):
     _validate_intake(prepared_intake["existing"])
     _validate_intake(prepared_intake["new"])
 
+def _validate_detailed_intake(intake:DetailedIntake):
+    assert isinstance(intake["divisions"], list)
+    assert isinstance(intake.get("description"), str) or intake.get("description") is None
+    assert isinstance(intake["ticket_group_name"], str)
+    assert isinstance(intake["last_update"], datetime)
+    assert isinstance(intake["jira_ticket_ids"], list)
+    assert isinstance(intake["inquiry_source"], list)
+    assert isinstance(intake["request_types"], list)
+    assert isinstance(intake["to_statuses"], list)
+    assert isinstance(intake["from_statuses"], list)
+    assert isinstance(intake["details"], list)
+
+def _validate_summarized_intake(intake:SummarizedIntake):
+    assert isinstance(intake.get('ticket_group_name',None), str)
+    assert isinstance(intake.get('ticket_ids',None), List)
+    assert all(isinstance(tid, str) and tid != "" for tid in intake["ticket_ids"])
+    assert isinstance(intake.get('last_updated',None), datetime)
+    assert isinstance(intake.get('status',None), str)
+    assert isinstance(intake.get('inquiry_source',None), str)
+    assert isinstance(intake.get('ticket_count',None), int)
+
+
 class TestIntakeActions:
 
     def _mock_tickets(self, ticket_kwargs:Optional[Ticket]=None) -> List[Ticket]:
@@ -208,15 +235,42 @@ class TestIntakeActions:
             TicketFactory(ticket_kwargs).to_dict() for _ in range(10)
         ]
 
-    def test_summarize_new_intake(self):
-        pass
+    def test_summarize_new_intake(self, mocker):
+        tickets = self._mock_tickets(
+            # ensure there are mocked 'new' tickets
+            {"Request Type": "Publish New Open Dataset Page"}
+        )
+        mocker.patch(
+            "ckanext.opendata.api._get_intake_tickets",
+            return_value=tickets
+        )
+        summarized_intakes:List[SummarizedIntake] = helpers.call_action(
+            "summarize_new_intake",
+            {},
+        )
+        for intake in summarized_intakes:
+            _validate_summarized_intake(intake)
 
-    def test_detail_new_intake(self):
-        pass
+    def test_detail_new_intake(self, mocker):
+        tickets = self._mock_tickets(
+            # ensure there are mocked 'new' tickets
+            {"Request Type": "Publish New Open Dataset Page"}
+        )
+        mocker.patch(
+            "ckanext.opendata.api._get_intake_tickets",
+            return_value=tickets
+        )
+        ticket_group_id = tickets[0]["Ticket Id"]
+        result:DetailedIntake = helpers.call_action(
+            "detail_new_intake",
+            {},
+            ticket_group_id=ticket_group_id
+        )
+        _validate_detailed_intake(result)
 
     def test_detail_existing_intake(self, mocker):
         tickets = self._mock_tickets(
-            # ensure there are mocked 'new' tickets
+            # ensure there are mocked 'existing' tickets
             {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
         )
         mocker.patch(
@@ -229,20 +283,7 @@ class TestIntakeActions:
             {},
             ticket_group_id=ticket_group_id
         )
-
-        assert isinstance(result["divisions"], list)
-        assert isinstance(result.get("description"), str) or result.get("description") is None
-        assert isinstance(result["ticket_group_name"], str)
-        assert isinstance(result["last_update"], datetime)
-        assert isinstance(result["jira_ticket_ids"], list)
-        assert isinstance(result["inquiry_source"], list)
-        assert isinstance(result["request_types"], list)
-        assert isinstance(result["to_statuses"], list)
-        assert isinstance(result["from_statuses"], list)
-        assert isinstance(result["details"], list)
-
-        
-        # _validate_prepared_intake(result)
+        _validate_detailed_intake(result)
 
     def test_prepare_intake(self, mocker):
         mocker.patch(
@@ -252,4 +293,3 @@ class TestIntakeActions:
         result = helpers.call_action("prepare_intake", {})
         _validate_prepared_intake(result)
 
-from opendata.api import _get_intake_tickets

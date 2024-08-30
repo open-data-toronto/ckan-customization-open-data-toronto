@@ -462,11 +462,6 @@ def name_ticket_groups(grouped_tickets:Dict[str, List[Ticket]]) -> Intakes:
     }
 
 def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
-    try:
-        assert isinstance(in_dict, dict)
-    except AssertionError:
-        breakpoint()
-        raise
     for key in keys:
         val = in_dict[key]
         if val:

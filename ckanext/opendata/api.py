@@ -4,7 +4,7 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, Intake, SummarizeIntakesData, PreparedIntake, PreparedIntake
+    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes
 )
 from .util import utils
 from datetime import datetime
@@ -131,7 +131,6 @@ def query_facet(context, data_dict):
     return output
 
 def _get_intake_tickets(context) -> List[Ticket]:
-    breakpoint()
     pid = "open-data-intake"
     package = tk.get_action("package_show")(context, {"id": pid})
     try:
@@ -175,40 +174,42 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 def summarize_new_intake(
         context,
         data_dict:SummarizeIntakesData
-    ) -> List[Intake]:
+    ) -> List[SummarizedIntake]:
     '''Returns summaries of all new, active ticket groups'''
     output = []
-    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"]
-    for ticket_group_id, records in intake.items():
+    intake:Intakes = tk.get_action("prepare_intake")(context, data_dict)["new"]
+    for ticket_group_id, group in intake.items():
         # skip published datasets
-        if any([rec["To Status"] in ["Published", "Retired"] for rec in records]):
+        tickets = group["tickets"]
+        ticket_group_name = group["ticket_group_name"]
+        if any([rec["To Status"] in ["Published", "Retired"] for rec in tickets]):
             continue
 
         # prepare to skip old and finished ticket groups
-        last_updated = max([utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in records])
+        last_updated = max([utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in tickets])
         age = datetime.today() - last_updated
         
         # skip closed standalone inquiry tickets
-        if any([rec["To Status"] == "Closed" for rec in records]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in records]) and age.days > 30:
+        if any([rec["To Status"] == "Closed" for rec in tickets]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in tickets]) and age.days > 30:
             continue
 
         # skip old closed publish ticket groups
-        if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in records]) and age.days > 30:
+        if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in tickets]) and age.days > 30:
             continue
 
-        divisions = utils.get_divisions_from_intake_tickets(records)
+        divisions = utils.get_divisions_from_intake_tickets(tickets)
 
         # add summary to output
         output.append({
             "description": utils.get_mock_ticket_description(ticket_group_name),
             "divisions": divisions,
             "last_updated": last_updated,
-            "inquiry_source": records[-1]["Inquiry Source"],
+            "inquiry_source": tickets[-1]["Inquiry Source"],
             "ticket_group_name": ticket_group_name,
             "ticket_group_id": ticket_group_id,
-            "ticket_ids": list(set([r["Ticket Id"] for r in records])),
-            "status": records[-1]["To Status"] or "Identified",
-            "ticket_count": len(set(x["Ticket Id"] for x in records)),
+            "ticket_ids": list(set([r["Ticket Id"] for r in tickets])),
+            "status": tickets[-1]["To Status"] or "Identified",
+            "ticket_count": len(set(x["Ticket Id"] for x in tickets)),
         })
 
     search_cleaned = data_dict.get('search','').lower().strip()
@@ -217,7 +218,6 @@ def summarize_new_intake(
         results = search_intakes(output, search_cleaned)
     else:
         results = sorted(output, key=lambda x: x["ticket_group_name"])
-
     return results
 
 @tk.side_effect_free
@@ -232,15 +232,15 @@ def detail_new_intake(context, data_dict):
     - Ordered list of milestones and their date
     """
     
-    if "ticket_group_name" not in data_dict.keys():
-        raise tk.ValidationError({"constraints": ["ticket_group_name required as input"]}) 
+    if "ticket_group_id" not in data_dict.keys():
+        raise tk.ValidationError({"constraints": ["ticket_group_id required as input"]})
 
-    ticket_group_name = data_dict["ticket_group_name"]
+    ticket_group_id = data_dict["ticket_group_id"]
 
-    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_name, None)
+    intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_id, None)
     if not intake:
         raise tk.ValidationError({"constraints": [
-            "Ticket Group Name {} does not exist".format(ticket_group_name)
+            "Ticket Group Name {} does not exist".format(ticket_group_id)
         ]}) 
     
     return utils.detail_intake(intake)
