@@ -67,10 +67,21 @@ ticket_3 = MockIntake(ticket_id="DIA-3", ticket_name="Ticket 3").to_dict()
 ticket_multi = MockIntake(ticket_id="DIA-4", ticket_name="Ticket Multi").to_dict()
 
 mock_intake_items = {
-    "Ticket Group 1": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
-    "Ticket Group 2": [ticket_2, ticket_multi],
-    "Ticket Group 3": [ticket_3],
-    "Other Group 3": [ticket_3],
+    ticket_1["Ticket Id"]: {
+        "ticket_group_name": ticket_1["Ticket Name"],
+        "ticket_group_id": ticket_1["Ticket Id"],
+        "tickets": [ticket_1, ticket_1a, ticket_1b, ticket_multi]
+    },
+    ticket_2["Ticket Id"]: {
+        "ticket_group_name": ticket_2["Ticket Name"],
+        "ticket_group_id": ticket_2["Ticket Id"],
+        "tickets": [ticket_2, ticket_multi]
+    },
+    ticket_3["Ticket Id"]: {
+        "ticket_group_name": ticket_3["Ticket Name"],
+        "ticket_group_id": ticket_3["Ticket Id"],
+        "tickets": [ticket_3]
+    },
 }
 
 
@@ -86,7 +97,7 @@ def test_summarize_new_intake_search_str(search, mocker):
     )
     result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == 3
-    assert all(t["ticket_group_name"].startswith("Ticket Group ") for t in result)
+    assert all(t["ticket_group_name"].startswith("Ticket") for t in result)
 
 
 def test_summarize_new_intake_accepts_empty_search(mocker):
@@ -105,17 +116,17 @@ def test_summarize_new_intake_accepts_empty_search(mocker):
     [
         (
             ticket_multi["Ticket Id"],
-            {"Ticket Group 1", "Ticket Group 2"},
+            {"Ticket 1", "Ticket 2"},
         ),
         (
             # strip the "DIA-""
             ticket_multi["Ticket Id"][4:],
-            {"Ticket Group 1", "Ticket Group 2"},
+            {"Ticket 1", "Ticket 2"},
         ),
         (
             # Add arbitrary padding text
             f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
-            {"Ticket Group 1", "Ticket Group 2"},
+            {"Ticket 1", "Ticket 2"},
         ),
         (
             "9999999",
@@ -210,6 +221,7 @@ def _validate_detailed_intake(intake:DetailedIntake):
     assert isinstance(intake["divisions"], list)
     assert isinstance(intake.get("description"), str) or intake.get("description") is None
     assert isinstance(intake["ticket_group_name"], str)
+    assert isinstance(intake["ticket_group_id"], str)
     assert isinstance(intake["last_update"], datetime)
     assert isinstance(intake["jira_ticket_ids"], list)
     assert isinstance(intake["inquiry_source"], list)
@@ -219,6 +231,8 @@ def _validate_detailed_intake(intake:DetailedIntake):
     assert isinstance(intake["details"], list)
 
 def _validate_summarized_intake(intake:SummarizedIntake):
+    assert isinstance(intake.get('description'), str) or intake.get('description') is None
+    assert isinstance(intake.get('ticket_group_id', None), str)
     assert isinstance(intake.get('ticket_group_name',None), str)
     assert isinstance(intake.get('ticket_ids',None), List)
     assert all(isinstance(tid, str) and tid != "" for tid in intake["ticket_ids"])

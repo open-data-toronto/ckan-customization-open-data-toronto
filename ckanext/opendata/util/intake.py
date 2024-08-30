@@ -5,24 +5,6 @@ from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 
 
-
-# Ticket = TypedDict(
-#     "Ticket",
-#     {
-#         "_id": str,
-#         "Ticket Id": str,
-#         "Ticket Name": str,
-#         "Inquiry Source": str,
-#         "Request Type": str,
-#         "Created": str,
-#         "First Response": str,
-#         "From Status": str,
-#         "To Status": str,
-#         "Status Timestamp": str,
-#         "Linked Ticket Id": str,
-#     },
-# )
-
 UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
 
 Ticket = TypedDict(
@@ -43,50 +25,30 @@ Ticket = TypedDict(
     },
 )
 
-# GroupedEntry = TypedDict(
-#     "GroupedEntry",{
-#         "ticket_group_name": str,
-#         # "parent_ticket_id": str,
-#         "records": List[Entry]
-#     }
-# )
-
 GroupedEntry = TypedDict(
     "GroupedEntry",
     {"ticket_group_name": str, "ticket_group_id": str, "tickets": List[Ticket]},
 )
 
-
-# New = Dict[str, List[Entry]]
-# Existing = Dict[str, List[Entry]]
-
 Intakes = Dict[str, GroupedEntry]
-# Intakes = Dict[str, List[Ticket]]
 PreparedIntake = TypedDict("PreparedIntake", {"new": Intakes, "existing": Intakes})
-
-from pydantic import BaseModel, create_model
 
 class PreparedIntake(TypedDict):
     new: Intakes
     existing: Intakes
 
-
-# class PreparedIntake(BaseModel):
-#     new: Intakes = Field(default_factory)
-#     existing: Intakes = Field(default_factory)
-
-
 class SummarizeIntakesData(TypedDict):
     search: Optional[str]
 
-
 class SummarizedIntake(TypedDict):
-    ticket_group_name: str
-    ticket_ids: List[str]
+    description: Optional[str]
+    inquiry_source: str
     last_updated: datetime
     status: str
-    inquiry_source: str
     ticket_count: int
+    ticket_group_id: str
+    ticket_group_name: str
+    ticket_ids: List[str]
 
 
 def search_intakes(intakes: List[SummarizedIntake], search: str) -> List[SummarizedIntake]:
@@ -127,6 +89,7 @@ class DetailedIntake(TypedDict):
     divisions: List[str]
     description: Optional[str]
     ticket_group_name: str
+    ticket_group_id: str
     last_update: datetime
     jira_ticket_ids: List[str]
     inquiry_source: List[str]

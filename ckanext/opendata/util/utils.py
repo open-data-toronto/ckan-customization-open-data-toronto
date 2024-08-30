@@ -700,6 +700,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
 
     description = get_mock_ticket_description(ticket_group_name)
 
+    ticket_group_id = grouped_entry["ticket_group_id"]
+
     # remove problematic details
     for i in to_remove:
         details.pop(i)
@@ -708,6 +710,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         "divisions": divisions,
         "description": description,
         "ticket_group_name": ticket_group_name,
+        "ticket_group_id": ticket_group_id,
         "last_update": last_update,
         "jira_ticket_ids": jira_ticket_ids,
         "inquiry_source": inquiry_source,

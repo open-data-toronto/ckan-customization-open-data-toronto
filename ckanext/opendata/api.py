@@ -4,7 +4,7 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake import (
-    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes
+    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake
 )
 from .util import utils
 from datetime import datetime
@@ -221,7 +221,7 @@ def summarize_new_intake(
     return results
 
 @tk.side_effect_free
-def detail_new_intake(context, data_dict):
+def detail_new_intake(context, data_dict) -> DetailedIntake:
     """input a ticket group name, output a dict with all info needed on coming soon dataset detail page
     Outputs include:
     - Most recent update date
@@ -240,14 +240,14 @@ def detail_new_intake(context, data_dict):
     intake:PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)["new"].get(ticket_group_id, None)
     if not intake:
         raise tk.ValidationError({"constraints": [
-            "Ticket Group Name {} does not exist".format(ticket_group_id)
+            "Ticket Group ID {} does not exist".format(ticket_group_id)
         ]}) 
     
     return utils.detail_intake(intake)
 
         
 @tk.side_effect_free
-def detail_existing_intake(context, data_dict):
+def detail_existing_intake(context, data_dict) -> DetailedIntake:
     """input a ticket group name, output a dict with all info needed on coming soon dataset detail page
     Outputs include:
     - Most recent update date
