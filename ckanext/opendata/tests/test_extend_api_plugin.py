@@ -174,7 +174,7 @@ class TicketFactory:
             "Linked Ticket Id": "",
         }
         self._value = {**defaults, **ticket_values}
-    
+
     @classmethod
     def _get_id(cls) -> int:
         id_value = cls._n
@@ -183,7 +183,6 @@ class TicketFactory:
 
     def to_dict(self) -> Ticket:
         return self._value
-
 
 
 from opendata.util.intake import Intakes, GroupedEntry, Ticket
@@ -306,4 +305,3 @@ class TestIntakeActions:
         )
         result = helpers.call_action("prepare_intake", {})
         _validate_prepared_intake(result)
-
