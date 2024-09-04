@@ -152,7 +152,6 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     grouped_tickets:Dict[str, List[Dict]] = {}
     for ticket_id in ticket_ids:
         grouped_tickets[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
-    
     linked_tickets = utils.join_linked_tickets(grouped_tickets)
     filtered_tickets = utils.filter_out_closed_tickets(linked_tickets)
     named_ticket_groups = utils.name_ticket_groups(filtered_tickets)
@@ -197,16 +196,11 @@ def summarize_new_intake(
             continue
 
         divisions = utils.get_divisions_from_intake_tickets(tickets)
-
-        # TODO: DO NOT LET THIS PASS PR, PLEASE REMOVE
-        if ticket_group_name == 'Topographic Mapping – Waterbodies & Rivers':
-            # description = "<script>alert('html injection example!')</script>"
-            # ticket_group_name += "/stuff to break the url?redirect_to=somewhere&other_param=2"
-            ticket_group_name += "/../../wp-content/uploads/2020/01/team.jpg"
+        public_description = utils.get_ticket_group_public_description(tickets)
 
         # add summary to output
         output.append({
-            "description": utils.get_mock_ticket_description(ticket_group_name),
+            "public_description": public_description,
             "divisions": divisions,
             "last_updated": last_updated,
             "inquiry_source": tickets[-1]["Inquiry Source"],

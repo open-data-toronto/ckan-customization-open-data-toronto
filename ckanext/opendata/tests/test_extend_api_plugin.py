@@ -1,10 +1,12 @@
 import ckan.tests.helpers as helpers
 import pytest
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
 from datetime import datetime
 from ckan.logic import NotFound
 from ckanext.opendata.util.utils import _extract_ticket_name
+from opendata.util.intake import Intakes, GroupedEntry, Ticket
+
 
 class MockIntake:
     __count = 0
@@ -162,18 +164,20 @@ class TicketFactory:
         if ticket_values is None:
             ticket_values = {}
         _id = self._get_id()
-        defaults = {
+        defaults:Ticket = {
             "_id": f"{_id}",
-            "Ticket Id": f"DIA-{_id}",
-            "Ticket Name": f"Ticket Name {_id}",
-            "Inquiry Source": "Inq Source",
-            "Request Type": "Publish New Open Dataset Page",
             "Created": "2024-01-01T11:00:0",
+            "Division": None,
             "First Response": "2024-01-01T11:00:0",
             "From Status": None,
-            "To Status": None,
-            "Status Timestamp": None,
+            "Inquiry Source": "Inq Source",
             "Linked Ticket Id": "",
+            "Public Description": "",
+            "Request Type": "Publish New Open Dataset Page",
+            "Status Timestamp": None,
+            "Ticket Id": f"DIA-{_id}",
+            "Ticket Name": f"Ticket Name {_id}",
+            "To Status": None,
         }
         self._value = {**defaults, **ticket_values}
 
@@ -186,27 +190,31 @@ class TicketFactory:
     def to_dict(self) -> Ticket:
         return self._value
 
+def _is_optional_str(s:Any) -> bool:
+    return isinstance(s, str) or s is None
 
-from opendata.util.intake import Intakes, GroupedEntry, Ticket
 
 def _validate_ticket(ticket:Ticket):
     assert isinstance(ticket["_id"], str)
     assert isinstance(ticket["Ticket Id"], str)
     assert isinstance(ticket["Ticket Name"], str)
     assert isinstance(ticket["Inquiry Source"], str)
-    assert isinstance(ticket.get("Division"), str) or ticket.get("Division")is None
+    assert _is_optional_str(ticket.get("Division"))
     assert isinstance(ticket["Request Type"], str)
     assert isinstance(ticket["Created"], str)
-    assert isinstance(ticket.get("First Response"), str) or ticket.get("First Response")is None
-    assert isinstance(ticket.get("From Status"), str) or ticket.get("From Status")is None
-    assert isinstance(ticket.get("To Status"), str) or ticket.get("To Status")is None
-    assert isinstance(ticket.get("Status Timestamp"), str) or ticket.get("Status Timestamp")is None
+    assert _is_optional_str(ticket.get("First Response"))
+    assert _is_optional_str(ticket.get("From Status"))
+    assert _is_optional_str(ticket.get("To Status"))
+    assert _is_optional_str(ticket.get("Status Timestamp"))
     assert isinstance(ticket["Linked Ticket Id"], str)
+    assert _is_optional_str(ticket.get("Public Description"))
 
 
 def _validate_grouped(grouped_entry:GroupedEntry):
     assert isinstance(grouped_entry["ticket_group_id"], str)
     assert isinstance(grouped_entry["ticket_group_name"], str)
+    assert _is_optional_str(grouped_entry.get("public_description"))
+
     for ticket in grouped_entry["tickets"]:
         _validate_ticket(ticket)
 

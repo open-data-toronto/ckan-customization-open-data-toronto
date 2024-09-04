@@ -6,8 +6,7 @@ import re
 import codecs
 from typing import List, Dict, Any, TypeVar, Callable
 import ckan.plugins.toolkit as tk
-from .intake import Ticket, Intakes, GroupedEntry, DetailedIntake
-
+from .intake import Ticket, Intakes, GroupedEntry, DetailedIntake, PublicDescription
 
 def string_to_hex(s):
     return codecs.encode(s.encode("utf-8"), "hex")
@@ -496,29 +495,11 @@ def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:
     return list(divisions)
 
 
-def get_mock_ticket_description(ticket_group_name:str) -> str:
-    import hashlib
-    lorem_ipsum = (
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed "
-        "ullamcorper non orci vitae pretium. Sed faucibus nulla tempus, "
-        "commodo lacus eget, condimentum nulla. Donec at luctus ipsum. "
-        "Vestibulum nec fringilla turpis. Etiam interdum scelerisque tellus "
-        "sit amet facilisis. Donec efficitur convallis ipsum a lobortis. "
-        "Suspendisse ut massa at dolor sagittis ornare vulputate at libero. "
-        "Integer tristique neque at mauris luctus, id tincidunt arcu imperdiet."
-        " Aliquam blandit accumsan tincidunt. Sed sed ultrices arcu, vel "
-        "maximus lectus. Sed quis pellentesque erat. Mauris eleifend ex eget "
-        "massa luctus tempus. Nam eget orci euismod, varius tellus sed, "
-        "efficitur libero. Quisque congue tincidunt sem ut."
-    )
-    options = [
-            lorem_ipsum[:56],
-            lorem_ipsum[:96],
-            lorem_ipsum[:490],
-            None,
-    ]
-    hash = int(hashlib.md5(ticket_group_name.encode()).hexdigest(), 16) % len(options)
-    return options[hash]
+def get_ticket_group_public_description(tickets: List[Ticket]) -> PublicDescription:
+    descriptions = {ticket.get('Public Description') for ticket in tickets}
+    description = ". ".join(desc for desc in descriptions if desc is not None)
+    return None if not description else description
+
 
 def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     """Presents details of ticket group to be rendered on the frontend.
@@ -699,13 +680,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     
     ticket_group_id = grouped_entry["ticket_group_id"]
     ticket_group_name = grouped_entry["ticket_group_name"]
-    description = get_mock_ticket_description(ticket_group_name)
+    public_description = get_ticket_group_public_description(tickets)
     divisions = get_divisions_from_intake_tickets(tickets)
-
-    # TODO: DO NOT LET THIS PASS PR, PLEASE REMOVE
-    if ticket_group_name == 'Topographic Mapping – Waterbodies & Rivers':
-        description = "<script>alert('html injection example!')</script>"
-        ticket_group_name += "/stuff to break the url?redirect_to=somewhere&other_param=2"
 
     # remove problematic details
     for i in to_remove:
@@ -713,7 +689,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
 
     return  {
         "divisions": divisions,
-        "description": description,
+        "public_description": public_description,
         "ticket_group_name": ticket_group_name,
         "ticket_group_id": ticket_group_id,
         "last_update": last_update,

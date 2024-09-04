@@ -11,23 +11,31 @@ Ticket = TypedDict(
     "NewEntry",
     {
         "_id": str,
-        "Ticket Id": str,
-        "Ticket Name": str,
-        "Inquiry Source": str,
-        "Division": Optional[str],
-        "Request Type": str,
         "Created": str,
+        "Division": Optional[str],
         "First Response": Optional[str],
         "From Status": Optional[str],
-        "To Status": Optional[str],
-        "Status Timestamp": Optional[str],
+        "Inquiry Source": str,
         "Linked Ticket Id": str,
+        "Public Description": Optional[str],
+        "Request Type": str,
+        "Status Timestamp": Optional[str],
+        "Ticket Id": str,
+        "Ticket Name": str,
+        "To Status": Optional[str],
     },
 )
 
+PublicDescription = Optional[str]
+
 GroupedEntry = TypedDict(
     "GroupedEntry",
-    {"ticket_group_name": str, "ticket_group_id": str, "tickets": List[Ticket]},
+    {
+        "ticket_group_name": str,
+        "ticket_group_id": str,
+        "public_description": PublicDescription,
+        "tickets": List[Ticket]
+    },
 )
 
 Intakes = Dict[str, GroupedEntry]
@@ -41,7 +49,7 @@ class SummarizeIntakesData(TypedDict):
     search: Optional[str]
 
 class SummarizedIntake(TypedDict):
-    description: Optional[str]
+    public_description: PublicDescription
     inquiry_source: str
     last_updated: datetime
     status: str
@@ -87,7 +95,7 @@ from datetime import datetime
 
 class DetailedIntake(TypedDict):
     divisions: List[str]
-    description: Optional[str]
+    public_description: PublicDescription
     ticket_group_name: str
     ticket_group_id: str
     last_update: datetime
