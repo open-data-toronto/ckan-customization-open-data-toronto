@@ -4,7 +4,10 @@ import json
 import csv
 import re
 import codecs
-from typing import List, Dict
+from typing import List, Dict, Any, TypeVar, Callable
+import ckan.plugins.toolkit as tk
+from .intake import Ticket, Intakes, GroupedEntry, DetailedIntake
+
 
 def string_to_hex(s):
     return codecs.encode(s.encode("utf-8"), "hex")
@@ -387,15 +390,102 @@ def get_dqs(input_package, input_resource):
     return output
 
 
-def get_non_empty_var(input_dict, var1, var2):
-     assert isinstance(input_dict, dict)
-     assert isinstance(var1, str)
-     assert isinstance(var2, str)
- 
-     if not input_dict[var1]:
-         return input_dict[var2]
-     else:
-	         return input_dict[var1]
+################################################################################
+# Intake
+################################################################################
+
+DictKey = TypeVar('DictKey')
+DictValue = TypeVar('DictValue')
+
+
+def _subset_dict_by(
+        dictionary:Dict[DictKey, DictValue],
+        predicate: Callable[[DictKey, DictValue],bool]
+    ) -> Dict[DictKey, DictValue]:
+    return {
+        k:v for k,v in dictionary.items() if predicate(k, v)
+    }
+
+def filter_out_closed_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    return _subset_dict_by(
+        grouped_tickets,
+        predicate=lambda _,tickets: not any(is_closed_ticket(ticket) for ticket in tickets)
+    )
+
+def join_linked_tickets(grouped_tickets:Dict[str,List[Ticket]]) -> Dict[str, List[Ticket]]:
+    # join linked ticket objects together
+    joined = {}
+    ticket_ids = set(grouped_tickets.keys())
+    for ticket_id in ticket_ids:
+        
+        # if there are any linked tickets, combine their records
+        if grouped_tickets.get(ticket_id, False):
+            
+            # If this ticket has any linked tickets and hasn't already been popped we're going to add it to `grouped`
+            if any([x["Linked Ticket Id"] for x in grouped_tickets[ticket_id]]):
+                
+                #  pop it's associated records (ticket_id no longer in working)
+                # This ticket id will no longer be considered in linked tickets
+                records = grouped_tickets.pop(ticket_id)
+                
+                #  grab the linked tickets of the first record (maybe its consistent between all records)
+                #  for all linked tickets that haven't already been
+                for linked_id in records[0]["Linked Ticket Id"].split(","):
+                    if linked_id == 'DIA-236' and ticket_id == 'DIA-38':
+                        pass
+                    # if it hasn't already been popped, grab that linked' ticket's records and append them to this records
+                    if grouped_tickets.get(linked_id, False):
+                        this = grouped_tickets.pop(linked_id)
+                        for item in this:
+                            records.append(item)
+
+                joined[ticket_id] = records
+    # adding records that dont have linked tickets   
+    for k, v in grouped_tickets.items():
+        joined[k] = v
+    return joined
+
+def _extract_ticket_name(s:str)->str:
+    match = re.search(r'^https://open.toronto.ca/dataset/([^/]+)/?$', s)
+    if match:
+        return match.group(1)
+    return s
+
+def _get_ticket_group_name(ticket_group_id:str, tickets: List[Ticket])->str:
+    for ticket in tickets:
+        if ticket["Ticket Id"] == ticket_group_id:
+            return _extract_ticket_name(ticket["Ticket Name"])
+    raise ValueError(f"Ticket with id {ticket_group_id} not found")
+
+def name_ticket_groups(grouped_tickets:Dict[str, List[Ticket]]) -> Intakes:
+    return {
+        ticket_group_id: {
+            "tickets": tickets,
+            "ticket_group_id": ticket_group_id,
+            "ticket_group_name": _get_ticket_group_name(ticket_group_id, tickets)
+        }
+        for ticket_group_id, tickets in grouped_tickets.items()
+    }
+
+def _get_first_is_truthy(in_dict:Dict[Any,Any], *keys) -> Any:
+    for key in keys:
+        val = in_dict[key]
+        if val:
+            return val
+
+def get_first_datetime(in_dict:Dict[str, str], *keys) -> datetime:
+    return datetime.strptime(
+        _get_first_is_truthy(in_dict, *keys),
+        "%Y-%m-%dT%H:%M:%S",
+    )
+
+def is_closed_ticket(ticket:Dict[str, Any]) -> bool:
+    _CLOSED_REQUEST_TYPES = ["Update Existing Open Dataset Page", "Publish New Open Dataset Page"]
+    _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
+    return (
+        ticket["Request Type"] in _CLOSED_REQUEST_TYPES
+        and ticket["To Status"] in _CLOSED_STATUSES
+    )
 
 
 def get_divisions_from_intake_tickets(intake:List[Dict]) -> List[str]:
@@ -430,8 +520,7 @@ def get_mock_ticket_description(ticket_group_name:str) -> str:
     hash = int(hashlib.md5(ticket_group_name.encode()).hexdigest(), 16) % len(options)
     return options[hash]
 
-
-def detail_intake(intake):
+def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     """Presents details of ticket group to be rendered on the frontend.
     Attribute of output include:
     - Most recent update date
@@ -447,9 +536,10 @@ def detail_intake(intake):
     - subtext
     - activity_state (done, active, future)
     """
+    tickets = grouped_entry["tickets"]
 
-    assert isinstance(intake, list), f"Input must be a list of dicts!"
-    assert len(intake), f"Input must be populated!"
+    assert isinstance(tickets, list), f"Input must be a list of dicts!"
+    assert len(tickets), f"Input must be populated!"
 
     # Let's make high level info for this ticket group
     last_update = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
@@ -460,12 +550,10 @@ def detail_intake(intake):
     to_statuses = []
     from_statuses = []
     
-    for rec in intake:
-        ticket_group_name = rec["Ticket Name"]
-
+    for rec in tickets:
         # last update
-        if datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S") > last_update:
-            last_update = datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S")    
+        if get_first_datetime(rec, "Status Timestamp", "Created") > last_update:
+            last_update = get_first_datetime(rec, "Status Timestamp", "Created")    
             latest_record = rec
 
         # start date
@@ -525,9 +613,6 @@ def detail_intake(intake):
     ]
 
     # sort out the last ticket type
-    latest_type = latest_record.get("Request Type")
-    latest_status = latest_record.get("To Status", None)
-    
     for order in orders:
         # for each status, we'll get all relevant ticket records and choose the earliest
         for order_status, order_detail in order["order"].items():
@@ -535,17 +620,17 @@ def detail_intake(intake):
                 "timestamp": datetime.strptime("9999-12-31T00:00:00", "%Y-%m-%dT%H:%M:%S"),
                 "match": False
             }
-            for i in range(len(intake)):
-                rec = intake[i]
+            for i in range(len(tickets)):
+                rec = tickets[i]
                 # skip irrelevant tickets in this loop
                 if rec["Request Type"] not in order["request_types"]:
                     continue
                 
                 # if we make a match and its the earliest timestamp, it will be included in the output
-                if rec["To Status"] == order_status and detail["timestamp"] > datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"):
+                if rec["To Status"] == order_status and (detail["timestamp"] > get_first_datetime(rec, "Status Timestamp", "Created")):
                     detail = {
                         "title": order_detail["title"],
-                        "timestamp": datetime.strptime(get_non_empty_var(rec, "Status Timestamp", "Created"), "%Y-%m-%dT%H:%M:%S"),
+                        "timestamp": get_first_datetime(rec, "Status Timestamp", "Created"),
                         "text": order_detail["text"],
                         "activity_state": "done",
                         "order": order_detail["order"]
@@ -612,9 +697,10 @@ def detail_intake(intake):
                             })
                             break
     
-    divisions = get_divisions_from_intake_tickets(intake)
-
+    ticket_group_id = grouped_entry["ticket_group_id"]
+    ticket_group_name = grouped_entry["ticket_group_name"]
     description = get_mock_ticket_description(ticket_group_name)
+    divisions = get_divisions_from_intake_tickets(tickets)
 
     # TODO: DO NOT LET THIS PASS PR, PLEASE REMOVE
     if ticket_group_name == 'Topographic Mapping – Waterbodies & Rivers':
@@ -629,6 +715,7 @@ def detail_intake(intake):
         "divisions": divisions,
         "description": description,
         "ticket_group_name": ticket_group_name,
+        "ticket_group_id": ticket_group_id,
         "last_update": last_update,
         "jira_ticket_ids": jira_ticket_ids,
         "inquiry_source": inquiry_source,
