@@ -4,9 +4,15 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 from datetime import datetime
+from enum import Enum
 
 
-UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
+class RequestType(str, Enum):
+    MAKE_OPEN_DATA_INQUIRY = "Make Open Data Inquiry"
+    PUBLISH_NEW_OPEN_DATASET_PAGE = "Publish New Open Dataset Page"
+    UPDATE_EXISTING_OPEN_DATASET_PAGE = "Update Existing Open Dataset Page"
+
+PublicDescription = Optional[str]
 
 Ticket = TypedDict(
     "NewEntry",
@@ -18,7 +24,7 @@ Ticket = TypedDict(
         "From Status": Optional[str],
         "Inquiry Source": str,
         "Linked Ticket Id": str,
-        "Public Description": Optional[str],
+        "Public Description": PublicDescription,
         "Request Type": str,
         "Status Timestamp": Optional[str],
         "Ticket Id": str,
@@ -27,27 +33,28 @@ Ticket = TypedDict(
     },
 )
 
-PublicDescription = Optional[str]
-
 GroupedEntry = TypedDict(
     "GroupedEntry",
     {
         "ticket_group_name": str,
         "ticket_group_id": str,
         "public_description": PublicDescription,
-        "tickets": List[Ticket]
+        "tickets": List[Ticket],
     },
 )
 
 Intakes = Dict[str, GroupedEntry]
 PreparedIntake = TypedDict("PreparedIntake", {"new": Intakes, "existing": Intakes})
 
+
 class PreparedIntake(TypedDict):
     new: Intakes
     existing: Intakes
 
-class SummarizeIntakesData(TypedDict):
+
+class SummarizeIntakesParameter(TypedDict):
     search: Optional[str]
+
 
 class SummarizedIntake(TypedDict):
     public_description: PublicDescription
@@ -58,9 +65,6 @@ class SummarizedIntake(TypedDict):
     ticket_group_id: str
     ticket_group_name: str
     ticket_ids: List[str]
-
-
-
 
 
 class DetailedIntake(TypedDict):

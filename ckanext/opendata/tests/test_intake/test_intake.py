@@ -3,7 +3,7 @@ import pytest
 from typing import Optional, List
 from ckanext.opendata.util.intake.types import (
     Ticket,
-    UPDATE_TICKET_REQUEST_TYPE,
+    RequestType,
     DetailedIntake,
     SummarizedIntake,
 )
@@ -148,7 +148,7 @@ class TestIntakeActions:
     def test_detail_existing_intake_by_group_id(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
-            {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
+            {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
@@ -162,7 +162,7 @@ class TestIntakeActions:
     def test_detail_existing_intake_by_group_id(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
-            {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
+            {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets

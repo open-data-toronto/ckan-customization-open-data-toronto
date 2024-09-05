@@ -4,12 +4,12 @@ from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
 from .util.intake.types import (
-    SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake, Optional
+    SummarizedIntake, SummarizeIntakesParameter, PreparedIntake, PreparedIntake, Intakes, DetailedIntake, Optional
 )
 from .util.intake.utils import search_intakes
 from .util import utils
 from datetime import datetime
-from .util.intake.types import UPDATE_TICKET_REQUEST_TYPE, GroupedEntry
+from .util.intake.types import GroupedEntry, RequestType
 import os
 import io
 import logging
@@ -152,7 +152,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     result = {"new":{}, "existing":{}}
     for ticket_id, ticket_group in named_ticket_groups.items():
         ticket_request_types = [ticket['Request Type'] for ticket in ticket_group["tickets"]]
-        if UPDATE_TICKET_REQUEST_TYPE in ticket_request_types:
+        if RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE in ticket_request_types:
             result["existing"][ticket_id] = ticket_group
         else:
             result["new"][ticket_id] = ticket_group
@@ -163,7 +163,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 @tk.side_effect_free
 def summarize_new_intake(
         context,
-        data_dict:SummarizeIntakesData
+        data_dict:SummarizeIntakesParameter
     ) -> List[SummarizedIntake]:
     '''Returns summaries of all new, active ticket groups'''
     output = []

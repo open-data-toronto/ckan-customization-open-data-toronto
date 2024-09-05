@@ -10,6 +10,7 @@ from .types import (
     GroupedEntry,
     DetailedIntake,
     SummarizedIntake,
+    RequestType,
 )
 
 
@@ -49,12 +50,13 @@ def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
             return val
 
 
+
 # ticket history is presented in an order that is meant to be easy to understand
 # this history, then, has a set order. We show the history that fits this order
 # we do this to simplify the process for people consuming this info
 _TICKET_STATUS_ORDERS = (
     {
-        "request_types": ["Make Open Data Inquiry"],
+        "request_types": [RequestType.MAKE_OPEN_DATA_INQUIRY],
         "order": {
             "Identified": {
                 "order": 1,
@@ -90,8 +92,8 @@ _TICKET_STATUS_ORDERS = (
     },
     {
         "request_types": [
-            "Update Existing Open Dataset Page",
-            "Publish New Open Dataset Page",
+            RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
+            RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
         ],
         "order": {
             "Waiting on Open Data": {
@@ -149,7 +151,6 @@ _TICKET_STATUS_ORDERS = (
 ########################################################################################
 # Public Utils
 ########################################################################################
-
 
 def get_intake_tickets(context) -> List[Ticket]:
     pid = "open-data-intake"
@@ -271,8 +272,8 @@ def get_leftmost_datetime(in_dict: Dict[str, str], *keys) -> datetime:
 
 def is_closed_ticket(ticket: Dict[str, Any]) -> bool:
     _CLOSED_REQUEST_TYPES = [
-        "Update Existing Open Dataset Page",
-        "Publish New Open Dataset Page",
+        RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
+        RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
     ]
     _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
     return (
