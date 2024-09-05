@@ -1,18 +1,20 @@
 """'Logic for multiple Open Data Toronto-specific CKAN actions"""
 
-from ckan.logic import ValidationError, NotFound
+from ckan.logic import ValidationError
 import ckan.plugins.toolkit as tk
 from werkzeug.datastructures import FileStorage
-from .util.intake import (
-    search_intakes, SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake, Optional
+from .util.intake.types import (
+    SummarizedIntake, SummarizeIntakesData, PreparedIntake, PreparedIntake, Intakes, DetailedIntake, Optional
 )
+from .util.intake.utils import search_intakes
 from .util import utils
 from datetime import datetime
-from .util.intake import Ticket, UPDATE_TICKET_REQUEST_TYPE, GroupedEntry
+from .util.intake.types import UPDATE_TICKET_REQUEST_TYPE, GroupedEntry
 import os
 import io
 import logging
 from typing import List, Dict
+from .util.intake import utils as intake_utils
 
 def build_query(query):
     """
@@ -129,20 +131,10 @@ def query_facet(context, data_dict):
         )
     return output
 
-def _get_intake_tickets(context) -> List[Ticket]:
-    pid = "open-data-intake"
-    package = tk.get_action("package_show")(context, {"id": pid})
-    try:
-        resource_id = next(r['id'] for r in package['resources'] if r['name'] == "Open Data Intake Records")
-    except StopIteration:
-        raise ValueError("Could not find Open Data Intake Resource")
-    return tk.get_action("datastore_search")(context, {"resource_id": resource_id, "limit": 32000})["records"]
-
-
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
     # get raw open data intake data from datastore
-    raw = _get_intake_tickets(context)
+    raw = intake_utils.get_intake_tickets(context)
 
     # get unique ticket names
     ticket_ids = {row["Ticket Id"] for row in raw}
@@ -152,9 +144,9 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     grouped_tickets:Dict[str, List[Dict]] = {}
     for ticket_id in ticket_ids:
         grouped_tickets[ticket_id] = [rec for rec in raw if rec['Ticket Id'] == ticket_id]
-    linked_tickets = utils.join_linked_tickets(grouped_tickets)
-    filtered_tickets = utils.filter_out_closed_tickets(linked_tickets)
-    named_ticket_groups = utils.name_ticket_groups(filtered_tickets)
+    linked_tickets = intake_utils.join_linked_tickets(grouped_tickets)
+    filtered_tickets = intake_utils.filter_out_closed_tickets(linked_tickets)
+    named_ticket_groups = intake_utils.name_ticket_groups(filtered_tickets)
 
     # partition by new/existing
     result = {"new":{}, "existing":{}}
@@ -184,7 +176,7 @@ def summarize_new_intake(
             continue
 
         # prepare to skip old and finished ticket groups
-        last_updated = max([utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in tickets])
+        last_updated = max([intake_utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in tickets])
         age = datetime.today() - last_updated
         
         # skip closed standalone inquiry tickets
@@ -195,8 +187,8 @@ def summarize_new_intake(
         if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in tickets]) and age.days > 30:
             continue
 
-        divisions = utils.get_divisions_from_intake_tickets(tickets)
-        public_description = utils.get_ticket_group_public_description(tickets)
+        divisions = intake_utils.get_divisions_from_intake_tickets(tickets)
+        public_description = intake_utils.get_ticket_group_public_description(tickets)
 
         # add summary to output
         output.append({
@@ -236,7 +228,7 @@ def detail_new_intake(context, data_dict) -> DetailedIntake:
             "Ticket Group ID {} does not exist".format(ticket_group_id)
         ]}) 
     
-    return utils.detail_intake(intake)
+    return intake_utils.detail_intake(intake)
 
         
 @tk.side_effect_free

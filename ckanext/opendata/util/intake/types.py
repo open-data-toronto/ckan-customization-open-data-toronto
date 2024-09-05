@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
+from datetime import datetime
 
 
 UPDATE_TICKET_REQUEST_TYPE = "Update Existing Open Dataset Page"
@@ -59,38 +60,7 @@ class SummarizedIntake(TypedDict):
     ticket_ids: List[str]
 
 
-def search_intakes(intakes: List[SummarizedIntake], search: str) -> List[SummarizedIntake]:
-    """_serach_intakes
 
-    Args:
-        intakes (List[Intake]): list of intakes to search
-        search (str): search query
-
-    Returns:
-        List[Intake]: intakes filtered and sorted based on search term
-    """
-
-    # "0asdf12 other_things!@#$ 34" -> [0, 12, 34]
-    ticket_ids_in_search = [
-        f"DIA-{ticket_id}" for ticket_id in re.findall(r"\d+", search)
-    ]
-
-    intake_matches_ticket_id = lambda intake: any(
-        ticket in intake["ticket_ids"] for ticket in ticket_ids_in_search
-    )
-
-    filtered_intakes = [
-        intake
-        for intake in intakes
-        if intake_matches_ticket_id(intake)
-        or search in intake["ticket_group_name"].lower()
-    ]
-
-    sorted_intakes = sorted(filtered_intakes, key=lambda x: x["ticket_group_name"])
-
-    return sorted_intakes
-
-from datetime import datetime
 
 
 class DetailedIntake(TypedDict):

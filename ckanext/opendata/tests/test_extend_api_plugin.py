@@ -1,11 +1,11 @@
 import ckan.tests.helpers as helpers
 import pytest
 from typing import Dict, Optional, List, Any
-from ckanext.opendata.util.intake import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
+from ckanext.opendata.util.intake.types import Ticket, PreparedIntake, UPDATE_TICKET_REQUEST_TYPE, DetailedIntake, SummarizedIntake
 from datetime import datetime
 from ckan.logic import NotFound
-from ckanext.opendata.util.utils import _extract_ticket_name
-from opendata.util.intake import Intakes, GroupedEntry, Ticket
+from ckanext.opendata.util.intake.utils import _extract_ticket_name
+from ckanext.opendata.util.intake.types import Intakes, GroupedEntry, Ticket
 
 
 class MockIntake:
@@ -264,7 +264,7 @@ class TestIntakeActions:
             {"Request Type": "Publish New Open Dataset Page"}
         )
         mocker.patch(
-            "ckanext.opendata.api._get_intake_tickets",
+            "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=tickets
         )
         summarized_intakes:List[SummarizedIntake] = helpers.call_action(
@@ -280,7 +280,7 @@ class TestIntakeActions:
             {"Request Type": "Publish New Open Dataset Page"}
         )
         mocker.patch(
-            "ckanext.opendata.api._get_intake_tickets",
+            "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=tickets
         )
         ticket_group_id = tickets[0]["Ticket Id"]
@@ -297,7 +297,7 @@ class TestIntakeActions:
             {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
         )
         mocker.patch(
-            "ckanext.opendata.api._get_intake_tickets",
+            "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=tickets
         )
         ticket_group_id = tickets[0]["Ticket Id"]
@@ -314,7 +314,7 @@ class TestIntakeActions:
             {"Request Type": UPDATE_TICKET_REQUEST_TYPE}
         )
         mocker.patch(
-            "ckanext.opendata.api._get_intake_tickets",
+            "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=tickets
         )
         ticket_group_name = tickets[0]["Ticket Name"]
@@ -326,7 +326,7 @@ class TestIntakeActions:
         _validate_detailed_intake(result)
 
     def test_detail_existing_intake_by_group_id(self, mocker):
-        mocker.patch("ckanext.opendata.api._get_intake_tickets", return_value=[])
+        mocker.patch("ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=[])
         ticket_group_name = 'dne'
         with pytest.raises(NotFound):
             helpers.call_action(
@@ -337,7 +337,7 @@ class TestIntakeActions:
 
     def test_prepare_intake(self, mocker):
         mocker.patch(
-            "ckanext.opendata.api._get_intake_tickets",
+            "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=self._mock_tickets()
         )
         result = helpers.call_action("prepare_intake", {})
