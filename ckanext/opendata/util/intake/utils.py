@@ -1,4 +1,4 @@
-from typing import List, Dict, TypeVar, Callable, Any
+from typing import List, Dict, TypeVar, Callable, Any, Optional
 import re
 from datetime import datetime
 
@@ -48,7 +48,6 @@ def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
         val = in_dict[key]
         if val:
             return val
-
 
 
 # ticket history is presented in an order that is meant to be easy to understand
@@ -151,6 +150,7 @@ _TICKET_STATUS_ORDERS = (
 ########################################################################################
 # Public Utils
 ########################################################################################
+
 
 def get_intake_tickets(context) -> List[Ticket]:
     pid = "open-data-intake"
@@ -305,6 +305,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     :return: grouped tickets formatted for frontend
     :rtype: DetailedIntake
     """
+    # TODO pair-program to refactor this?
     tickets = grouped_entry["tickets"]
 
     assert isinstance(tickets, list), f"Input must be a list of dicts!"
@@ -313,11 +314,11 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     # Let's make high level info for this ticket group
     last_update = None
     start_date = None
-    jira_ticket_ids = []
-    inquiry_source = []
-    request_types = []
-    to_statuses = []
-    from_statuses = []
+    jira_ticket_ids = set()
+    inquiry_source = set()
+    request_types = set()
+    to_statuses = set()
+    from_statuses = set()
 
     for rec in tickets:
         # last update
@@ -330,25 +331,11 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         if start_date is None or ticket_start_date < start_date:
             start_date = ticket_start_date
 
-        # ticket ids
-        if rec["Ticket Id"] not in jira_ticket_ids:
-            jira_ticket_ids.append(rec["Ticket Id"])
-
-        # inquiry source
-        if rec["Inquiry Source"] not in inquiry_source:
-            inquiry_source.append(rec["Inquiry Source"])
-
-        # request_types
-        if rec["Request Type"] not in request_types:
-            request_types.append(rec["Request Type"])
-
-        # to statuses
-        if rec["To Status"] not in to_statuses:
-            to_statuses.append(rec["To Status"])
-
-        # from statuses
-        if rec["From Status"] not in from_statuses:
-            from_statuses.append(rec["From Status"])
+        jira_ticket_ids.add(rec["Ticket Id"])
+        inquiry_source.add(rec["Inquiry Source"])
+        request_types.add(rec["Request Type"])
+        to_statuses.add(rec["To Status"])
+        from_statuses.add(rec["From Status"])
 
     details = []
 
@@ -357,35 +344,32 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         # for each status, we'll get all relevant ticket records and choose the earliest
         for order_status, order_detail in order["order"].items():
             detail = {
-                "timestamp": datetime.strptime(
-                    "9999-12-31T00:00:00", "%Y-%m-%dT%H:%M:%S"
-                ),
+                "timestamp": None,
                 "match": False,
             }
-            for i in range(len(tickets)):
-                rec = tickets[i]
+            for index in range(len(tickets)):
+                rec = tickets[index]
                 # skip irrelevant tickets in this loop
                 if rec["Request Type"] not in order["request_types"]:
                     continue
 
                 # if we make a match and its the earliest timestamp, it will be included
                 # in the output
+                record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
                 if rec["To Status"] == order_status and (
-                    detail["timestamp"]
-                    > get_leftmost_datetime(rec, "Status Timestamp", "Created")
+                    (detail["timestamp"] is None)
+                    or (detail["timestamp"] > record_ts)
                 ):
                     detail = {
                         "title": order_detail["title"],
-                        "timestamp": get_leftmost_datetime(
-                            rec, "Status Timestamp", "Created"
-                        ),
+                        "timestamp": record_ts,
                         "text": order_detail["text"],
                         "activity_state": "done",
                         "order": order_detail["order"],
                     }
 
                 # if it's the first intake record, put one simple detail
-                if i + 1 == 1 and len(details) == 0:
+                if index == 0 and len(details) == 0:
                     details.append(
                         {
                             "title": "Request Received",
@@ -402,7 +386,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                     )
 
             # append the detail if there's been a match
-            if detail.get("match", True) == True:
+            if detail.get("match", True):
                 details.append(detail)
 
     # loop through details again to ...
@@ -411,23 +395,23 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     #   ensure only one final status is shown
     #   make sure no dates and orders of things are incorrect
     to_remove = []
-    for i in range(len(details)):
-        detail = details[i]
+    for index in range(len(details)):
+        detail = details[index]
 
         # make sure orders and dates are correct
-        if i + 1 < len(details) and i != 0:
+        if index + 1 < len(details) and index != 0:
             # loop through all preceding details. If it has a later date than this one,
             # delete the preceding one
-            if details[i]["timestamp"] < details[i - 1]["timestamp"]:
-                to_remove.append(i - 1)
+            if details[index]["timestamp"] < details[index - 1]["timestamp"]:
+                to_remove.append(index - 1)
 
         # if there's only a closed inquiry ticket, don't add future details
         if detail["order"] == 5 and len(request_types) == 1:
             break
 
         # add active state to last detail
-        elif i + 1 == len(details):
-            details[i]["activity_state"] = "active"
+        elif index + 1 == len(details):
+            details[index]["activity_state"] = "active"
 
             # add future details
             for order in _TICKET_STATUS_ORDERS:
@@ -468,19 +452,19 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     divisions = get_divisions_from_intake_tickets(tickets)
 
     # remove problematic details
-    for i in to_remove:
-        details.pop(i)
+    for index in to_remove:
+        details.pop(index)
 
     return {
         "details": details,
         "divisions": divisions,
-        "from_statuses": from_statuses,
-        "inquiry_source": inquiry_source,
-        "jira_ticket_ids": jira_ticket_ids,
+        "from_statuses": list(from_statuses),
+        "inquiry_source": list(inquiry_source),
+        "jira_ticket_ids": list(jira_ticket_ids),
         "last_update": last_update,
         "public_description": public_description,
-        "request_types": request_types,
+        "request_types": list(request_types),
         "ticket_group_id": ticket_group_id,
         "ticket_group_name": ticket_group_name,
-        "to_statuses": to_statuses,
+        "to_statuses": list(to_statuses),
     }
