@@ -180,11 +180,11 @@ def summarize_new_intake(
         age = datetime.today() - last_updated
         
         # skip closed standalone inquiry tickets
-        if any([rec["To Status"] == "Closed" for rec in tickets]) and all([rec["Request Type"] == "Make Open Data Inquiry" for rec in tickets]) and age.days > 30:
+        if any([rec["To Status"] == "Closed" for rec in tickets]) and all([rec["Request Type"] == RequestType.MAKE_OPEN_DATA_INQUIRY for rec in tickets]) and age.days > 30:
             continue
 
         # skip old closed publish ticket groups
-        if any([rec["To Status"] == "Closed" and rec["Request Type"] == "Publish New Open Dataset Page" for rec in tickets]) and age.days > 30:
+        if any([rec["To Status"] == "Closed" and rec["Request Type"] == RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE for rec in tickets]) and age.days > 30:
             continue
 
         divisions = intake_utils.get_divisions_from_intake_tickets(tickets)
@@ -255,7 +255,7 @@ def detail_existing_intake(context, data_dict) -> DetailedIntake:
     existing_intakes = tk.get_action("prepare_intake")(context, data_dict)["existing"]
     intake = search_func(existing_intakes)
 
-    if intake is None or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == "Update Existing Open Dataset Page" for rec in intake["tickets"]]):
+    if intake is None or any([rec["To Status"] in ["Published", "Closed", "Retired"] and rec["Request Type"] == RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE for rec in intake["tickets"]]):
         return "Not found"
         # TODO switch back to not-found to follow HTTP conventions
         # raise NotFound()

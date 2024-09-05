@@ -11,6 +11,7 @@ from ckan.logic import NotFound
 from ckanext.opendata.util.intake.utils import _extract_ticket_name
 from ckanext.opendata.util.intake.types import Ticket
 from .utils import ODP_ADDR, MockIntake, TicketFactory
+
 from .validators import (
     validate_prepared_intake,
     validate_detailed_intake,
@@ -119,7 +120,7 @@ class TestIntakeActions:
     def test_summarize_new_intake(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
-            {"Request Type": "Publish New Open Dataset Page"}
+            {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
@@ -134,7 +135,7 @@ class TestIntakeActions:
     def test_detail_new_intake(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
-            {"Request Type": "Publish New Open Dataset Page"}
+            {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
