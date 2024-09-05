@@ -1,8 +1,6 @@
-from typing import List, TypedDict, Optional, TypeVar, Callable, Any
+from typing import List, Dict, TypeVar, Callable, Any
 import re
 from datetime import datetime
-from typing import List, Dict, Optional
-from typing_extensions import TypedDict
 
 import ckan.plugins.toolkit as tk
 from .types import (
@@ -13,6 +11,144 @@ from .types import (
     DetailedIntake,
     SummarizedIntake,
 )
+
+
+########################################################################################
+# Private
+########################################################################################
+
+DictKey = TypeVar("DictKey")
+DictValue = TypeVar("DictValue")
+
+
+def _subset_dict_by(
+    dictionary: Dict[DictKey, DictValue],
+    predicate: Callable[[DictKey, DictValue], bool],
+) -> Dict[DictKey, DictValue]:
+    return {k: v for k, v in dictionary.items() if predicate(k, v)}
+
+
+def _extract_ticket_name(s: str) -> str:
+    match = re.search(r"^https://open.toronto.ca/dataset/([^/]+)/?$", s)
+    if match:
+        return match.group(1)
+    return s
+
+
+def _get_ticket_group_name(ticket_group_id: str, tickets: List[Ticket]) -> str:
+    for ticket in tickets:
+        if ticket["Ticket Id"] == ticket_group_id:
+            return _extract_ticket_name(ticket["Ticket Name"])
+    raise ValueError(f"Ticket with id {ticket_group_id} not found")
+
+
+def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
+    for key in keys:
+        val = in_dict[key]
+        if val:
+            return val
+
+
+# ticket history is presented in an order that is meant to be easy to understand
+# this history, then, has a set order. We show the history that fits this order
+# we do this to simplify the process for people consuming this info
+_TICKET_STATUS_ORDERS = (
+    {
+        "request_types": ["Make Open Data Inquiry"],
+        "order": {
+            "Identified": {
+                "order": 1,
+                "title": "Inquiry Received",
+                "text": "This inquiry is on the Open Data Team's list",
+            },
+            "Initiating": {
+                "order": 2,
+                "title": "Initiating Inquiry",
+                "text": (
+                    "Open Data is searching for data owner(s) within the city to help "
+                    "address this inquiry"
+                ),
+            },
+            "Exploring": {
+                "order": 3,
+                "title": "Exploring Details",
+                "text": (
+                    "Data owners have been identified, and technical details and "
+                    "feasibility concerns are being explored"
+                ),
+            },
+            # "Waiting on Division": {"order":4, "title": "", "text": "Data "},
+            "Closed": {
+                "order": 5,
+                "title": "Inquiry Concluded",
+                "text": (
+                    "Investigations here have finished. If there are no additional "
+                    "details here, no further actions are being taken by City staff"
+                ),
+            },
+        },
+    },
+    {
+        "request_types": [
+            "Update Existing Open Dataset Page",
+            "Publish New Open Dataset Page",
+        ],
+        "order": {
+            "Waiting on Open Data": {
+                "order": 6,
+                "title": "Waiting on Open Data",
+                "text": (
+                    "The Open Data Team has the configurations it needs to "
+                    "create/update this dataset but has not begun work"
+                ),
+            },
+            "Waiting on Owner Division": {
+                "order": 7,
+                "title": "Waiting on Owner Division",
+                "text": (
+                    "The Open Data Team needs more details from the data owners before "
+                    "work can continue"
+                ),
+            },
+            "In Progress": {
+                "order": 8,
+                "title": "Configuration In Progress",
+                "text": (
+                    "Open Data is configuring the process of loading this data into the"
+                    " open data portal"
+                ),
+            },
+            "Staged for Review": {
+                "order": 9,
+                "title": "Under Review",
+                "text": "The dataset has been staged and is under review by city staff",
+            },
+            "Published": {
+                "order": 10,
+                "title": "Published",
+                "text": "This data has been published",
+            },
+            "Closed": {
+                "order": 10,
+                "title": "Will not Action",
+                "text": (
+                    "There is no action that can be taken here, and so this work has "
+                    "concluded"
+                ),
+            },
+            "Retired": {
+                "order": 10,
+                "title": "Retired",
+                "text": "This dataset has been retired",
+            },
+        },
+    },
+)
+
+
+########################################################################################
+# Public Utils
+########################################################################################
 
 
 def get_intake_tickets(context) -> List[Ticket]:
@@ -65,16 +201,6 @@ def search_intakes(
     return sorted_intakes
 
 
-DictKey = TypeVar("DictKey")
-DictValue = TypeVar("DictValue")
-
-def _subset_dict_by(
-    dictionary: Dict[DictKey, DictValue],
-    predicate: Callable[[DictKey, DictValue], bool],
-) -> Dict[DictKey, DictValue]:
-    return {k: v for k, v in dictionary.items() if predicate(k, v)}
-
-
 def filter_out_closed_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
@@ -97,19 +223,22 @@ def join_linked_tickets(
         # if there are any linked tickets, combine their records
         if grouped_tickets.get(ticket_id, False):
 
-            # If this ticket has any linked tickets and hasn't already been popped we're going to add it to `grouped`
+            # If this ticket has any linked tickets and hasn't already been popped we're
+            # going to add it to `grouped`
             if any([x["Linked Ticket Id"] for x in grouped_tickets[ticket_id]]):
 
                 #  pop it's associated records (ticket_id no longer in working)
                 # This ticket id will no longer be considered in linked tickets
                 records = grouped_tickets.pop(ticket_id)
 
-                #  grab the linked tickets of the first record (maybe its consistent between all records)
+                #  grab the linked tickets of the first record (maybe its consistent
+                # between all records)
                 #  for all linked tickets that haven't already been
                 for linked_id in records[0]["Linked Ticket Id"].split(","):
                     if linked_id == "DIA-236" and ticket_id == "DIA-38":
                         pass
-                    # if it hasn't already been popped, grab that linked' ticket's records and append them to this records
+                    # if it hasn't already been popped, grab that linked' ticket's
+                    # records and append them to this records
                     if grouped_tickets.get(linked_id, False):
                         this = grouped_tickets.pop(linked_id)
                         for item in this:
@@ -120,20 +249,6 @@ def join_linked_tickets(
     for k, v in grouped_tickets.items():
         joined[k] = v
     return joined
-
-
-def _extract_ticket_name(s: str) -> str:
-    match = re.search(r"^https://open.toronto.ca/dataset/([^/]+)/?$", s)
-    if match:
-        return match.group(1)
-    return s
-
-
-def _get_ticket_group_name(ticket_group_id: str, tickets: List[Ticket]) -> str:
-    for ticket in tickets:
-        if ticket["Ticket Id"] == ticket_group_id:
-            return _extract_ticket_name(ticket["Ticket Name"])
-    raise ValueError(f"Ticket with id {ticket_group_id} not found")
 
 
 def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> Intakes:
@@ -147,16 +262,9 @@ def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> Intakes:
     }
 
 
-def _get_first_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
-    for key in keys:
-        val = in_dict[key]
-        if val:
-            return val
-
-
-def get_first_datetime(in_dict: Dict[str, str], *keys) -> datetime:
+def get_leftmost_datetime(in_dict: Dict[str, str], *keys) -> datetime:
     return datetime.strptime(
-        _get_first_is_truthy(in_dict, *keys),
+        _get_leftmost_is_truthy(in_dict, *keys),
         "%Y-%m-%dT%H:%M:%S",
     )
 
@@ -189,20 +297,12 @@ def get_ticket_group_public_description(tickets: List[Ticket]) -> PublicDescript
 
 
 def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
-    """Presents details of ticket group to be rendered on the frontend.
-    Attribute of output include:
-    - Most recent update date
-    - Jira Ticket IDs
-    - Inquiry Source
-    - Request Type(s)
-    - Ticket Group Name
-    - Ordered list of milestones (dicts)
+    """detail_intake
 
-    Each milestone will have the following attributes:
-    - title
-    - timestamp
-    - subtext
-    - activity_state (done, active, future)
+    :param grouped_entry: ticket groups
+    :type grouped_entry: GroupedEntry
+    :return: grouped tickets formatted for frontend
+    :rtype: DetailedIntake
     """
     tickets = grouped_entry["tickets"]
 
@@ -210,8 +310,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     assert len(tickets), f"Input must be populated!"
 
     # Let's make high level info for this ticket group
-    last_update = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
-    start_date = datetime.strptime("1000-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+    last_update = None
+    start_date = None
     jira_ticket_ids = []
     inquiry_source = []
     request_types = []
@@ -220,12 +320,14 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
 
     for rec in tickets:
         # last update
-        if get_first_datetime(rec, "Status Timestamp", "Created") > last_update:
-            last_update = get_first_datetime(rec, "Status Timestamp", "Created")
+        ticket_last_updated = get_leftmost_datetime(rec, "Status Timestamp", "Created")
+        if last_update is None or ticket_last_updated > last_update:
+            last_update = ticket_last_updated
 
         # start date
-        if datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S") < start_date:
-            start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
+        ticket_start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
+        if start_date is None or ticket_start_date < start_date:
+            start_date = ticket_start_date
 
         # ticket ids
         if rec["Ticket Id"] not in jira_ticket_ids:
@@ -249,85 +351,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
 
     details = []
 
-    # ticket history is presented in an order that is meant to be easy to understand
-    # this history, then, has a set order. We show the history that fits this order
-    # we do this to simplify the process for people consuming this info
-
-    # first, here is the ideal order and content
-    orders = [
-        {
-            "request_types": ["Make Open Data Inquiry"],
-            "order": {
-                "Identified": {
-                    "order": 1,
-                    "title": "Inquiry Received",
-                    "text": "This inquiry is on the Open Data Team's list",
-                },
-                "Initiating": {
-                    "order": 2,
-                    "title": "Initiating Inquiry",
-                    "text": "Open Data is searching for data owner(s) within the city to help address this inquiry",
-                },
-                "Exploring": {
-                    "order": 3,
-                    "title": "Exploring Details",
-                    "text": "Data owners have been identified, and technical details and feasibility concerns are being explored",
-                },
-                # "Waiting on Division": {"order":4, "title": "", "text": "Data "},
-                "Closed": {
-                    "order": 5,
-                    "title": "Inquiry Concluded",
-                    "text": "Investigations here have finished. If there are no additional details here, no further actions are being taken by City staff",
-                },
-            },
-        },
-        {
-            "request_types": [
-                "Update Existing Open Dataset Page",
-                "Publish New Open Dataset Page",
-            ],
-            "order": {
-                "Waiting on Open Data": {
-                    "order": 6,
-                    "title": "Waiting on Open Data",
-                    "text": "The Open Data Team has the configurations it needs to create/update this dataset but has not begun work",
-                },
-                "Waiting on Owner Division": {
-                    "order": 7,
-                    "title": "Waiting on Owner Division",
-                    "text": "The Open Data Team needs more details from the data owners before work can continue",
-                },
-                "In Progress": {
-                    "order": 8,
-                    "title": "Configuration In Progress",
-                    "text": "Open Data is configuring the process of loading this data into the open data portal",
-                },
-                "Staged for Review": {
-                    "order": 9,
-                    "title": "Under Review",
-                    "text": "The dataset has been staged and is under review by city staff",
-                },
-                "Published": {
-                    "order": 10,
-                    "title": "Published",
-                    "text": "This data has been published",
-                },
-                "Closed": {
-                    "order": 10,
-                    "title": "Will not Action",
-                    "text": "There is no action that can be taken here, and so this work has concluded",
-                },
-                "Retired": {
-                    "order": 10,
-                    "title": "Retired",
-                    "text": "This dataset has been retired",
-                },
-            },
-        },
-    ]
-
     # sort out the last ticket type
-    for order in orders:
+    for order in _TICKET_STATUS_ORDERS:
         # for each status, we'll get all relevant ticket records and choose the earliest
         for order_status, order_detail in order["order"].items():
             detail = {
@@ -342,14 +367,15 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                 if rec["Request Type"] not in order["request_types"]:
                     continue
 
-                # if we make a match and its the earliest timestamp, it will be included in the output
+                # if we make a match and its the earliest timestamp, it will be included
+                # in the output
                 if rec["To Status"] == order_status and (
                     detail["timestamp"]
-                    > get_first_datetime(rec, "Status Timestamp", "Created")
+                    > get_leftmost_datetime(rec, "Status Timestamp", "Created")
                 ):
                     detail = {
                         "title": order_detail["title"],
-                        "timestamp": get_first_datetime(
+                        "timestamp": get_leftmost_datetime(
                             rec, "Status Timestamp", "Created"
                         ),
                         "text": order_detail["text"],
@@ -365,7 +391,10 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                             "timestamp": datetime.strptime(
                                 rec["Created"], "%Y-%m-%dT%H:%M:%S"
                             ),
-                            "text": "Open Data has received this a request. Follow up actions on this will be logged here",
+                            "text": (
+                                "Open Data has received this a request. Follow up "
+                                "actions on this will be logged here"
+                            ),
                             "activity_state": "done",
                             "order": 1,
                         }
@@ -386,7 +415,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
 
         # make sure orders and dates are correct
         if i + 1 < len(details) and i != 0:
-            # loop through all preceding details. If it has a later date than this one, delete the preceding one
+            # loop through all preceding details. If it has a later date than this one,
+            # delete the preceding one
             if details[i]["timestamp"] < details[i - 1]["timestamp"]:
                 to_remove.append(i - 1)
 
@@ -399,7 +429,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
             details[i]["activity_state"] = "active"
 
             # add future details
-            for order in orders:
+            for order in _TICKET_STATUS_ORDERS:
                 for order_status, order_detail in order["order"].items():
                     if order_detail["order"] > detail["order"]:
                         if order_detail["order"] not in [10, 5]:
@@ -419,7 +449,12 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                                 {
                                     "title": "Resolution",
                                     "timestamp": None,
-                                    "text": "The resolution of this work can result in the publication, retirement, or update of an open dataset. It may, depending on circumstances, end in nothing actionable.",
+                                    "text": (
+                                        "The resolution of this work can result in the "
+                                        "publication, retirement, or update of an open "
+                                        "dataset. It may, depending on circumstances, "
+                                        "end in nothing actionable."
+                                    ),
                                     "activity_state": "future",
                                     "order": 10,
                                 }

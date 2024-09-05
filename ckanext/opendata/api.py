@@ -176,7 +176,7 @@ def summarize_new_intake(
             continue
 
         # prepare to skip old and finished ticket groups
-        last_updated = max([intake_utils.get_first_datetime(rec, "Status Timestamp", "Created") for rec in tickets])
+        last_updated = max([intake_utils.get_leftmost_datetime(rec, "Status Timestamp", "Created") for rec in tickets])
         age = datetime.today() - last_updated
         
         # skip closed standalone inquiry tickets
