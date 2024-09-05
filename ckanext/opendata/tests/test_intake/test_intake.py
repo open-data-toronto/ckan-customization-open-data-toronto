@@ -179,10 +179,15 @@ class TestIntakeActions:
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=[]
         )
         ticket_group_name = "dne"
-        with pytest.raises(NotFound):
-            helpers.call_action(
-                "detail_existing_intake", {}, ticket_group_name=ticket_group_name
-            )
+        result = helpers.call_action(
+            "detail_existing_intake", {}, ticket_group_name=ticket_group_name
+        )
+        # TODO if spec changes to expect 404
+        # with pytest.raises(NotFound):
+        #     helpers.call_action(
+        #         "detail_existing_intake", {}, ticket_group_name=ticket_group_name
+        #     )
+        assert result == "Not found"
 
     def test_prepare_intake(self, mocker):
         mocker.patch(
