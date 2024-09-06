@@ -275,7 +275,7 @@ def detail_existing_intake(context, data_dict) -> DetailedIntake:
         # TODO consider switching back to not-found (404)
         # raise NotFound()
 
-    return utils.detail_intake(intake)
+    return intake_utils.detail_intake(intake)
 
 
 @tk.side_effect_free

@@ -117,6 +117,10 @@ class TestIntakeActions:
     def _mock_tickets(self, ticket_kwargs: Optional[Ticket] = None) -> List[Ticket]:
         return [TicketFactory(ticket_kwargs).to_dict() for _ in range(10)]
 
+    #################
+    # Summarize new #
+    #################
+
     def test_summarize_new_intake(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
@@ -132,6 +136,10 @@ class TestIntakeActions:
         for intake in summarized_intakes:
             validate_summarized_intake(intake)
 
+    ##############
+    # Detail new #
+    ##############
+
     def test_detail_new_intake(self, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
@@ -146,7 +154,12 @@ class TestIntakeActions:
         )
         validate_detailed_intake(result)
 
-    def test_detail_existing_intake_by_group_id(self, mocker):
+    ###################
+    # Detail existing #
+    ###################
+
+    @pytest.mark.parametrize("query_by", ("ticket_group_id", "ticket_group_name"))
+    def test_detail_existing_intake(self, query_by, mocker):
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
             {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
@@ -154,27 +167,16 @@ class TestIntakeActions:
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )
-        ticket_group_id = tickets[0]["Ticket Id"]
+
+        query_key = "Ticket Id" if query_by == "ticket_group_id" else "Ticket Name"
+        query = {query_by: tickets[0][query_key]}
+
         result: DetailedIntake = helpers.call_action(
-            "detail_existing_intake", {}, ticket_group_id=ticket_group_id
+            "detail_existing_intake", {}, **query
         )
         validate_detailed_intake(result)
 
-    def test_detail_existing_intake_by_group_id(self, mocker):
-        tickets = self._mock_tickets(
-            # ensure there are mocked 'existing' tickets
-            {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
-        )
-        mocker.patch(
-            "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
-        )
-        ticket_group_name = tickets[0]["Ticket Name"]
-        result: DetailedIntake = helpers.call_action(
-            "detail_existing_intake", {}, ticket_group_name=ticket_group_name
-        )
-        validate_detailed_intake(result)
-
-    def test_detail_existing_intake_by_group_id(self, mocker):
+    def test_detail_existing_intake_by_group_id_not_found(self, mocker):
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=[]
         )
@@ -188,6 +190,10 @@ class TestIntakeActions:
         #         "detail_existing_intake", {}, ticket_group_name=ticket_group_name
         #     )
         assert result == "Not found"
+
+    ##################
+    # prepare intake #
+    ##################
 
     def test_prepare_intake(self, mocker):
         mocker.patch(
