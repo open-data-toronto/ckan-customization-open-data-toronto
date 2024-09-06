@@ -13,7 +13,7 @@ class RequestType(str, Enum):
 PublicDescription = Optional[str]
 
 Ticket = TypedDict(
-    "NewEntry",
+    "Ticket",
     {
         "_id": str,
         "Created": str,
