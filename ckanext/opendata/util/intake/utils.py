@@ -1,4 +1,4 @@
-from typing import List, Dict, TypeVar, Callable, Any, Optional
+from typing import List, Dict, TypeVar, Callable, Any, Union, Optional
 import re
 from datetime import datetime
 
@@ -26,6 +26,17 @@ def _subset_dict_by(
     dictionary: Dict[DictKey, DictValue],
     predicate: Callable[[DictKey, DictValue], bool],
 ) -> Dict[DictKey, DictValue]:
+    """subset_dict_by
+
+    :param dictionary: the dictionary to subset by
+    :type dictionary: Dict[DictKey, DictValue]
+    :param predicate: function that, given a key and value of the dictionary returns a
+      boolean indicating if the key should be removed from the returned dictionary
+    :type predicate: Callable[[DictKey, DictValue], bool]
+    :return: the original dictionary with keys removed for elements not matching the
+      predicate.
+    :rtype: Dict[DictKey, DictValue]
+    """
     return {k: v for k, v in dictionary.items() if predicate(k, v)}
 
 
@@ -48,6 +59,18 @@ def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
         val = in_dict[key]
         if val:
             return val
+
+
+def _is_closed_ticket(ticket: Dict[str, Any]) -> bool:
+    _CLOSED_REQUEST_TYPES = [
+        RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
+        RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
+    ]
+    _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
+    return (
+        ticket["Request Type"] in _CLOSED_REQUEST_TYPES
+        and ticket["To Status"] in _CLOSED_STATUSES
+    )
 
 
 # ticket history is presented in an order that is meant to be easy to understand
@@ -116,13 +139,13 @@ _TICKET_STATUS_ORDERS = (
                 "title": "Configuration In Progress",
                 "text": (
                     "Open Data is configuring the process of loading this data into the"
-                    " open data portal"
+                    " Open Data Portal"
                 ),
             },
             "Staged for Review": {
                 "order": 9,
                 "title": "Under Review",
-                "text": "The dataset has been staged and is under review by city staff",
+                "text": "The dataset has been staged and is under review by City staff",
             },
             "Published": {
                 "order": 10,
@@ -153,13 +176,15 @@ _TICKET_STATUS_ORDERS = (
 
 
 def get_intake_tickets(context) -> List[Ticket]:
-    pid = "open-data-intake"
-    package = tk.get_action("package_show")(context, {"id": pid})
+    open_data_intake_package_id = "open-data-intake"
+    package = tk.get_action("package_show")(
+        context, {"id": open_data_intake_package_id}
+    )
     try:
         resource_id = next(
-            r["id"]
-            for r in package["resources"]
-            if r["name"] == "Open Data Intake Records"
+            resource["id"]
+            for resource in package["resources"]
+            if resource["name"] == "Open Data Intake Records"
         )
     except StopIteration:
         raise ValueError("Could not find Open Data Intake Resource")
@@ -171,14 +196,14 @@ def get_intake_tickets(context) -> List[Ticket]:
 def search_intakes(
     intakes: List[SummarizedIntake], search: str
 ) -> List[SummarizedIntake]:
-    """_serach_intakes
+    """_=serach_intakes
 
     Args:
-        intakes (List[Intake]): list of intakes to search
+        intakes (List[SummarizedIntake]): list of intakes to search
         search (str): search query
 
     Returns:
-        List[Intake]: intakes filtered and sorted based on search term
+        List[SummarizedIntake]: intakes filtered and sorted based on search term
     """
 
     # "0asdf12 other_things!@#$ 34" -> [0, 12, 34]
@@ -205,10 +230,18 @@ def search_intakes(
 def filter_out_closed_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
+    """filter_out_closed_tickets
+
+    :param grouped_tickets: tickets grouped by ticket_group_id
+    :type grouped_tickets: Dict[str, List[Ticket]]
+    :return: dictionary of ticket groups where ticket groups containing any closed
+      tickets have been removed
+    :rtype: Dict[str, List[Ticket]]
+    """
     return _subset_dict_by(
         grouped_tickets,
         predicate=lambda _, tickets: not any(
-            is_closed_ticket(ticket) for ticket in tickets
+            _is_closed_ticket(ticket) for ticket in tickets
         ),
     )
 
@@ -216,6 +249,14 @@ def filter_out_closed_tickets(
 def join_linked_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
+    """join_linked_tickets
+
+    :param grouped_tickets: Join tickets with "Linked Ticket ID" to their parent
+      ticket_group
+    :type grouped_tickets: Dict[str, List[Ticket]]
+    :return: dictionary with linked tickets joined to their 'linked' ticket group
+    :rtype: Dict[str, List[Ticket]]
+    """
     # join linked ticket objects together
     joined = {}
     ticket_ids = set(grouped_tickets.keys())
@@ -253,6 +294,13 @@ def join_linked_tickets(
 
 
 def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> Intakes:
+    """name_ticket_groups
+
+    :param grouped_tickets: tickets grouped under ticket_group_ids
+    :type grouped_tickets: Dict[str, List[Ticket]]
+    :return: Intakes
+    :rtype: Intakes
+    """
     return {
         ticket_group_id: {
             "tickets": tickets,
@@ -263,35 +311,47 @@ def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> Intakes:
     }
 
 
-def get_leftmost_datetime(in_dict: Dict[str, str], *keys) -> datetime:
+def get_leftmost_datetime(in_dict: Dict[Any, Union[str, Any]], *keys) -> datetime:
+    """get_leftmost_datetime
+
+    :param in_dict: dictionary
+    :type in_dict: Dict[Any, Union[str, Any]]
+    :return: parsed datetime of first/leftmost truthy dictionary value checked in the
+      order that *args are provided in
+    :rtype: datetime
+    """
     return datetime.strptime(
         _get_leftmost_is_truthy(in_dict, *keys),
         "%Y-%m-%dT%H:%M:%S",
     )
 
 
-def is_closed_ticket(ticket: Dict[str, Any]) -> bool:
-    _CLOSED_REQUEST_TYPES = [
-        RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
-        RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
-    ]
-    _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
-    return (
-        ticket["Request Type"] in _CLOSED_REQUEST_TYPES
-        and ticket["To Status"] in _CLOSED_STATUSES
-    )
+def get_divisions_from_intake_tickets(intakes: List[Dict]) -> List[str]:
+    """get_divisions_from_intake_tickets
 
-
-def get_divisions_from_intake_tickets(intake: List[Dict]) -> List[str]:
+    :param intake: list of intakes
+    :type intake: List[Dict]
+    :return: list of unique divisions
+    :rtype: List[str]
+    """
     divisions = set(
         rec.get("Division")
-        for rec in intake
+        for rec in intakes
         if rec.get("Division") != "" and rec.get("Division") is not None
     )
     return list(divisions)
 
 
-def get_ticket_group_public_description(tickets: List[Ticket]) -> PublicDescription:
+def get_ticket_group_public_description(
+    tickets: List[Ticket],
+) -> Optional[PublicDescription]:
+    """get_ticket_group_public_description
+
+    :param tickets: list of tickets
+    :type tickets: List[Ticket]
+    :return: user-facing public description
+    :rtype: PublicDescription
+    """
     descriptions = {ticket.get("Public Description") for ticket in tickets}
     description = ". ".join(desc for desc in descriptions if desc is not None)
     return None if not description else description
@@ -357,8 +417,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                 # in the output
                 record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
                 if rec["To Status"] == order_status and (
-                    (detail["timestamp"] is None)
-                    or (detail["timestamp"] > record_ts)
+                    (detail["timestamp"] is None) or (detail["timestamp"] > record_ts)
                 ):
                     detail = {
                         "title": order_detail["title"],
