@@ -1,8 +1,6 @@
 from typing import List, TypedDict, Optional
-import re
 from datetime import datetime
 from typing import List, Dict, Optional
-from typing_extensions import TypedDict
 from datetime import datetime
 from enum import Enum
 
