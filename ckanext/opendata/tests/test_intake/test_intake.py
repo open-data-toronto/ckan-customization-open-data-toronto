@@ -10,7 +10,7 @@ from ckanext.opendata.util.intake.types import (
 from ckan.logic import NotFound
 from ckanext.opendata.util.intake.utils import _extract_ticket_name
 from ckanext.opendata.util.intake.types import Ticket
-from .utils import ODP_ADDR, MockIntake, TicketFactory
+from .utils import ODP_ADDR, TicketFactory
 
 from .validators import (
     validate_prepared_intake,
@@ -18,12 +18,12 @@ from .validators import (
     validate_summarized_intake,
 )
 
-ticket_1 = MockIntake(ticket_id="DIA-1", ticket_name="Ticket 1").to_dict()
-ticket_1a = MockIntake(ticket_id="DIA-1a", ticket_name="Ticket 1").to_dict()
-ticket_1b = MockIntake(ticket_id="DIA-1b", ticket_name="Ticket 1").to_dict()
-ticket_2 = MockIntake(ticket_id="DIA-2", ticket_name="Ticket 2").to_dict()
-ticket_3 = MockIntake(ticket_id="DIA-3", ticket_name="Ticket 3").to_dict()
-ticket_multi = MockIntake(ticket_id="DIA-4", ticket_name="Ticket Multi").to_dict()
+ticket_1 = TicketFactory({"Ticket Id":"DIA-1", "Ticket Name":"Ticket 1"}).to_dict()
+ticket_1a = TicketFactory({"Ticket Id":"DIA-1a", "Ticket Name":"Ticket 1"}).to_dict()
+ticket_1b = TicketFactory({"Ticket Id":"DIA-1b", "Ticket Name":"Ticket 1"}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id":"DIA-2", "Ticket Name":"Ticket 2"}).to_dict()
+ticket_3 = TicketFactory({"Ticket Id":"DIA-3", "Ticket Name":"Ticket 3"}).to_dict()
+ticket_multi = TicketFactory({"Ticket Id":"DIA-4", "Ticket Name":"Ticket Multi"}).to_dict()
 
 mock_intake_items = {
     ticket_1["Ticket Id"]: {
