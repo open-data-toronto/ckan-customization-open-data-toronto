@@ -7,7 +7,6 @@ from ckanext.opendata.util.intake.types import (
     DetailedIntake,
     SummarizedIntake,
 )
-from ckan.logic import NotFound
 from ckanext.opendata.util.intake.utils import _extract_ticket_name
 from ckanext.opendata.util.intake.types import Ticket
 from .utils import ODP_ADDR, TicketFactory
@@ -45,7 +44,9 @@ mock_intake_items = {
 
 
 @pytest.mark.parametrize("search", ["Ticket", "ticket", "TiCkEt"])
-def test_summarize_new_intake_search_str(search, mocker):
+def test_summarize_new_intake_search_str(record_test_name, search, mocker):
+    record_test_name(f"Summarize New Intake API accepts a search parameter[{search}]")
+
     context = {}
     data = {"search": search}
 
@@ -59,7 +60,9 @@ def test_summarize_new_intake_search_str(search, mocker):
     assert all(t["ticket_group_name"].startswith("Ticket") for t in result)
 
 
-def test_summarize_new_intake_accepts_empty_search(mocker):
+def test_summarize_new_intake_accepts_empty_search(record_test_name, mocker):
+    record_test_name("Summarize New Intake API accepts no search parameter")
+
     context = {}
     data = {}
     mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
@@ -84,7 +87,7 @@ def test_summarize_new_intake_accepts_empty_search(mocker):
         ),
         (
             # Add arbitrary padding text
-            f'other things here {ticket_multi["Ticket Id"]} numbers too 12',
+            f'padding:12 {ticket_multi["Ticket Id"]} padding34',
             {"Ticket 1", "Ticket 2"},
         ),
         (
@@ -94,10 +97,14 @@ def test_summarize_new_intake_accepts_empty_search(mocker):
     ],
 )
 def test_summarize_new_intake_accepts_ticket_number_in_search(
+    record_test_name,
     mocker,
     ticket_id,
     expected_ticket_groups,
 ):
+    record_test_name(
+        f"Summarize New Intake API accepts ticket number in search[{ticket_id}]"
+    )
     context = {}
     data = {"search": ticket_id}
 
@@ -121,7 +128,8 @@ class TestIntakeActions:
     # Summarize new #
     #################
 
-    def test_summarize_new_intake(self, mocker):
+    def test_summarize_new_intake(self, record_test_name, mocker):
+        record_test_name("Summarize New Intake API returns a valid JSON response")
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
             {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
@@ -140,7 +148,8 @@ class TestIntakeActions:
     # Detail new #
     ##############
 
-    def test_detail_new_intake(self, mocker):
+    def test_detail_new_intake(self, record_test_name, mocker):
+        record_test_name("Detail New Intake API returns a valid JSON response")
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
             {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
@@ -159,7 +168,8 @@ class TestIntakeActions:
     ###################
 
     @pytest.mark.parametrize("query_by", ("ticket_group_id", "ticket_group_name"))
-    def test_detail_existing_intake(self, query_by, mocker):
+    def test_detail_existing_intake(self, record_test_name, query_by, mocker):
+        record_test_name(f"Detail Existing Intake API can be queried by {query_by}")
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
             {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
@@ -176,7 +186,13 @@ class TestIntakeActions:
         )
         validate_detailed_intake(result)
 
-    def test_detail_existing_intake_by_group_id_not_found(self, mocker):
+    def test_detail_existing_intake_by_group_id_not_found(
+        self, mocker, record_test_name
+    ):
+        record_test_name(
+            "Detail Existing Intake API returns proper error message when not found"
+        )
+
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=[]
         )
@@ -195,7 +211,8 @@ class TestIntakeActions:
     # prepare intake #
     ##################
 
-    def test_prepare_intake(self, mocker):
+    def test_prepare_intake(self, record_test_name, mocker):
+        record_test_name("Prepare Intake API returns a valid JSON resposne")
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets",
             return_value=self._mock_tickets(),
@@ -207,13 +224,14 @@ class TestIntakeActions:
 @pytest.mark.parametrize(
     "test,expected",
     [
-        (f"{ODP_ADDR}/something/", "something"),
-        (f"{ODP_ADDR}/something", "something"),
-        (f"/something", "/something"),
-        (f"/something/", "/something/"),
-        (f"anything here <asdf;lkj", "anything here <asdf;lkj"),
+        (f"{ODP_ADDR}/ticket-name/", "ticket-name"),
+        (f"{ODP_ADDR}/ticket-name", "ticket-name"),
+        (f"/ticket-name", "/ticket-name"),
+        (f"/ticket-name/", "/ticket-name/"),
+        ("ticket w\ special characters !%^&*", "ticket w\ special characters !%^&*"),
     ],
 )
-def test_extract_ticket_name(test, expected):
+def test_extract_ticket_name(record_test_name, test, expected):
+    record_test_name(f"Jira Ticket Names are extracted from URLs as expected[{test}]")
     result = _extract_ticket_name(test)
     assert result == expected
