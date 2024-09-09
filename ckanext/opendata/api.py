@@ -357,7 +357,7 @@ def search_packages(context, data_dict):
     intake_names = {intake["ticket_group_name"] for _, intake in intake.items()}
 
     for i in range(len(output["results"])):
-        output["results"][i] = output["results"][i]["name"] in intake_names
+        output["results"][i]["updating"] = output["results"][i]["name"] in intake_names
 
     return output
 
