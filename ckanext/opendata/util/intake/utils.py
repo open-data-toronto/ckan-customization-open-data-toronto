@@ -1,18 +1,18 @@
-from typing import List, Dict, TypeVar, Callable, Any, Union, Optional
 import re
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 import ckan.plugins.toolkit as tk
-from .types import (
-    Ticket,
-    PublicDescription,
-    Intakes,
-    GroupedEntry,
-    DetailedIntake,
-    SummarizedIntake,
-    RequestType,
-)
 
+from .types import (
+    DetailedIntake,
+    GroupedEntry,
+    Intakes,
+    PublicDescription,
+    RequestType,
+    SummarizedIntake,
+    Ticket,
+)
 
 ########################################################################################
 # Private

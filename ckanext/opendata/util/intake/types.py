@@ -1,14 +1,13 @@
-from typing import List, TypedDict, Optional
-from datetime import datetime
-from typing import List, Dict, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Dict, List, Optional, TypedDict
 
 
 class RequestType(str, Enum):
     MAKE_OPEN_DATA_INQUIRY = "Make Open Data Inquiry"
     PUBLISH_NEW_OPEN_DATASET_PAGE = "Publish New Open Dataset Page"
     UPDATE_EXISTING_OPEN_DATASET_PAGE = "Update Existing Open Dataset Page"
+
 
 PublicDescription = Optional[str]
 

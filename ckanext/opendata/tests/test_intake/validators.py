@@ -1,18 +1,14 @@
-from ckanext.opendata.util.intake.types import (
-    Ticket,
-    PreparedIntake,
-    DetailedIntake,
-    SummarizedIntake,
-)
-from typing import List, Any
-from ckanext.opendata.util.intake.types import (
-    Ticket,
-    PreparedIntake,
-    DetailedIntake,
-    SummarizedIntake,
-)
 from datetime import datetime
-from ckanext.opendata.util.intake.types import Intakes, GroupedEntry, Ticket
+from typing import Any, List
+
+from ckanext.opendata.util.intake.types import (
+    DetailedIntake,
+    GroupedEntry,
+    Intakes,
+    PreparedIntake,
+    SummarizedIntake,
+    Ticket,
+)
 
 
 def _is_optional_str(s: Any) -> bool:

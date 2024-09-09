@@ -1,5 +1,6 @@
 from typing import Optional
-from ckanext.opendata.util.intake.types import Ticket, RequestType
+
+from ckanext.opendata.util.intake.types import RequestType, Ticket
 
 ODP_ADDR = "https://open.toronto.ca/dataset"
 
