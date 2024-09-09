@@ -1,2 +1,2 @@
-[pytest]
+[tool.pytest.ini_options]
 junit_suite_name = "Open Data Toronto CKAN Extension"
