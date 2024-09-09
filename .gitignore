@@ -1,3 +1,4 @@
+*.swp
 .ropeproject
 node_modules
 bower_components
