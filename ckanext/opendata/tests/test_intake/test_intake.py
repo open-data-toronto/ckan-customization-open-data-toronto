@@ -1,28 +1,31 @@
+from typing import List, Optional
+
 import ckan.tests.helpers as helpers
 import pytest
-from typing import Optional, List
+
 from ckanext.opendata.util.intake.types import (
-    Ticket,
-    RequestType,
     DetailedIntake,
+    RequestType,
     SummarizedIntake,
+    Ticket,
 )
 from ckanext.opendata.util.intake.utils import _extract_ticket_name
-from ckanext.opendata.util.intake.types import Ticket
-from .utils import ODP_ADDR, TicketFactory
 
+from .utils import ODP_ADDR, TicketFactory
 from .validators import (
-    validate_prepared_intake,
     validate_detailed_intake,
+    validate_prepared_intake,
     validate_summarized_intake,
 )
 
-ticket_1 = TicketFactory({"Ticket Id":"DIA-1", "Ticket Name":"Ticket 1"}).to_dict()
-ticket_1a = TicketFactory({"Ticket Id":"DIA-1a", "Ticket Name":"Ticket 1"}).to_dict()
-ticket_1b = TicketFactory({"Ticket Id":"DIA-1b", "Ticket Name":"Ticket 1"}).to_dict()
-ticket_2 = TicketFactory({"Ticket Id":"DIA-2", "Ticket Name":"Ticket 2"}).to_dict()
-ticket_3 = TicketFactory({"Ticket Id":"DIA-3", "Ticket Name":"Ticket 3"}).to_dict()
-ticket_multi = TicketFactory({"Ticket Id":"DIA-4", "Ticket Name":"Ticket Multi"}).to_dict()
+ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1"}).to_dict()
+ticket_1a = TicketFactory({"Ticket Id": "DIA-1a", "Ticket Name": "Ticket 1"}).to_dict()
+ticket_1b = TicketFactory({"Ticket Id": "DIA-1b", "Ticket Name": "Ticket 1"}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Ticket Name": "Ticket 2"}).to_dict()
+ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3"}).to_dict()
+ticket_multi = TicketFactory(
+    {"Ticket Id": "DIA-4", "Ticket Name": "Ticket Multi"}
+).to_dict()
 
 mock_intake_items = {
     ticket_1["Ticket Id"]: {
@@ -120,7 +123,6 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
 
 
 class TestIntakeActions:
-
     def _mock_tickets(self, ticket_kwargs: Optional[Ticket] = None) -> List[Ticket]:
         return [TicketFactory(ticket_kwargs).to_dict() for _ in range(10)]
 
@@ -228,7 +230,7 @@ class TestIntakeActions:
         (f"{ODP_ADDR}/ticket-name", "ticket-name"),
         (f"/ticket-name", "/ticket-name"),
         (f"/ticket-name/", "/ticket-name/"),
-        ("ticket w\ special characters !%^&*", "ticket w\ special characters !%^&*"),
+        ("ticket w special characters !%^&*", "ticket w special characters !%^&*"),
     ],
 )
 def test_extract_ticket_name(record_test_name, test, expected):

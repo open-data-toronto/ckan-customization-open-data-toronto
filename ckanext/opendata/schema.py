@@ -106,8 +106,5 @@ def update_package(context):
     if last_refreshed != old_last_refreshed:
         tk.get_action("package_patch")(
             context,
-            {
-                "id": package.id,
-                "last_refreshed": last_refreshed,
-                "formats": formats},
+            {"id": package.id, "last_refreshed": last_refreshed, "formats": formats},
         )

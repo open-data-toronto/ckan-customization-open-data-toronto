@@ -1,3 +1,6 @@
+###########
+# testing #
+###########
 pytest==8.3.2
 pytest-mock==3.14.0
 pytest-ckan==0.0.12
@@ -8,3 +11,8 @@ mock==2.0.0
 # Pylons needs factory-boy to be installed as well.
 Pylons==1.0.3
 factory-boy==3.3.0
+#############
+# dev utils #
+#############
+pre-commit==3.5.0
+watchdog==2.1.5
