@@ -1,8 +1,8 @@
-from . import api, schema, utils
-
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckan.plugins.toolkit import _
+
+from . import api, schema, utils
 
 
 class ExtendedAPIPlugin(p.SingletonPlugin):
@@ -60,9 +60,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     #   to its resources
 
     def before_create(self, context, resource):
-        package = tk.get_action("package_show")(context, {
-            "id": resource["package_id"]
-        })
+        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
 
         # throw an error if we attempt to create 2 packages with the same name
         for idx, r in enumerate(package["resources"]):

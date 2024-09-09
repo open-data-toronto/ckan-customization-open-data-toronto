@@ -1,15 +1,15 @@
 """'Logic for multiple Open Data Toronto-specific CKAN actions"""
 
-from ckan.logic import ValidationError
+import io
+import logging
+import os
+from datetime import datetime
+
 import ckan.plugins.toolkit as tk
+from ckan.logic import ValidationError
 from werkzeug.datastructures import FileStorage
 
 from . import utils
-from datetime import datetime
-
-import os
-import io
-import logging
 
 
 def build_query(query):
@@ -80,10 +80,7 @@ def quality_show(context, data_dict):
     if pid is None:
         raise ValidationError("Missing package ID")
 
-    package = tk.get_action("package_show")(context, {
-        "id": "catalogue-quality-scores"
-        }
-    )
+    package = tk.get_action("package_show")(context, {"id": "catalogue-quality-scores"})
 
     for r in package["resources"]:
         if r["name"] == "quality-scores-explanation-codes-and-scores":
@@ -91,11 +88,14 @@ def quality_show(context, data_dict):
             break
 
     if rid is not None:
-        return [r for r in tk.get_action("datastore_search")(
-            context,
-            {"resource_id": rid, "q": {"package": pid},
-                "sort": "recorded_at desc"},
-        )["records"] if r["package"] == pid]
+        return [
+            r
+            for r in tk.get_action("datastore_search")(
+                context,
+                {"resource_id": rid, "q": {"package": pid}, "sort": "recorded_at desc"},
+            )["records"]
+            if r["package"] == pid
+        ]
 
 
 @tk.side_effect_free
@@ -211,15 +211,14 @@ def datastore_cache(context, data_dict):
         }
 
     # otherwise, use input param has resource id only
-    logging.info("[ckanext-opendatatoronto]----------- Looking for resource id in data_dict")
+    logging.info(
+        "[ckanext-opendatatoronto]----------- Looking for resource id in data_dict"
+    )
     if "resource_id" in data_dict.keys() and "package_id" not in data_dict.keys():
         resource = tk.get_action("resource_show")(
             context, {"id": data_dict["resource_id"]}
         )
-        package = tk.get_action("package_show")(context, {
-            "id": resource["package_id"]
-            }
-        )
+        package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
         resource_id = (
             resource["id"]
             if resource["datastore_active"] in [True, "true", "True"]
@@ -269,7 +268,9 @@ def datastore_cache(context, data_dict):
             for format in target_formats:
                 output[format.upper()] = {}
 
-            logging.info("[ckanext-opendatatoronto]=========================== CONVERTING Spatial FILE")
+            logging.info(
+                "[ckanext-opendatatoronto]=========================== CONVERTING Spatial FILE"
+            )
             logging.info(resource_info)
 
             cached_files = tk.get_action("to_file")(
@@ -295,7 +296,12 @@ def datastore_cache(context, data_dict):
                 with open(val, "rb") as f:
                     response = io.BytesIO(f.read())
                     f.close()
-                    logging.info("[ckanext-opendatatoronto]--------------- " + format + " " + epsg_code)
+                    logging.info(
+                        "[ckanext-opendatatoronto]--------------- "
+                        + format
+                        + " "
+                        + epsg_code
+                    )
 
                 try:
                     # try making a resource from scratch
@@ -311,8 +317,8 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"],
                         },
                     )
-                except Exception as e:                    
-                    
+                except Exception as e:
+
                     # otherwise, update the existing one
                     existing_resource = tk.get_action("resource_search")(
                         context, {"query": "name:{}".format(filename)}
@@ -344,7 +350,9 @@ def datastore_cache(context, data_dict):
             for format in target_formats:
                 output[format.upper()] = {}
 
-            logging.info("[ckanext-opendatatoronto]---------- CONVERTING Non Spatial FILE")
+            logging.info(
+                "[ckanext-opendatatoronto]---------- CONVERTING Non Spatial FILE"
+            )
             logging.info("[ckanext-opendatatoronto]-------------- " + format)
             cached_files = tk.get_action("to_file")(
                 context,
@@ -451,7 +459,7 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # We dont want to hit the /datastore_cache for each chunk,
     # just the last chunk
     # The last "chunk" wont be 2000 or 20000 records in size
-    
+
     # We also have an optional "do not cache" input for datastore_create
     # if this is marked, caching wont occur after a final chunk
 
@@ -465,38 +473,43 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
         )
     )
     output = original_datastore_create(context, data_dict)
-    logging.info("[ckanext-opendatatoronto]=== LOADED {} RECORDS".format(str(numrecords)))
-    if numrecords not in [2000, 1999, 20000, 19999, 0] and not data_dict.get("do_not_cache", False):
+    logging.info(
+        "[ckanext-opendatatoronto]=== LOADED {} RECORDS".format(str(numrecords))
+    )
+    if numrecords not in [2000, 1999, 20000, 19999, 0] and not data_dict.get(
+        "do_not_cache", False
+    ):
 
         context.pop("model")
         context.pop("session")
         context.pop("connection")
-        
-        #tk.enqueue_job(
-        #    fn=datastore_cache_job, 
+
+        # tk.enqueue_job(
+        #    fn=datastore_cache_job,
         #    args=[
         #        context,
         #        output["resource_id"],
-        #    ], 
+        #    ],
         #    title="cache_job - " + output["resource_id"],
         #    rq_kwargs={"timeout":3600}
         #    #title=output["resource_id"]+"_datastore_cache_job",
         #    #timeout=3600
-        #)
+        # )
         tk.get_action("datastore_cache")(
             context, {"resource_id": output["resource_id"]}
         )
-    logging.info("[ckanext-opendatatoronto]------------ Done Checking If ready for Datastore Cache")
+    logging.info(
+        "[ckanext-opendatatoronto]------------ Done Checking If ready for Datastore Cache"
+    )
 
     return output
+
 
 def datastore_cache_job(context, resource_id):
     """Calls datastore_cache CKAN action"""
 
-    tk.get_action("datastore_cache")(
-        context,
-        {"resource_id": resource_id}
-    )
+    tk.get_action("datastore_cache")(context, {"resource_id": resource_id})
+
 
 @tk.chained_action
 def datastore_delete_hook(original_datastore_delete, context, data_dict):

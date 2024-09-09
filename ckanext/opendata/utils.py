@@ -1,9 +1,10 @@
-from datetime import datetime
-import ckan.plugins.toolkit as tk
-import json
-import csv
-import re
 import codecs
+import csv
+import json
+import re
+from datetime import datetime
+
+import ckan.plugins.toolkit as tk
 
 
 def string_to_hex(s):
@@ -27,7 +28,10 @@ def to_list(input):
         # If the item is already a list from wordpress, it
         # may have "vocab_" as an unnecessary prefix to certain
         # values, specifically when running extendedapi's /search_facets
-        return [item.replace("vocab_", "") if item.startswith("vocab_") else item for item in input]
+        return [
+            item.replace("vocab_", "") if item.startswith("vocab_") else item
+            for item in input
+        ]
 
 
 def validate_length(key, data, errors, context):
@@ -125,7 +129,7 @@ def default_to_false(value):
 
 
 def default_to_today(value):
-    # if we receive a valid datetime IS format string, parse it into 
+    # if we receive a valid datetime IS format string, parse it into
     # an ISO format datetime object
     # if we receive a datetime, return it as is
     # if we return something else, return today as a datetime object
@@ -170,9 +174,7 @@ def str_to_datetime(input):
     # string into a datetime of one of those formats
     assert isinstance(
         input, str
-    ), "str_to_datetime() input should be string - it received {}".format(
-        type(input)
-    )
+    ), "str_to_datetime() input should be string - it received {}".format(type(input))
     for format in [
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%d %H:%M:%S.%f",
@@ -216,37 +218,33 @@ def get_catalog():
     except Exception as e:
         print("Couldnt access catalog page:\n" + str(e))
         output = {
-            "records": [
-                {
-                    "message": "Log in as an admin to see catalog ETL details"
-                }
-            ]
+            "records": [{"message": "Log in as an admin to see catalog ETL details"}]
         }
 
     return output
 
 
 def parse_dqs_codes(input):
-    '''takes a tilde (~) separated string containing dqs codes
-    and parses it into meaningful descriptions in an array'''
+    """takes a tilde (~) separated string containing dqs codes
+    and parses it into meaningful descriptions in an array"""
 
     output = {}
     # init translation dict
     code_dict = {
-        "colnames_unclear": "Column names are not composed of clear english words", 
+        "colnames_unclear": "Column names are not composed of clear english words",
         "constant_cols": "The following column(s) contain constant values:",
-        "metadata_missing": "The following metadata field(s) are empty:", 
-        "owner_is_opendata": "This dataset's owner is marked as opendata@toronto.ca, when there may be a better contact email", 
-        "bad_info_url": "The url where users can get more information about this data is broken", 
-        "all_data_def_missing": "There are no column definitions in this dataset", 
-        "missing_def_cols": "The following column definitions are empty:", 
-        #"periods_behind": "The dataset is not being refreshed at its designated refresh rate.", 
-        "stale": "This dataset has not been updated in over 2 years", 
-        "significant_missing_data": "A significant amount of data is null in this dataset", 
-        "no_pipeline_found": "This dataset is updated by hand", 
-        "no_tags": "This dataset hasn't been associated with any additional, searchable keywords", 
+        "metadata_missing": "The following metadata field(s) are empty:",
+        "owner_is_opendata": "This dataset's owner is marked as opendata@toronto.ca, when there may be a better contact email",
+        "bad_info_url": "The url where users can get more information about this data is broken",
+        "all_data_def_missing": "There are no column definitions in this dataset",
+        "missing_def_cols": "The following column definitions are empty:",
+        # "periods_behind": "The dataset is not being refreshed at its designated refresh rate.",
+        "stale": "This dataset has not been updated in over 2 years",
+        "significant_missing_data": "A significant amount of data is null in this dataset",
+        "no_pipeline_found": "This dataset is updated by hand",
+        "no_tags": "This dataset hasn't been associated with any additional, searchable keywords",
         "invalid_geospatial": "Geography in this dataset is invalid",
-        "filestore_resource": "This data is saved in a file instead of in the Open Data database"
+        "filestore_resource": "This data is saved in a file instead of in the Open Data database",
     }
 
     # we add special logic for periods_behind
@@ -258,13 +256,14 @@ def parse_dqs_codes(input):
         "monthly": "month(s)",
         "quarterly": "quarter(s)",
         "semi-annually": "half-year(s)",
-        "annually": "year(s)"
+        "annually": "year(s)",
     }
 
     if "periods_behind" in input and "refresh_rate" in input:
         # get the number of periods behind
-        periods_behind = int(float(re.search(
-            r"periods_behind:([0-9\.]*)", input).group(1)))
+        periods_behind = int(
+            float(re.search(r"periods_behind:([0-9\.]*)", input).group(1))
+        )
 
         rr = re.search(r"refresh_rate:(.*?)[\~]", input).group(1)
 
@@ -278,9 +277,8 @@ def parse_dqs_codes(input):
             s = "This dataset is over {} {} behind its refresh rate".format(
                 periods_behind, rr_dict[rr]
             )
-        
-        output[s] = []
 
+        output[s] = []
 
     codes = input.split("~")
 
@@ -298,9 +296,9 @@ def parse_dqs_codes(input):
                     for subcode in subcodes:
                         output[code_dict[main_code]].append(subcode)
 
-    # remove duplicate explanation code details    
-    for k,v in output.items():
-            output[k] = set(v)
+    # remove duplicate explanation code details
+    for k, v in output.items():
+        output[k] = set(v)
 
     return output
 
@@ -309,79 +307,101 @@ def get_dqs(input_package, input_resource):
 
     # initialize descriptions for output
     descriptions = {
-        "usability": {"definition": "How easy is it to work with the data?", 
-                      "metrics": [
-                        "Do columns have meaningful, English names?",
-                        "Do any columns have a single, constant value?"
-                      ]},
-        "metadata": {"definition": "Is the data well described?", 
-                      "metrics": [
-                        "Are there metadata missing from the dataset?",
-                        "Is the dataset associated with a placeholder email, like opendata@toronto.ca?",
-                        "Is the 'Learn More' URL a broken link?",
-                        "Are data definitions missing?",
-                      ]},
-        "freshness": {"definition": "Is the dataset up-to-date?", 
-                      "metrics": [
-                        "Is the dataset not being refreshed on schedule (if it has a refresh rate)?",
-                        "Has the data not been updated in over 2 years?"
-                      ]},
-        "completeness": {"definition": "Is there lots of missing data?", 
-                      "metrics": [
-                        "Are more than half of the values in this dataset null?"
-                      ]},
-        "accessibility": {"definition": "Is the data easy to access for different kinds of users?", 
-                      "metrics": [
-                        "Are there any tags/keywords on the dataset?",
-                        "Is this dataset updated manually by the Open Data team?",
-                        "Is the data stored as a file instead of a database table?",
-                      ]},
+        "usability": {
+            "definition": "How easy is it to work with the data?",
+            "metrics": [
+                "Do columns have meaningful, English names?",
+                "Do any columns have a single, constant value?",
+            ],
+        },
+        "metadata": {
+            "definition": "Is the data well described?",
+            "metrics": [
+                "Are there metadata missing from the dataset?",
+                "Is the dataset associated with a placeholder email, like opendata@toronto.ca?",
+                "Is the 'Learn More' URL a broken link?",
+                "Are data definitions missing?",
+            ],
+        },
+        "freshness": {
+            "definition": "Is the dataset up-to-date?",
+            "metrics": [
+                "Is the dataset not being refreshed on schedule (if it has a refresh rate)?",
+                "Has the data not been updated in over 2 years?",
+            ],
+        },
+        "completeness": {
+            "definition": "Is there lots of missing data?",
+            "metrics": ["Are more than half of the values in this dataset null?"],
+        },
+        "accessibility": {
+            "definition": "Is the data easy to access for different kinds of users?",
+            "metrics": [
+                "Are there any tags/keywords on the dataset?",
+                "Is this dataset updated manually by the Open Data team?",
+                "Is the data stored as a file instead of a database table?",
+            ],
+        },
     }
 
-    # get DQS values from CKAN for this package    
-    datastore_resources = tk.get_action("quality_show")(data_dict={"package_id": input_package["name"]})
+    # get DQS values from CKAN for this package
+    datastore_resources = tk.get_action("quality_show")(
+        data_dict={"package_id": input_package["name"]}
+    )
 
     # if there's no DQS for this package, return empty list
     if len(datastore_resources) == 0:
-         return [] 
-	    
-    datastore_resource = [r for r in datastore_resources if r["resource"] == input_resource["name"]]
+        return []
+
+    datastore_resource = [
+        r for r in datastore_resources if r["resource"] == input_resource["name"]
+    ]
 
     # if there's no DQS for this resource, return empty list
     if len(datastore_resource) == 0:
-         return [] 
-    
+        return []
+
     # parse DQS values
-    max_date = max(datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S") for x in datastore_resource)
-    records = [r for r in datastore_resource if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")]
-    
+    max_date = max(
+        datetime.strptime(x["recorded_at"], "%Y-%m-%dT%H:%M:%S")
+        for x in datastore_resource
+    )
+    records = [
+        r
+        for r in datastore_resource
+        if r["recorded_at"] == max_date.strftime("%Y-%m-%dT%H:%M:%S")
+    ]
+
     # init output with overall scores
     output = {
         "dimensions": {},
         "overall": {
             "last refreshed": max_date.strftime("%Y-%m-%dT%H:%M:%S")[:10],
-            "overall score": str(int(float(records[0]["score"])*100))+"%",
+            "overall score": str(int(float(records[0]["score"]) * 100)) + "%",
             "grade": records[0]["grade"],
-        }
+        },
     }
 
     # populate output with dimension-specific scores
     # filestore resources only get 3 dimensions, datastore get all 5
 
-    store_type = "datastore" if any([r for r in datastore_resource if r["store_type"]=="datastore"]) else "filestore"
+    store_type = (
+        "datastore"
+        if any([r for r in datastore_resource if r["store_type"] == "datastore"])
+        else "filestore"
+    )
     dimensions = ["freshness", "metadata", "accessibility"]
     if store_type == "datastore":
-        dimensions += ["completeness","usability"]
-
+        dimensions += ["completeness", "usability"]
 
     for dimension in dimensions:
         mean_score = sum(r[dimension] for r in records) / len(records)
-        codes = "~".join([r[dimension+"_code"] for r in records])
+        codes = "~".join([r[dimension + "_code"] for r in records])
         output["dimensions"][dimension] = {
-            "score": str(int(100*mean_score))+"%",
+            "score": str(int(100 * mean_score)) + "%",
             "codes": parse_dqs_codes(codes),
             "description": descriptions[dimension]["definition"],
             "metrics": descriptions[dimension]["metrics"],
         }
-    
+
     return output
