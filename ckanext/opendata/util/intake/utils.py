@@ -436,7 +436,7 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                                 rec["Created"], "%Y-%m-%dT%H:%M:%S"
                             ),
                             "text": (
-                                "Open Data has received this a request. Follow up "
+                                "Open Data has received a request. Follow up "
                                 "actions on this will be logged here"
                             ),
                             "activity_state": "done",
