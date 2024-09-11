@@ -1,2 +1,12 @@
+pytest==8.3.2
+pytest-mock==3.14.0
+pytest-ckan==0.0.12
+freezegun==0.3.15
+mock==2.0.0
+# Note: we aren't using pylons directly anywhere but pytest-ckan (which itself
+# is 4 years stale TODO:find alternative?) requires it to be installed.
+# Pylons needs factory-boy to be installed as well.
+Pylons==1.0.3
+factory-boy==3.3.0
 pre-commit==3.5.0
 watchdog==2.1.5
