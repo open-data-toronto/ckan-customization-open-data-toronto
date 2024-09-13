@@ -25,21 +25,21 @@ from .util.intake.types import (
 from .util.intake.utils import search_intakes
 
 
-def build_query(query):
-    """
+def build_query(query_args: Dict[str, str]) -> str:
+    """_summary_
     Takes inputs to api calls
     maps those inputs to respective CKAN fields
     and SOLR queries and returns a valid query
 
-    Args:
-        query: Content passed from the API call from the frontend
-
-    Returns:
-        list: SOLR search params
+    :param query_args:  Content passed from the API call from the frontend
+    :type query_args: Dict[str, str]
+    :return: a Solr 'query' string
+    :rtype: str
     """
-    q = []
 
-    for k, v in query.items():  # For items in the input API call's params...
+    query = []
+
+    for k, v in query_args.items():  # For items in the input API call's params...
         if not len(v):  # ignore empty strings and non-strings
             continue
 
@@ -65,7 +65,7 @@ def build_query(query):
                 )
                 + ")"
             )
-            q.append(this)  # remove any vocab_ prefix from values
+            query.append(this)  # remove any vocab_ prefix from values
 
         elif (
             k == "search"
@@ -73,14 +73,14 @@ def build_query(query):
             for w in v.lower().split(
                 " "
             ):  # split the input by spaces, add solr syntax, add to output
-                q.append(
+                query.append(
                     "(name:(*{0}*))^5.0 OR "
                     "(tags:(*{1}*))^5.0 OR "
                     '(notes:("{1}")) OR '
                     "(title:(*{1}*))^10.0".format(w.replace(" ", "-"), w)
                 )
 
-    return q
+    return " AND ".join(["({x})".format(x=x) for x in query])
 
 
 @tk.side_effect_free
@@ -119,12 +119,12 @@ def query_facet(context, data_dict):
     of open.toronto.ca intelligently
     """
 
-    q = build_query(data_dict)
+    query = build_query(data_dict)
 
     output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["({x})".format(x=x) for x in q]),  # solr query
+            "q": query,  # solr query
             "rows": 0,  # max number of rows shown - presumably 0 is maximum
             "facet": "on",  # whether to enable faceted results
             "facet.limit": -1,  # vals a facet field can return. -1 = infinity
@@ -336,14 +336,20 @@ def search_packages(context, data_dict):
     It receives inputs from filters or search terms users have selected
     on the catalog page, then returns the correct CKAN packages"""
 
-    q = build_query(data_dict)
-    params = {"rows": 10, "sort": "score desc", "start": 0}
+    query = build_query(data_dict)
+    solr_sort_expression = (
+        # is_retired='false' (or undefined) at the top, is_retired=<otherwise> at the bottom
+        # within groups:by score
+        # ie: non-retired + greatest score -> non-retired lower score -> retired
+        "or(not(exists(is_retired)),termfreq(is_retired,'false')) desc, score desc"
+    )
+    params = {"rows": 10, "sort": solr_sort_expression, "start": 0}
     params.update(data_dict)
 
     output = tk.get_action("package_search")(
         context,
         {
-            "q": " AND ".join(["({x})".format(x=x) for x in q]),  # solr query
+            "q": query,  # solr query
             "rows": params["rows"],
             "sort": params["sort"],  # this is solr specific
             "start": params[
