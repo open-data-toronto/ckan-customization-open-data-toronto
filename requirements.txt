@@ -3,7 +3,7 @@ click==8.1.7
 click-plugins==1.1.1
 cligj==0.7.2
 enum34==1.1.10
-Fiona==1.9.5
+Fiona==1.10.0
 geopandas==0.13.2
 iotrans==0.0.4
 munch==4.0.0
