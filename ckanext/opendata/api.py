@@ -4,12 +4,14 @@ import io
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import ckan.plugins.toolkit as tk
+from ckan.authz import is_sysadmin
 from ckan.logic import ValidationError
 from werkzeug.datastructures import FileStorage
 
+from .constants import MUTLIPLE_CHOICE_PACKAGE_FIELDS
 from .util import utils
 from .util.intake import utils as intake_utils
 from .util.intake.types import (
@@ -22,7 +24,6 @@ from .util.intake.types import (
     SummarizedIntake,
     SummarizeIntakesParameter,
 )
-from .util.intake.utils import search_intakes
 
 
 def build_query(query_args: Dict[str, str]) -> str:
@@ -112,7 +113,7 @@ def quality_show(context, data_dict):
 
 
 @tk.side_effect_free
-def query_facet(context, data_dict):
+def search_facet(context, data_dict):
     """runs package_search API call with input parameters
     This is triggered in the UI when someone clicks on a Dataset Filter
     This returns the appearance of the filter panel on the left side
@@ -135,8 +136,9 @@ def query_facet(context, data_dict):
     )
 
     # for the "multiple_" metadata attrs in the package schema, clean output
-    for facet in "topics", "civic_issues", "formats":
-        output["search_facets"][facet]["items"] = utils.unstringify(
+    # e.g: topics, civic_issues, formats
+    for facet in MUTLIPLE_CHOICE_PACKAGE_FIELDS:
+        output["search_facets"][facet]["items"] = utils.calculate_list_facets(
             output["search_facets"][facet]["items"]
         )
     return output
@@ -245,7 +247,7 @@ def summarize_new_intake(
     search_cleaned = data_dict.get("search", "").lower().strip()
 
     if search_cleaned:
-        results = search_intakes(output, search_cleaned)
+        results = intake_utils.search_intakes(output, search_cleaned)
     else:
         results = sorted(output, key=lambda x: x["ticket_group_name"])
     return results
@@ -254,7 +256,7 @@ def summarize_new_intake(
 @tk.side_effect_free
 def detail_new_intake(context, data_dict) -> DetailedIntake:
     """
-    input a ticket group name, output a dict with all info needed on coming soon dataset detail page
+    input a ticket group name, output a dict with all info needed on dataset detail page
     """
 
     if "ticket_group_id" not in data_dict.keys():
@@ -339,30 +341,33 @@ def search_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
     It receives inputs from filters or search terms users have selected
     on the catalog page, then returns the correct CKAN packages"""
-
     query = build_query(data_dict)
-    solr_sort_expression = (
-        # is_retired='false' (or undefined) at the top, is_retired=<otherwise> at the bottom
-        # within groups:by score
-        # ie: non-retired + greatest score -> non-retired lower score -> retired
-        "or(not(exists(is_retired)),termfreq(is_retired,'false')) desc, score desc"
-    )
-    params = {"rows": 10, "sort": solr_sort_expression, "start": 0}
-    params.update(data_dict)
+    sort = data_dict.get("sort", "score desc")
+    retired_last = utils.to_bool(data_dict.get("retired_last", False), False)
+    if retired_last:
+        # First sort expression here ensures is_retired datasets are sorted lasted.
+        # This isn't the best/most efficient sort term - `is_retired` comes from
+        # package_extra which exists in solr just as stringified JSON (it gets
+        # deserialized in CKAN as a boolean via scheming output_validators for the FE)..
+        # So to check for is_retired==False from solr's perspective we need to do messy
+        # string-check (termferq) for 'false'.
+        # TODO: We can fix this by changing Solr's schemal.xml but this is presently a black
+        # box to us (OD team) - we will need changes to CFN to modify this xml file..
+        sort = f"or(not(exists(is_retired)),termfreq(is_retired,'false')) desc, {sort}"
+    rows = data_dict.get("rows", 10)
+    start = data_dict.get("start", 0)
 
     output = tk.get_action("package_search")(
         context,
         {
-            "q": query,  # solr query
-            "rows": params["rows"],
-            "sort": params["sort"],  # this is solr specific
-            "start": params[
-                "start"
-            ],  # since its 0: start the returned dataset at the first record
+            "q": query,
+            "rows": rows,
+            "sort": sort,
+            "start": start,
         },
     )
 
-    intake: Intakes = tk.get_action("prepare_intake")(context, data_dict)["existing"]
+    intake: Intakes = tk.get_action("prepare_intake")(context, None)["existing"]
 
     intake_names = {intake["ticket_group_name"] for intake in intake.values()}
 
@@ -806,6 +811,10 @@ def reindex_solr(context, data_dict):
     This wont cause a reindex in an associated delivery environment, though
     The solr-sqs package is responsible for that
     """
+    # TODO confirm this be sysadmins only...
+    user = context.get("user")
+    if not is_sysadmin(user):
+        raise tk.NotAuthorized()
     # make sure an authorized user is making this call
     assert context[
         "auth_user_obj"

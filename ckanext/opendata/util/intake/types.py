@@ -8,6 +8,23 @@ class RequestType(str, Enum):
     PUBLISH_NEW_OPEN_DATASET_PAGE = "Publish New Open Dataset Page"
     UPDATE_EXISTING_OPEN_DATASET_PAGE = "Update Existing Open Dataset Page"
 
+class DetailTitle(str, Enum):
+    inquiry_received = "Inquiry Received"
+    initiating_inquiry = "Initiating Inquiry"
+    exploring_details = "Exploring Details"
+    waiting_on_open_data = "Waiting on Open Data"
+    waiting_on_owner_division = "Waiting on Owner Division"
+    configuration_in_progress = "Configuration In Progress"
+    under_review = "Under Review"
+    published = "Published"
+    will_not_action = "Will not Action"
+    retired = "Retired"
+
+CLOSING_STATUSES = {
+    DetailTitle.will_not_action,
+    DetailTitle.published,
+    DetailTitle.retired,
+}
 
 PublicDescription = Optional[str]
 
@@ -63,6 +80,12 @@ class SummarizedIntake(TypedDict):
     ticket_group_name: str
     ticket_ids: List[str]
 
+class IntakeDetails(TypedDict):
+    title: str
+    timestamp: str
+    text: str
+    activity_state: str
+    order: int
 
 class DetailedIntake(TypedDict):
     divisions: List[str]
@@ -75,4 +98,5 @@ class DetailedIntake(TypedDict):
     request_types: List
     to_statuses: List
     from_statuses: List
-    details: List
+    details: List[IntakeDetails]
+

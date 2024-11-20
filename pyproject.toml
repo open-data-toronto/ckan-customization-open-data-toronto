@@ -1,2 +1,5 @@
 [tool.pytest.ini_options]
+markers = [
+    "depends_on_db(reason): Mark a test that depends on a database setup."
+]
 junit_suite_name = "Open Data Toronto CKAN Extension"

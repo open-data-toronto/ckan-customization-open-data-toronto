@@ -1,8 +1,11 @@
+import logging
+
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckan.plugins.toolkit import _
 
 from . import api, schema
+from .cli import opendatatoronto
 from .util import utils
 
 
@@ -20,16 +23,16 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         return {
-            "quality_show": api.quality_show,
-            "search_packages": api.search_packages,
-            "search_facet": api.query_facet,
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
-            "reindex_solr": api.reindex_solr,
-            "summarize_new_intake": api.summarize_new_intake,
-            "detail_new_intake": api.detail_new_intake,
             "detail_existing_intake": api.detail_existing_intake,
+            "detail_new_intake": api.detail_new_intake,
             "prepare_intake": api.prepare_intake,
+            "quality_show": api.quality_show,
+            "reindex_solr": api.reindex_solr,
+            "search_facet": api.search_facet,
+            "search_packages": api.search_packages,
+            "summarize_new_intake": api.summarize_new_intake,
         }
 
 
@@ -105,6 +108,8 @@ class ExtendedThemePlugin(p.SingletonPlugin):
     # Custom theme logic for homepage etl-inventory viewer
     p.implements(p.IConfigurer)
     p.implements(p.ITemplateHelpers)
+    p.implements(p.IClick)
+    p.implements(p.IActions)
 
     def update_config(self, config):
         tk.add_template_directory(config, "catalog_templates")
@@ -142,3 +147,27 @@ class ExtendedThemePlugin(p.SingletonPlugin):
 
     def form_template(self, context, data_dict):
         return "views/dqs_form.html"
+
+    def get_commands(self):
+        return [opendatatoronto]
+
+    # ==============================
+    # IActions
+    # Leveraged here more as 'plugins_have_registered' hook rather than implementing
+    # new actions.
+    # ==============================
+
+    def get_actions(self):
+        if p.plugin_loaded("scheming_datasets"):
+            self._validate_scheming_datasets_schema()
+        return {}
+
+    @staticmethod
+    def _validate_scheming_datasets_schema() -> None:
+        """_validate_scheming_datasets_schema
+        Checks if scheming plugins are installed. If they are, runs some validators
+        to ensure scheming schemas are valid.
+        """
+        schemas = tk.h.scheming_dataset_schemas(expanded=True)
+        for schema in schemas.keys():
+            utils.validate_schema(schemas[schema])

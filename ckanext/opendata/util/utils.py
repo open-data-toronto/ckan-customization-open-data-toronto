@@ -3,8 +3,12 @@ import csv
 import json
 import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional, TypedDict
+from warnings import warn
 
 import ckan.plugins.toolkit as tk
+
+from .types import SchemingSchema
 
 
 def string_to_hex(s):
@@ -44,51 +48,111 @@ def validate_length(key, data, errors, context):
     return data[key]
 
 
-def unstringify(input):
-    # inputs "items" dict of a search_facet ...
-    # ... (it will hold arrays that solr turned into a string) ...
-    # outputs a dict for use in /search_facet
+class Facet(TypedDict):
+    name: str
+    display_name: str
+    count: int
 
-    names = []
-    terms = []
-    output = []
 
-    assert isinstance(input, list), "Input to unstringify is not a list, its {}".format(
-        type(input)
-    )
+class ListFacet(TypedDict):
+    """ListFacet
+    A type of facet counts where the values (`name`s) and labels (`display_name`s) are
+    actually lists themselves.
 
-    # for each dict in the input...
-    for item in input:
-        assert isinstance(
-            item, dict
-        ), "Input list to unstringify does not contain dicts"
-        assert "name" in item.keys(), "Input list's dict doesnt have a name attribute"
-        assert "count" in item.keys(), "Input list's dict doesnt have a count attribute"
+    Typically downstream processing needs to occur before these are useful for the FE
 
-        # take the item out of its list, and put them in one big array
+    e.g. we're not that interested in how many records have exactly the topics:
+    ```
+    ["Health", "Public safety", "Something else"]
+    ```
+    in that order, but more typically want to flatten/aggregate/sum for 'Health',
+    'Public safety' and 'Something else'.
 
-        if isinstance(item["name"], str):
-            these_names = (
-                item["name"]
-                .replace("{", "")
-                .replace("}", "")
-                .replace('"', "")
-                .split(",")
+    """
+
+    name: List[str]
+    display_name: List[str]
+    count: int
+
+
+def calculate_list_facets(values: List[ListFacet]) -> List[Facet]:
+    """calculate_list_facets
+
+    Process a list of facets where the values (`name`s) and labels (`display_name`s) are
+    lists of values into a list of facets that are more consumable for the FE.
+
+    E.g. Relevant for `topics`, `civic_issues`, and `formats` which are many <-> many
+      with respect to datasets
+
+    In this situation, facet counts need to be aggregated before being served to the FE.
+
+    e.g, for `topics` as a facet:
+    # One record has
+    {name: ["Health", "Public safety"], count: 1, ...}
+    # another maybe has
+    {name: ["Health", "Somethin Else"], count: 2, ...}
+
+    We need to aggregate (sum) the `Health` counts and produce something more useful for
+    the FE:
+    [
+      # note the count = sum of the 2 above
+      {name: "Health", count 3, ...}
+      {name: "Somethin Else", count 2, ...}
+    ]
+
+    :param values: list of facets where each facet 'value' (`name`) is actually a list
+      of values
+    :type values: List[ListFacet]
+    :return: _description_
+    :rtype: List[ListFacet]
+    """
+    aggregated_facet_counts: Dict[str, ListFacet] = {}
+    for facet in values:
+        if isinstance(facet["name"], list):
+            names = facet["name"]
+        elif isinstance(facet["name"], str):
+            try:
+                # NOTE: this is not really the best place for this to be done. We are
+                # incurring O(n) `json.loads` each call to search_facets.
+                # This could (should) be done in `before_index` before solr indexes datasets
+                # so that solr will return lists to begin with, as is advised here:
+                #
+                # https://github.com/ckan/ckanext-scheming/issues/195#issuecomment-421154311
+                #
+                # However, as noted in the link above, this requires changing `solr`'s
+                # config which we don't have access to.
+                names = json.loads(facet["name"])
+            except json.JSONDecodeError as exc:
+                warn(f"Could not parse as json: {exc}, this facet will not be counted")
+                continue
+        else:
+            warn(
+                f"Could not parse facet name: {facet['name']}, this facet will not be "
+                "counted"
             )
-            names += these_names
-            terms.append({"names": these_names, "count": item["count"]})
+            continue
+        for name in names:
+            if name not in aggregated_facet_counts:
+                aggregated_facet_counts[name] = {
+                    "name": name,
+                    # NOTE: of consequence. the shape of the FacetCount type here makes
+                    # it hard for us to find a `display_name` that corresponds with a
+                    # given `name` (we'd have to do some fuzzy string-matching which is
+                    # precarious).
+                    # Chose to set to `name` because:
+                    # - we're only using this for `topics`,`civic_issues`,`formats`
+                    # - we've chosen to restrict these values such that their `value`s
+                    #   are equivalent to their `label`s (see
+                    #   `ckan opendatatoronto scheming-migration` CLI command which
+                    #   performs this. It is otherwise enforced by scheming)
+                    # - in this context, this means that `name` and `display_name`
+                    #   should be equivalent anyway.
+                    "display_name": name,
+                    "count": 0,
+                }
+            aggregated_facet_counts[name]["count"] += facet["count"]
 
-    # get the distinct terms and make an output dict structure for them
-    for name in set(names):
-        item = {"count": 0, "display_name": name, "name": name}
-        # update the count attribute in the appropriate dict in the output dict
-        for value in terms:
-            if name in value["names"]:
-                item["count"] += value["count"]
-
-        output.append(item)
-
-    return output
+    return list(aggregated_facet_counts.values())
 
 
 # Useful scheming validator functions
@@ -405,3 +469,20 @@ def get_dqs(input_package, input_resource):
         }
 
     return output
+
+
+def validate_schema(schema: Dict):
+    SchemingSchema(**schema)
+
+
+def to_bool(item: Any, default: Optional[bool] = None) -> bool:
+    if isinstance(item, bool):
+        return item
+    elif isinstance(item, str):
+        return item.lower() == "true"
+    elif item is None:
+        return False
+    elif default is not None:
+        return default
+
+    raise ValueError(f"Could not parse {item} as a bool")

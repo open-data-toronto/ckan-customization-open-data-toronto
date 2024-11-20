@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import ckan.tests.helpers as helpers
 import pytest
-from datetime import datetime, timedelta
+
 from ckanext.opendata.util.intake.types import (
     DetailedIntake,
     RequestType,
@@ -187,12 +188,87 @@ class TestIntakeActions:
     # Detail new #
     ##############
 
-    def test_detail_new_intake(self, record_test_name, mocker):
-        record_test_name("Detail New Intake API returns a valid JSON response")
-        tickets = self._mock_tickets(
-            # ensure there are mocked 'new' tickets
-            {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
+    def test_detail_new_intake_repeat_statuses(self, record_test_name, mocker):
+        record_test_name("Detail New Intake API returns a valid JSON response when only a single ticket status is repeated")
+
+        t1 = TicketFactory(
+            {
+                "To Status": "Initiating",
+                "Status Timestamp": "2024-01-01T11:00:0",
+            }
+        ).to_dict()
+        t2 = TicketFactory(
+            {
+                "To Status": "Exploring",
+                "Status Timestamp": "2024-01-02T11:00:0",
+            }
+        ).to_dict()
+        t3 = TicketFactory(
+            {
+                "To Status": "Closed",
+                "Status Timestamp": "2024-01-03T11:00:0",
+            }
+        ).to_dict()
+        t4 = TicketFactory(
+            {
+                "To Status": "Exploring",
+                "Status Timestamp": "2024-01-04T11:00:0",
+            }
+        ).to_dict()
+
+        tickets = [t1, t2, t3, t4]
+
+        mocker.patch(
+            "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )
+        ticket_group_id = tickets[0]["Ticket Id"]
+        result: DetailedIntake = helpers.call_action(
+            "detail_new_intake", {}, ticket_group_id=ticket_group_id
+        )
+        validate_detailed_intake(result)
+
+    def test_detail_new_intake_multiple_repeats(self, record_test_name, mocker):
+        record_test_name("Detail New Intake API returns a valid JSON response when many ticket statuses are repeated")
+
+        t1 = TicketFactory(
+            {
+                "To Status": "Initiating",
+                "Status Timestamp": "2024-01-01T11:00:0",
+            }
+        ).to_dict()
+        t2 = TicketFactory(
+            {
+                "To Status": "Exploring",
+                "Status Timestamp": "2024-01-02T11:00:0",
+            }
+        ).to_dict()
+        t3 = TicketFactory(
+            {
+                "To Status": "Closed",
+                "Status Timestamp": "2024-01-03T11:00:0",
+            }
+        ).to_dict()
+        t4 = TicketFactory(
+            {
+                "To Status": "Exploring",
+                "Status Timestamp": "2024-01-04T11:00:0",
+            }
+        ).to_dict()
+        t5 = TicketFactory(
+            {
+                "To Status": "Waiting on Open Data",
+                "Status Timestamp": "2024-01-05T11:00:0",
+            }
+        ).to_dict()
+        t6 = TicketFactory(
+            {
+                "To Status": "Initiating",
+                "Status Timestamp": "2024-01-06T11:00:0",
+            }
+        ).to_dict()
+
+        tickets = [t1, t2, t3, t4, t5, t6]
+
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )

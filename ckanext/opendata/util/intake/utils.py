@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 import ckan.plugins.toolkit as tk
+
 from .types import (
     DetailedIntake,
     GroupedEntry,
@@ -11,6 +12,8 @@ from .types import (
     RequestType,
     SummarizedIntake,
     Ticket,
+    DetailTitle,
+    CLOSING_STATUSES,
 )
 
 ########################################################################################
@@ -81,12 +84,12 @@ _TICKET_STATUS_ORDERS = (
         "order": {
             "Identified": {
                 "order": 1,
-                "title": "Inquiry Received",
+                "title": DetailTitle.inquiry_received,
                 "text": "This inquiry is on the Open Data Team's list",
             },
             "Initiating": {
                 "order": 2,
-                "title": "Initiating Inquiry",
+                "title": DetailTitle.initiating_inquiry,
                 "text": (
                     "Open Data is searching for data owner(s) within the city to help "
                     "address this inquiry"
@@ -94,21 +97,15 @@ _TICKET_STATUS_ORDERS = (
             },
             "Exploring": {
                 "order": 3,
-                "title": "Exploring Details",
+                "title": DetailTitle.exploring_details,
                 "text": (
                     "Data owners have been identified, and technical details and "
                     "feasibility concerns are being explored"
                 ),
             },
-            # "Waiting on Division": {"order":4, "title": "", "text": "Data "},
-            "Closed": {
-                "order": 5,
-                "title": "Inquiry Concluded",
-                "text": (
-                    "Investigations here have finished. If there are no additional "
-                    "details here, no further actions are being taken by City staff"
-                ),
-            },
+            # TODO: reconcile these duplicated statuses
+            # "Waiting on Division": {"order":4, "title": DetailTitle."", "text": "Data "},
+            # "Closed": {"order": 5,"title": DetailTitle."Inquiry Concluded","text": ("Investigations here have finished. If there are no additional details here, no further actions are being taken by City staff"),},
         },
     },
     {
@@ -119,7 +116,7 @@ _TICKET_STATUS_ORDERS = (
         "order": {
             "Waiting on Open Data": {
                 "order": 6,
-                "title": "Waiting on Open Data",
+                "title": DetailTitle.waiting_on_open_data,
                 "text": (
                     "The Open Data Team has the configurations it needs to "
                     "create/update this dataset but has not begun work"
@@ -127,7 +124,7 @@ _TICKET_STATUS_ORDERS = (
             },
             "Waiting on Owner Division": {
                 "order": 7,
-                "title": "Waiting on Owner Division",
+                "title": DetailTitle.waiting_on_owner_division,
                 "text": (
                     "The Open Data Team needs more details from the data owners before "
                     "work can continue"
@@ -135,7 +132,7 @@ _TICKET_STATUS_ORDERS = (
             },
             "In Progress": {
                 "order": 8,
-                "title": "Configuration In Progress",
+                "title": DetailTitle.configuration_in_progress,
                 "text": (
                     "Open Data is configuring the process of loading this data into the"
                     " Open Data Portal"
@@ -143,17 +140,17 @@ _TICKET_STATUS_ORDERS = (
             },
             "Staged for Review": {
                 "order": 9,
-                "title": "Under Review",
+                "title": DetailTitle.under_review,
                 "text": "The dataset has been staged and is under review by City staff",
             },
             "Published": {
                 "order": 10,
-                "title": "Published",
+                "title": DetailTitle.published,
                 "text": "This data has been published",
             },
             "Closed": {
                 "order": 10,
-                "title": "Will not Action",
+                "title": DetailTitle.will_not_action,
                 "text": (
                     "There is no action that can be taken here, and so this work has "
                     "concluded"
@@ -161,7 +158,7 @@ _TICKET_STATUS_ORDERS = (
             },
             "Retired": {
                 "order": 10,
-                "title": "Retired",
+                "title": DetailTitle.retired,
                 "text": "This dataset has been retired",
             },
         },
@@ -397,30 +394,35 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         to_statuses.add(rec["To Status"])
         from_statuses.add(rec["From Status"])
 
-    details = []
+    # Let's make representatives for each ticket type
+    details = [
+        {
+            "title": "Request Received",
+            "timestamp": start_date,
+            "text": (
+                "Open Data has received a request. Follow up "
+                "actions on this will be logged here."
+            ),
+            "activity_state": "done",
+            "order": 0,
+        }
+    ]
 
-    # sort out the last ticket type
+    # loop through each ticket type
     for order in _TICKET_STATUS_ORDERS:
-        # for each status, we'll get all relevant ticket records and choose the earliest
+        # for each status, we'll choose its earliest record
         for order_status, order_detail in order["order"].items():
-            detail = {
-                "timestamp": None,
-                "match": False,
-            }
-            for index in range(len(tickets)):
-                rec = tickets[index]
+            detail = {"timestamp": datetime.max, "match": False}
+            for rec in tickets:
 
-                # skip irrelevant tickets in this loop
-                if rec["Request Type"] not in order["request_types"]:
+                # only consider one status each loop
+                if rec["To Status"] != order_status:
                     continue
 
-                # if we make a match and its the earliest timestamp, it will be included
-                # in the output
                 record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
 
-                if rec["To Status"] == order_status and (
-                    (detail["timestamp"] is None) or (detail["timestamp"] > record_ts)
-                ):
+                # find this ticket status w earliest timestamp of others w same status
+                if detail["timestamp"] > record_ts:
 
                     detail = {
                         "title": order_detail["title"],
@@ -430,92 +432,21 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
                         "order": order_detail["order"],
                     }
 
-                # if it's the first intake record, put one simple detail
-                if index == 0 and len(details) == 0:
-                    details.append(
-                        {
-                            "title": "Request Received",
-                            "timestamp": datetime.strptime(
-                                rec["Created"], "%Y-%m-%dT%H:%M:%S"
-                            ),
-                            "text": (
-                                "Open Data has received a request. Follow up "
-                                "actions on this will be logged here"
-                            ),
-                            "activity_state": "done",
-                            "order": 1,
-                        }
-                    )
-
-            # append the detail if there's been a match
-            if detail.get("match", True):
+            # make sure this detail's date comes after the previous detail
+            if details[-1]["timestamp"] <= detail["timestamp"] and detail.get(
+                "match", True
+            ):
+                # if it does, append the detail
                 details.append(detail)
-
-    # loop through details again to ...
-    #   make sure the final detail's state is "active" if it's active
-    #   see if there are "future" states and add them
-    #   ensure only one final status is shown
-    #   make sure no dates and orders of things are incorrect
-    to_remove = []
-    for index in range(len(details)):
-        detail = details[index]
-
-        # make sure orders and dates are correct
-        if index + 1 < len(details) and index != 0:
-            # loop through all preceding details. If it has a later date than this one,
-            # delete the preceding one
-            if details[index]["timestamp"] < details[index - 1]["timestamp"]:
-                to_remove.append(index - 1)
-
-        # if there's only a closed inquiry ticket, don't add future details
-        if detail["order"] == 5 and len(request_types) == 1:
-            break
-
-        # add active state to last detail
-        elif index + 1 == len(details):
-            details[index]["activity_state"] = "active"
-
-            # add future details
-            for order in _TICKET_STATUS_ORDERS:
-                for order_status, order_detail in order["order"].items():
-                    if order_detail["order"] > detail["order"]:
-                        if order_detail["order"] not in [10, 5]:
-                            details.append(
-                                {
-                                    "title": order_detail["title"],
-                                    "timestamp": None,
-                                    "text": order_detail["text"],
-                                    "activity_state": "future",
-                                    "order": order_detail["order"],
-                                }
-                            )
-
-                        # special logic for "final" future detail
-                        elif order_detail["order"] == 10:
-                            details.append(
-                                {
-                                    "title": "Resolution",
-                                    "timestamp": None,
-                                    "text": (
-                                        "The resolution of this work can result in the "
-                                        "publication, retirement, or update of an open "
-                                        "dataset. It may, depending on circumstances, "
-                                        "end in nothing actionable."
-                                    ),
-                                    "activity_state": "future",
-                                    "order": 10,
-                                }
-                            )
-                            break
 
     ticket_group_id = grouped_entry["ticket_group_id"]
     ticket_group_name = grouped_entry["ticket_group_name"]
     public_description = get_ticket_group_public_description(tickets)
     divisions = get_divisions_from_intake_tickets(tickets)
 
-    # remove problematic details
-    for index in to_remove:
-        details.pop(index)
+    # add active state to last detail if its not a closing status
+    if details[-1]["title"] not in CLOSING_STATUSES:
+        details[-1]["activity_state"] = "active"
 
     return {
         "details": details,

@@ -1,8 +1,10 @@
+logs/
+scratch
 *.swp
 .ropeproject
 node_modules
 bower_components
-
+*.log
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

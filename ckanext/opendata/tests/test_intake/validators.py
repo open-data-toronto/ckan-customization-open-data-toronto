@@ -8,6 +8,8 @@ from ckanext.opendata.util.intake.types import (
     PreparedIntake,
     SummarizedIntake,
     Ticket,
+    DetailTitle,
+    CLOSING_STATUSES
 )
 
 
@@ -65,6 +67,30 @@ def validate_detailed_intake(intake: DetailedIntake):
     assert isinstance(intake["from_statuses"], list)
     assert isinstance(intake["details"], list)
 
+    for index in range(len(intake["details"])):
+        # ensure future statuses cant have timestamps
+        detail_ts = intake["details"][index]["timestamp"]
+        detail_activity_state = intake["details"][index]["activity_state"] 
+        assert detail_ts or (detail_activity_state == "future")
+        assert not (detail_ts and (detail_activity_state == "future"))
+
+        # make sure orders and dates are correct
+        # we'll skip "future" details
+        if intake["details"][index]["activity_state"] == "future":
+            continue
+
+        # for every item after this one...
+        for other_i in range(index, len(intake["details"])):
+            if intake["details"][other_i]["activity_state"] == "future":
+                continue
+            assert (
+                intake["details"][index]["timestamp"]
+                <= intake["details"][other_i]["timestamp"]
+            )
+
+    # ensure that final status isn't "active" if it's Closed, or similar
+    if intake["details"][-1]["title"] in CLOSING_STATUSES:
+        assert intake["details"][-1]["activity_state"] == "done"
 
 def validate_summarized_intake(intake: SummarizedIntake):
     assert (
