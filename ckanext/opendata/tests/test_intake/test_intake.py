@@ -12,6 +12,7 @@ from ckanext.opendata.util.intake.types import (
 )
 from ckanext.opendata.util.intake.utils import _extract_ticket_name
 
+from ..utils import mock_actions
 from .utils import ODP_ADDR, TicketFactory
 from .validators import (
     validate_detailed_intake,
@@ -53,12 +54,7 @@ def test_summarize_new_intake_search_str(record_test_name, search, mocker):
 
     context = {}
     data = {"search": search}
-
-    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
-
-    mocker.patch(
-        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
-    )
+    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
     result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == 3
     assert all(t["ticket_group_name"].startswith("Ticket") for t in result)
@@ -69,10 +65,8 @@ def test_summarize_new_intake_accepts_empty_search(record_test_name, mocker):
 
     context = {}
     data = {}
-    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
-    mocker.patch(
-        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
-    )
+
+    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
     result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == len(mock_intake_items)
 
@@ -112,10 +106,7 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
     context = {}
     data = {"search": ticket_id}
 
-    mocked_prepare_intake_action = lambda *args, **kwargs: {"new": mock_intake_items}
-    mocker.patch(
-        "opendata.api.tk.get_action", return_value=mocked_prepare_intake_action
-    )
+    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
 
     result = helpers.call_action("summarize_new_intake", context, **data)
 
@@ -189,7 +180,9 @@ class TestIntakeActions:
     ##############
 
     def test_detail_new_intake_repeat_statuses(self, record_test_name, mocker):
-        record_test_name("Detail New Intake API returns a valid JSON response when only a single ticket status is repeated")
+        record_test_name(
+            "Detail New Intake API returns a valid JSON response when only a single ticket status is repeated"
+        )
 
         t1 = TicketFactory(
             {
@@ -228,7 +221,9 @@ class TestIntakeActions:
         validate_detailed_intake(result)
 
     def test_detail_new_intake_multiple_repeats(self, record_test_name, mocker):
-        record_test_name("Detail New Intake API returns a valid JSON response when many ticket statuses are repeated")
+        record_test_name(
+            "Detail New Intake API returns a valid JSON response when many ticket statuses are repeated"
+        )
 
         t1 = TicketFactory(
             {

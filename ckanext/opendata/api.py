@@ -4,14 +4,13 @@ import io
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import ckan.plugins.toolkit as tk
 from ckan.authz import is_sysadmin
-from ckan.logic import ValidationError
 from werkzeug.datastructures import FileStorage
 
-from .constants import MUTLIPLE_CHOICE_PACKAGE_FIELDS
+from .constants import MULTIPLE_CHOICE_PACKAGE_FIELDS, DatastoreCacheFormats
 from .util import utils
 from .util.intake import utils as intake_utils
 from .util.intake.types import (
@@ -92,7 +91,7 @@ def quality_show(context, data_dict):
     rid = None
 
     if pid is None:
-        raise ValidationError("Missing package ID")
+        raise tk.ValidationError("Missing package ID")
 
     package = tk.get_action("package_show")(context, {"id": "catalogue-quality-scores"})
 
@@ -137,7 +136,12 @@ def search_facet(context, data_dict):
 
     # for the "multiple_" metadata attrs in the package schema, clean output
     # e.g: topics, civic_issues, formats
-    for facet in MUTLIPLE_CHOICE_PACKAGE_FIELDS:
+    mc_package_fields = [
+        facet
+        for facet in MULTIPLE_CHOICE_PACKAGE_FIELDS
+        if facet in output["search_facets"]
+    ]
+    for facet in mc_package_fields:
         output["search_facets"][facet]["items"] = utils.calculate_list_facets(
             output["search_facets"][facet]["items"]
         )
@@ -406,9 +410,7 @@ def datastore_cache(context, data_dict):
 
     # make sure an authorized user is making this call
     if not context.get("auth_user_obj", None):
-        raise tk.ValidationError(
-            {"constraints": ["This endpoint can be used by authorized accounts only"]}
-        )
+        raise tk.NotAuthorized("This endpoint can be used by authorized accounts only")
 
     # make sure the call has the necessary inputs
     if "resource_id" not in data_dict.keys() and "package_id" not in data_dict.keys():
@@ -487,8 +489,8 @@ def datastore_cache(context, data_dict):
         # if this is spatial, we'll need to repeat the stuff below for
         # EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
-            target_formats = ["csv", "shp", "gpkg", "geojson"]
-            for format in target_formats:
+
+            for format in DatastoreCacheFormats.spatial.value:
                 output[format.upper()] = {}
 
             logging.info(
@@ -502,7 +504,7 @@ def datastore_cache(context, data_dict):
                     "resource_id": resource_info["id"],
                     "source_epsg": 4326,
                     "target_epsgs": [4326, 2952],
-                    "target_formats": target_formats,
+                    "target_formats": DatastoreCacheFormats.spatial.value,
                 },
             )
 
@@ -540,8 +542,9 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"],
                         },
                     )
-                except Exception as e:
 
+                # TODO fix bare exception without `raise`
+                except Exception:
                     # otherwise, update the existing one
                     existing_resource = tk.get_action("resource_search")(
                         context, {"query": "name:{}".format(filename)}
@@ -565,12 +568,10 @@ def datastore_cache(context, data_dict):
 
                 # delete temp file now that we've used it
                 tk.get_action("prune")(context, {"path": val})
-
         # if its not spatial, we'll have different file formats,
         # but no epsg codes to worry about
-        elif not is_geospatial:
-            target_formats = ["csv", "xml", "json"]
-            for format in target_formats:
+        else:
+            for format in DatastoreCacheFormats.non_spatial.value:
                 output[format.upper()] = {}
 
             logging.info(
@@ -581,7 +582,7 @@ def datastore_cache(context, data_dict):
                 context,
                 {
                     "resource_id": resource_info["id"],
-                    "target_formats": target_formats,
+                    "target_formats": DatastoreCacheFormats.non_spatial.value,
                 },
             )
 
@@ -595,7 +596,6 @@ def datastore_cache(context, data_dict):
                 filename = val.split("/")[-1]
                 with open(val, "rb") as f:
                     response = io.BytesIO(f.read())
-                    f.close()
 
                 try:
                     # try creating a resource
@@ -611,6 +611,7 @@ def datastore_cache(context, data_dict):
                             "datastore_resource_id": resource_info["id"],
                         },
                     )
+                # TODO fix bare exception without `raise`
                 except Exception:
                     # otherwise edit an existing resource
                     existing_resource = tk.get_action("resource_search")(
@@ -673,9 +674,8 @@ def datastore_create_hook(original_datastore_create, context, data_dict):
     # make sure an authorized user is making this call
     logging.info("[ckanext-opendatatoronto]------------ Checking Auth")
     tk.check_access("datastore_create", context, data_dict)
-    assert context[
-        "auth_user_obj"
-    ], "This endpoint can be used by authorized accounts only"
+    if not context["auth_user_obj"]:
+        raise tk.NotAuthorized("Not authorized to create datastore records")
     logging.info("[ckanext-opendatatoronto]------------ Done Checking Auth")
     # 2000 and 20000 are hardcoded "chunk" sizes
     # ETLs from NiFi send data in multiple "chunks"
@@ -803,27 +803,3 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
                     )
 
     original_datastore_delete(context, data_dict)
-
-
-@tk.side_effect_free
-def reindex_solr(context, data_dict):
-    """Endpoint to force a reindex of solr in the target environment
-    This wont cause a reindex in an associated delivery environment, though
-    The solr-sqs package is responsible for that
-    """
-    # TODO confirm this be sysadmins only...
-    user = context.get("user")
-    if not is_sysadmin(user):
-        raise tk.NotAuthorized()
-    # make sure an authorized user is making this call
-    assert context[
-        "auth_user_obj"
-    ], "This endpoint can be used by authorized accounts only"
-
-    os.system(
-        """
-        . /usr/lib/ckan/default/bin/activate
-        ckan --config=/etc/ckan/default/production.ini search-index rebuild -r
-    """
-    )
-    return "Complete"

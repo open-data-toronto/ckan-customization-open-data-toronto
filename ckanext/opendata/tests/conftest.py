@@ -37,27 +37,33 @@ def pytest_itemcollected(item):
 ################################################################################
 # Fixtures                                                                     #
 ################################################################################
+from typing import Tuple
 
 
 @pytest.fixture(scope="session")
-def sysadmin() -> Generator[Dict, None, None]:
+def sysadmin() -> Generator[User, None, None]:
     sysadmin = factories.Sysadmin()
-    yield sysadmin
-    # unfortunately there is no user_purge action and user_delete is a
-    # soft-delete. So instead we manually delete the user.
-    # Not ideal as we may bypass any plugins modifying this behavior
     user_id = sysadmin["id"]
     user = Session.query(User).get(user_id)
-    Session.delete(user)
-    Session.commit()
+    try:
+        yield user
+    finally:
+        # unfortunately there is no user_purge action and user_delete is a
+        # soft-delete. So instead we manually delete the user.
+        # Not ideal as we may bypass any plugins modifying this behavior
+        user = Session.query(User).get(user_id)
+        Session.delete(user)
+        Session.commit()
 
 
 @pytest.fixture(scope="session")
 def org(sysadmin: Dict) -> Generator[Dict, None, None]:
-    context = {"user": sysadmin["name"]}
+    context = {"user": sysadmin.name}
     org_dict = factories.Organization()
-    yield org_dict
-    helpers.call_action("organization_purge", context=context, id=org_dict["id"])
+    try:
+        yield org_dict
+    finally:
+        helpers.call_action("organization_purge", context=context, id=org_dict["id"])
 
 
 @pytest.fixture(scope="session")
@@ -66,7 +72,7 @@ def org(sysadmin: Dict) -> Generator[Dict, None, None]:
     "refresh_rate"
 )
 def package(sysadmin: Dict) -> Generator[Dict, None, None]:
-    context = {"user": sysadmin["name"]}
+    context = {"user": sysadmin.name}
     kwargs = {
         "name": "ckanext-scheming-test-dataset",
         "notes": "Test dataset from scheming plugin. This should be cleaned up "
@@ -78,13 +84,32 @@ def package(sysadmin: Dict) -> Generator[Dict, None, None]:
         "refresh_rate": "Daily",
     }
     package_dict = helpers.call_action("package_create", context=context, **kwargs)
-    yield package_dict
-    helpers.call_action("dataset_purge", context=context, id=package_dict["id"])
+    try:
+        yield package_dict
+    finally:
+        helpers.call_action("dataset_purge", context=context, id=package_dict["id"])
+
+
+@pytest.fixture(scope="session")
+def resource(sysadmin: Dict, package: Dict) -> Generator[Dict, None, None]:
+    context = {"user": sysadmin.name}
+    resource = helpers.call_action(
+        "resource_create",
+        context=context,
+        package_id=package["id"],
+        name="test-resource",
+        format="CSV",
+        url="test-resource.example.com",
+    )
+    try:
+        yield resource
+    finally:
+        helpers.call_action("resource_delete", context=context, id=resource["id"])
 
 
 @pytest.fixture(scope="session")
 def topics_resource(sysadmin: Dict) -> Generator[Dict, None, None]:
-    lc = LocalCKAN(username=sysadmin["name"])
+    lc = LocalCKAN(username=sysadmin.name)
 
     resource_alias = "topics"
     search = lc.action.datastore_search(resource_id=resource_alias)

@@ -1,6 +1,6 @@
-=============
+=======================
 ckanext-opendatatoronto
-=============
+=======================
 
 ------------
 Description
@@ -10,7 +10,7 @@ This extension contains plugins that modifiy and extend default CKAN features to
 
 * **updateschema**: Extends package schema to include custom fields used to maintain datasets published on the OD Portal. This plugin also contains validations and triggers to automate and manage the contents of these new fields.
 
-* **extendedapi**: Extends the action API to include new endpoints to enhance the OD Portal functionalities, most notably of which is the `/datastore_cache` functionality, which creates multiple formats / CSRs of filestore resources from newly created/updated datastore resources.
+* **extendedapi**: Extends the action API to include new endpoints to enhance the OD Portal functionalities, most notably of which is the ``/datastore_cache`` functionality, which creates multiple formats / CSRs of filestore resources from newly created/updated datastore resources.
 
 * **extendedurl**: Extends the URLs to include new functions that are outside the scope of the APIs.
 
@@ -46,9 +46,9 @@ To install ckanext-opendatatoronto:
 
      sudo service apache2 reload
 
-------------
+-----------------------------
 Additional Endpoints and URLs
-------------
+-----------------------------
 This extension uses CKAN's IActions plugin interface to add the following api endpoints:
 
 * ``/download_resource/{resource_id}``: Fetches and serves filestore and datastore content for resources and enables format and projection conversions for those resources that are in the datastore
@@ -57,12 +57,10 @@ This extension uses CKAN's IActions plugin interface to add the following api en
 * ``/api/action/search_facet``: Returns dataset filters, AKA solr facets, based on solr attributes appended to the api call
 * ``/api/action/datastore_cache``: Allows authorized user to create filestore resources (for the purpose of downloading later) for an input datastore resource, in multiple formats
 * ``/api/action/datastore_cache``: This extension has an additional hook on the native ``datastore_create`` endpoint that, under certain circumstances, prompts the firing of the ``/datastore_cache`` endpoint
-* ``/api/action/reindex_solr``: Allows an authorized user to refresh the solr index
 
-
-------------
+--------------------------
 A note on /datastore_cache
-------------
+--------------------------
 Datastore caching is how we enable users to download large datasets quickly.
 
 For a user to get a large datastore resource from CKAN as a file download, the server needs to get the data from CKAN and translate it into the file format (and, for geospatial datasets, Coordinate Reference System) requested by the user. ``/datastore_cache``, which relies heavily on https://github.com/open-data-toronto/iotrans, allows CKAN to transform and cache those files long before a user wants that data.
@@ -80,20 +78,59 @@ Please contact opendata@toronto.ca
 Developing and Debugging
 ------------------------
 
-`pre-commit`
-============
-This repository uses [pre-commit](https://pre-commit.com/).
+``pre-commit``
+==============
+This repository uses `pre-commit <https://pre-commit.com/>`_.
 
 To set up:
-```bash
-# Install pre-commit
-pip install -r dev-requirements.txt
-pre-commit install
-```
+
+.. code-block:: bash
+
+    # Install pre-commit
+    pip install -r dev-requirements.txt
+    pre-commit install
+
 Usage:
-- after you've installed pre-commit, the next time you `git commit` the list of installed pre-commit hooks (defined in `.pre-commit.yaml`) will run to auto-format files and check for other things.
-- A log of hooks that succeeded and failed will be printed
-- Normally a few will 'fail' which typically just means some rules of the hook were broken (e.g. a file in the diff had trailing whitepace)
-- Most often, the hooks defined for this repo will automatically fix these issues: running `git status` should then show some newly-unstaged changes which resulted from the pre-commit hooks modifying files (eg. autoformatting)
-- if an issue can't be automatically fixed by the installed hooks then you may need to fix it yourself before a commit is excepted
-- pre-commit hooks can be bypassed with the `-n` flag: `git commit -n -m "some commit message"`. This should generally be avoided if possible (if a rule truly should be ignored consider using linting ingore comments, eg `# noqa:<flake8_rule_id>
+
+* after you've installed pre-commit, the next time you ``git commit`` the list of installed pre-commit hooks (defined in ``.pre-commit.yaml``) will run to auto-format files and check for other things.
+* A log of hooks that succeeded and failed will be printed
+* Normally a few will 'fail' which typically just means some rules of the hook were broken (e.g. a file in the diff had trailing whitepace)
+* Most often, the hooks defined for this repo will automatically fix these issues: running ``git status`` should then show some newly-unstaged changes which resulted from the pre-commit hooks modifying files (eg. autoformatting)
+* if an issue can't be automatically fixed by the installed hooks then you may need to fix it yourself before a commit is excepted
+* pre-commit hooks can be bypassed with the ``-n`` flag: ``git commit -n -m "some commit message"``. This should generally be avoided if possible (if a rule truly should be ignored consider using linting ingore comments, eg ``# noqa:<flake8_rule_id>``
+
+Testing
+=======
+This repository uses ``pytest``.
+
+Running tests:
+--------------
+
+.. code-block:: bash
+
+    # install dev dependencies
+    pip install -r dev-requirements.txt
+    # run the tests:
+    pytest --ckan-ini=/path/to/ckan/config.ini
+
+
+Note: specifying the ``--ckan-ini`` flag each time can be a bit tedious, you may prefer
+to configure a ``CKAN_INI=/path/to/ckan/config.ini`` environment variable instead, and
+then you can run just ``pytest``.
+
+Contributing tests:
+-------------------
+Unlike some other CKAN extension testing norms, we do not always run unit tests against
+an ephemeral empty DB for some infrastructure reasons (more normally tests will be run
+against the db in your dev environment).
+
+
+Other CKAN repos commonly use the ``clean_db`` test fixture which clobbers the database to
+create a clean environment for testing. **NOTE**: we **do not** use this fixture because it
+will corrupt our dev databases (due to present configurations of dev dbs/environments).
+
+
+In lieu of an ephemeral testing DB, this repo defines several test fixtures (primarily
+in ``conftest.py``) which can be used to create any temporary packages/resources/users,
+etc... which are then cleaned up at the end of the test run. This provides some degree
+of test isolation and aims to keep some distracting junk out of our dev dbs.

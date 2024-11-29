@@ -16,7 +16,7 @@ class TestPackageCreateValidation:
     @staticmethod
     @contextmanager
     def _create_package(topic: str, org: Dict, sysadmin: Dict):
-        context = {"ignore_auth": False, "user": sysadmin["name"]}
+        context = {"ignore_auth": False, "user": sysadmin.name}
         data = {
             "name": "test-package",
             "private": False,

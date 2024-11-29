@@ -22,6 +22,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
     # in this CKAN extension code
 
     def get_actions(self):
+        # TODO: separate intake APIs into their own plugin
         return {
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
@@ -29,7 +30,6 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "detail_new_intake": api.detail_new_intake,
             "prepare_intake": api.prepare_intake,
             "quality_show": api.quality_show,
-            "reindex_solr": api.reindex_solr,
             "search_facet": api.search_facet,
             "search_packages": api.search_packages,
             "summarize_new_intake": api.summarize_new_intake,
