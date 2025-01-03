@@ -377,7 +377,6 @@ def search_packages(context, data_dict):
     return output
 
 
-@tk.side_effect_free
 def datastore_cache(context, data_dict):
     """Logic for creating datastore_cache filestore resources
     Datastore_cache filestore resources are filestore copies
@@ -805,7 +804,6 @@ def datastore_delete_hook(original_datastore_delete, context, data_dict):
     original_datastore_delete(context, data_dict)
 
 
-@tk.side_effect_free
 def reindex_solr(context, data_dict):
     """Endpoint to force a reindex of solr in the target environment
     This wont cause a reindex in an associated delivery environment, though
