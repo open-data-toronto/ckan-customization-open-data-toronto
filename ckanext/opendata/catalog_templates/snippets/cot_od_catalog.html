@@ -33,25 +33,27 @@
 
 </style>
 
+{% set catalog = h.get_catalog() %}
+{% if catalog is not none %}
 <!-- Download Button -->
 <div class = "row">
-  <div class = "col-sm-4">
-    <a type="button" class="btn btn-primary btn-lg btn-block" href="{{ h.get_catalog().url }}">Download List</a>
-  </div>
+<div class = "col-sm-4">
+    <a type="button" class="btn btn-primary btn-lg btn-block" href="{{ catalog.url }}">Download List</a>
+</div>
 </div>
 
 <!-- Table -->
 <table class="table table-striped" id="catalog-table">
   <thead>
     <tr>
-      {% for key, value in h.get_catalog().records[0].items() if key != "_id" %}
+      {% for key, value in catalog.records[0].items() if key != "_id" %}
       <th>{{ key.replace("_", " ").capitalize() }}</th>
       {% endfor %}
     </tr>
   </thead>
 
   <tbody>
-    {% for item in h.get_catalog().records %}
+    {% for item in catalog.records %}
 
       <tr>
         {% for key, value in item.items() if key != "_id" %}
@@ -71,5 +73,12 @@
   });
 
 </script>
+{% else %}
+<div class="row">
+    <p class="col-sm-4">
+        Log in as an admin to see catalog ETL details
+    </p>
+</div>
+{% endif %}
 
 {% endblock %}

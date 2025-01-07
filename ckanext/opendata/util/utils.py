@@ -271,7 +271,6 @@ def list_to_words(input):
 
 def get_catalog():
     """gets catalog datastore resource as json object"""
-
     try:
         package = tk.get_action("package_show")(data_dict={"id": "od-etl-configs"})
         resource_id = package["resources"][0]["id"]
@@ -279,13 +278,11 @@ def get_catalog():
             data_dict={"resource_id": resource_id, "limit": 32000}
         )
         output["url"] = package["resources"][0]["url"]
-    except Exception as e:
-        print("Couldnt access catalog page:\n" + str(e))
-        output = {
-            "records": [{"message": "Log in as an admin to see catalog ETL details"}]
-        }
+        return output
+    except tk.NotAuthorized:
+        pass
 
-    return output
+    return None
 
 
 def parse_dqs_codes(input):
