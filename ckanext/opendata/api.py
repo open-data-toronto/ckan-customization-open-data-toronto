@@ -503,7 +503,9 @@ def datastore_cache(context, data_dict):
                     "resource_id": resource_info["id"],
                     "source_epsg": 4326,
                     "target_epsgs": [4326, 2952],
-                    "target_formats": DatastoreCacheFormats.spatial.value,
+                    "target_formats": [
+                        fmt.lower() for fmt in DatastoreCacheFormats.spatial.value
+                    ],
                 },
             )
 
@@ -581,7 +583,9 @@ def datastore_cache(context, data_dict):
                 context,
                 {
                     "resource_id": resource_info["id"],
-                    "target_formats": DatastoreCacheFormats.non_spatial.value,
+                    "target_formats": [
+                        fmt.lower() for fmt in DatastoreCacheFormats.non_spatial.value
+                    ],
                 },
             )
 
