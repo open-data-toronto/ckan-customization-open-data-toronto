@@ -314,10 +314,11 @@ class TestSearchFacet:
             },
         }
 
-    def _search_facet_with_mock_data(self, mocker, mock_data):
+    def _search_facet_with_mock_data(self, mocker, mock_data, data_dict=None):
         mock_actions(mocker, package_search=mock_data)
-        data = {"facet_field[]": ""}
-        return helpers.call_action("search_facet", {}, **data)
+        if data_dict is None:
+            data_dict = {"facet_field[]": ""}
+        return helpers.call_action("search_facet", {}, **data_dict)
 
     def test_returns_valid_json(self, record_test_name, mocker):
         record_test_name("Search Facet API returns valid JSON response")
@@ -396,6 +397,28 @@ class TestSearchFacet:
             counts = next(facet for facet in format_facets if facet["name"] == format)
             assert counts["display_name"] == format
             assert counts["count"] == count
+
+    @pytest.mark.parametrize(
+        "params,expect_errors",
+        (
+            (dict(), True),  # facet_field[] not provided
+            ({"facet_field": "dataset_category"}, True),  # facet_field not correct
+            ({"facet_field[]": "topics"}, False),  # correct
+        ),
+    )
+    def test_param_validation(self, mocker, params: dict, expect_errors):
+        def run_test():
+            self._search_facet_with_mock_data(
+                mocker,
+                self._get_mock_package_search_response(),
+                params,
+            )
+
+        if expect_errors:
+            with pytest.raises(tk.ValidationError):
+                run_test()
+        else:
+            run_test()
 
 
 class TestSearchPackages:

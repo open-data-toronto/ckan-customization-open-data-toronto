@@ -119,6 +119,10 @@ def search_facet(context, data_dict):
     of open.toronto.ca intelligently
     """
 
+    facet_field = data_dict.get("facet_field[]")
+    if not (isinstance(facet_field, list) or isinstance(facet_field, str)):
+        raise tk.ValidationError("facet_field[] parameter must be provided as a list")
+
     query = build_query(data_dict)
 
     output = tk.get_action("package_search")(
@@ -128,9 +132,8 @@ def search_facet(context, data_dict):
             "rows": 0,  # max number of rows shown - presumably 0 is maximum
             "facet": "on",  # whether to enable faceted results
             "facet.limit": -1,  # vals a facet field can return. -1 = infinity
-            "facet.field": utils.to_list(
-                data_dict["facet_field[]"]
-            ),  # fields to facet on - usually a list of all dataset filters
+            # fields to facet on - usually a list of all dataset filters
+            "facet.field": utils.to_list(facet_field),
         },
     )
 
