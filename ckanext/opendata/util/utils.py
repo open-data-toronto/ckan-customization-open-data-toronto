@@ -22,7 +22,7 @@ def hex_to_string(s):
 def is_geospatial(resource_id):
     info = tk.get_action("datastore_info")(None, {"id": resource_id})
 
-    return "geometry" in info["schema"]
+    return "geometry" in [field["id"] for field in info["fields"]]
 
 
 def to_list(input):

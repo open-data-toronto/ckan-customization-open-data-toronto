@@ -67,7 +67,7 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     #   updates a package's formats and last_refreshed date based on changes
     #   to its resources
 
-    def before_create(self, context, resource):
+    def before_resource_create(self, context, resource):
         package = tk.get_action("package_show")(context, {"id": resource["package_id"]})
 
         # throw an error if we attempt to create 2 packages with the same name
@@ -90,15 +90,15 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
         resource["format"] = resource["format"].upper()
 
-    def after_create(self, context, resource):
+    def after_resource_create(self, context, resource):
         schema.create_resource_views(context, resource)
         schema.update_package(context)
 
-    def after_update(self, context, resource):
+    def after_resource_update(self, context, resource):
         schema.create_resource_views(context, resource)
         schema.update_package(context)
 
-    def after_delete(self, context, resources):
+    def after_resource_delete(self, context, resources):
         schema.update_package(context)
 
 

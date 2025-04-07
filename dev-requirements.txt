@@ -4,6 +4,7 @@
 pytest==8.3.2
 pytest-mock==3.14.0
 pytest-ckan==0.0.12
+pytest-factoryboy==2.7.0
 freezegun==0.3.15
 mock==2.0.0
 # Note: we aren't using pylons directly anywhere but pytest-ckan (which itself

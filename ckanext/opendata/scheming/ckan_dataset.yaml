@@ -1,0 +1,235 @@
+scheming_version: 2
+dataset_type: dataset
+about: A reimplementation of the default CKAN dataset schema
+about_url: http://github.com/ckan/ckanext-scheming
+
+dataset_fields:
+  - field_name: title
+    label: Title
+    preset: title
+    form_placeholder: eg. A descriptive title
+    required: true
+
+  - field_name: name
+    label: URL
+    preset: dataset_slug
+    form_placeholder: eg. my-dataset
+    required: true
+
+  - field_name: dataset_category
+    label: Dataset Category
+    preset: select
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: dataset_category
+    datastore_choices_columns:
+      value: value
+      label: label
+    required: true
+
+  - field_name: refresh_rate
+    label: Refresh Rate
+    preset: select
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: refresh_rate
+    datastore_choices_columns:
+      value: value
+      label: label
+    required: true
+
+  - field_name: collection_method
+    label: Collection Method
+    form_placeholder: This dataset was collected by...
+    form_snippet: markdown.html
+    validators: default_to_none
+
+  - field_name: excerpt
+    label: Excerpt
+    form_placeholder: A short blurb about the dataset
+    form_snippet: markdown.html
+    validators: validate_length default_to_none
+
+  - field_name: limitations
+    label: Limitations
+    form_placeholder: Things to keep in mind
+    form_snippet: markdown.html
+    validators: default_to_none
+
+  - field_name: owner_division
+    label: Owner Division
+    preset: select
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: owner_division
+    datastore_choices_columns:
+      value: value
+      label: label
+    required: true
+
+  - field_name: owner_section
+    label: Owner Section
+    form_placeholder: eg. Traffic Management Centre
+    form_snippet: text.html
+    validators: default_to_none
+
+  - field_name: owner_unit
+    label: Owner Unit
+    form_placeholder: eg. Traffic Safety Unit
+    form_snippet: text.html
+    validators: default_to_none
+
+  - field_name: owner_email
+    label: Owner Email
+    form_placeholder: eg. opendata@toronto.ca
+    form_snippet: text.html
+    validators: default_to_none
+
+  - field_name: author_email
+    label: Author Email
+    form_placeholder: eg. opendata@toronto.ca
+    form_snippet: text.html
+    validators: if_empty_same_as(owner_email) default_to_none
+
+  - field_name: maintainer_email
+    label: Maintainer Email
+    form_placeholder: eg. opendata@toronto.ca
+    form_snippet: text.html
+    validators: if_empty_same_as(owner_email) default_to_none
+
+  - field_name: author
+    label: Author
+    form_placeholder: eg. opendata@toronto.ca
+    form_snippet: text.html
+    validators: if_empty_same_as(owner_email) default_to_none
+
+
+  - field_name: civic_issues
+    label: Civic Issues
+    preset: multiple_checkbox
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: civic_issues
+    datastore_choices_columns:
+      value: value
+      label: label
+    validators: string_to_choices ignore_missing scheming_multiple_choice
+    output_validators: scheming_multiple_choice_output
+
+  - field_name: formats
+    label: Formats
+    preset: multiple_checkbox
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: formats
+    datastore_choices_columns:
+      value: value
+      label: label
+    validators: string_to_choices ignore_missing scheming_multiple_choice
+    output_validators: scheming_multiple_choice_output
+
+  - field_name: topics
+    label: Topics
+    preset: multiple_checkbox
+    choices_helper: scheming_datastore_choices
+    datastore_choices_resource: topics
+    datastore_choices_columns:
+      value: value
+      label: label
+    validators: string_to_choices ignore_missing scheming_multiple_choice
+    output_validators: scheming_multiple_choice_output
+
+  - field_name: url
+    label: Source
+    form_placeholder: http://example.com/dataset.json
+    display_property: foaf:homepage
+    display_snippet: link.html
+    validators: default_to_none
+
+  - field_name: information_url
+    label: Information URL
+    form_placeholder: eg. https://www.toronto.ca/rescu/index.htm
+    display_snippet: link.html
+    validators: default_to_none
+
+  - field_name: image_url
+    label: Image URL
+    form_placeholder: eg. /wp-content/image/1.png
+    form_snippet: text.html
+    validators: default_to_none
+
+  - field_name: notes
+    label: Description
+    form_snippet: markdown.html
+    form_placeholder: eg. Some useful notes about the data
+    validators: default_to_none
+
+  - field_name: license_id
+    label: License
+    form_snippet: license.html
+    help_text: License definitions and additional information can be found at http://opendefinition.org/
+    validators: default_to_none
+
+  - field_name: owner_org
+    label: Organization
+    preset: dataset_organization
+    validators: default_to_none
+
+  - field_name: last_refreshed
+    label: Last Updated
+    #preset: datetime
+    validators: ignore_missing default_to_today
+
+  - field_name: is_retired
+    label: Is Retired?
+    form_snippet: text.html
+    validators: ignore_missing default_to_false
+    output_validators: default_to_false
+
+  - field_name: date_published
+    label: Date Published
+    #preset: datetime
+    validators: default_to_today
+
+resource_fields:
+  - field_name: url
+    label: URL
+    preset: resource_url_upload
+    validators: default_to_none
+    output_validators: default_to_none
+
+  - field_name: extract_job
+    label: Extract Job
+    form_placeholder: Name of the ETL that put the data in CKAN
+    form_snippet: markdown.html
+    validators: default_to_none
+
+  - field_name: name
+    label: Name
+    form_placeholder: eg. January 2011 Gold Prices
+    required: true
+
+  - field_name: description
+    label: Description
+    form_snippet: markdown.html
+    form_placeholder: Some useful notes about the data
+    validators: default_to_none
+
+  - field_name: format
+    label: Format
+    preset: resource_format_autocomplete
+
+  - field_name: is_datastore_cache_file
+    label: Is Datastore Cache File?
+    forn_snippet: text.html
+    validators: ignore_missing default_to_false
+    output_validators: default_to_false
+
+  - field_name: datastore_cache
+    label: Datastore Cache
+    preset: multiple_text
+    validators: string_to_choices ignore_missing
+
+  - field_name: datastore_cache_last_updated
+    label: Datastore Cache Last Updated
+    preset: date
+
+  - field_name: datastore_resource_id
+    label: Datastore resource's ID
+    forn_snippet: text.html
+    validators: ignore_missing
