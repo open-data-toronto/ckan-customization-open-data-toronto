@@ -6,7 +6,6 @@ import pytest
 
 from ckanext.opendata.util.intake.types import (
     DetailedIntake,
-    RequestType,
     SummarizedIntake,
     Ticket,
 )
@@ -163,7 +162,7 @@ class TestIntakeActions:
         record_test_name("Summarize New Intake API returns a valid JSON response")
         tickets = self._mock_tickets(
             # ensure there are mocked 'new' tickets
-            {"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
+            #{"Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
@@ -282,7 +281,7 @@ class TestIntakeActions:
         record_test_name(f"Detail Existing Intake API can be queried by {query_by}")
         tickets = self._mock_tickets(
             # ensure there are mocked 'existing' tickets
-            {"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
+            #{"Request Type": RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE}
         )
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets

@@ -9,10 +9,8 @@ from .types import (
     GroupedEntry,
     Intakes,
     PublicDescription,
-    RequestType,
     SummarizedIntake,
     Ticket,
-    DetailTitle,
     CLOSING_STATUSES,
 )
 
@@ -62,108 +60,10 @@ def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
         if val:
             return val
 
-
 def _is_closed_ticket(ticket: Dict[str, Any]) -> bool:
-    _CLOSED_REQUEST_TYPES = [
-        RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
-        RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
-    ]
     _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
-    return (
-        ticket["Request Type"] in _CLOSED_REQUEST_TYPES
-        and ticket["To Status"] in _CLOSED_STATUSES
-    )
-
-
-# ticket history is presented in an order that is meant to be easy to understand
-# this history, then, has a set order. We show the history that fits this order
-# we do this to simplify the process for people consuming this info
-_TICKET_STATUS_ORDERS = (
-    {
-        "request_types": [RequestType.MAKE_OPEN_DATA_INQUIRY],
-        "order": {
-            "Identified": {
-                "order": 1,
-                "title": DetailTitle.inquiry_received,
-                "text": "This inquiry is on the Open Data Team's list",
-            },
-            "Initiating": {
-                "order": 2,
-                "title": DetailTitle.initiating_inquiry,
-                "text": (
-                    "Open Data is searching for data owner(s) within the city to help "
-                    "address this inquiry"
-                ),
-            },
-            "Exploring": {
-                "order": 3,
-                "title": DetailTitle.exploring_details,
-                "text": (
-                    "Data owners have been identified, and technical details and "
-                    "feasibility concerns are being explored"
-                ),
-            },
-            # TODO: reconcile these duplicated statuses
-            # "Waiting on Division": {"order":4, "title": DetailTitle."", "text": "Data "},
-            # "Closed": {"order": 5,"title": DetailTitle."Inquiry Concluded","text": ("Investigations here have finished. If there are no additional details here, no further actions are being taken by City staff"),},
-        },
-    },
-    {
-        "request_types": [
-            RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE,
-            RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
-        ],
-        "order": {
-            "Waiting on Open Data": {
-                "order": 6,
-                "title": DetailTitle.waiting_on_open_data,
-                "text": (
-                    "The Open Data Team has the configurations it needs to "
-                    "create/update this dataset but has not begun work"
-                ),
-            },
-            "Waiting on Owner Division": {
-                "order": 7,
-                "title": DetailTitle.waiting_on_owner_division,
-                "text": (
-                    "The Open Data Team needs more details from the data owners before "
-                    "work can continue"
-                ),
-            },
-            "In Progress": {
-                "order": 8,
-                "title": DetailTitle.configuration_in_progress,
-                "text": (
-                    "Open Data is configuring the process of loading this data into the"
-                    " Open Data Portal"
-                ),
-            },
-            "Staged for Review": {
-                "order": 9,
-                "title": DetailTitle.under_review,
-                "text": "The dataset has been staged and is under review by City staff",
-            },
-            "Published": {
-                "order": 10,
-                "title": DetailTitle.published,
-                "text": "This data has been published",
-            },
-            "Closed": {
-                "order": 10,
-                "title": DetailTitle.will_not_action,
-                "text": (
-                    "There is no action that can be taken here, and so this work has "
-                    "concluded"
-                ),
-            },
-            "Retired": {
-                "order": 10,
-                "title": DetailTitle.retired,
-                "text": "This dataset has been retired",
-            },
-        },
-    },
-)
+    return ticket["To Status"] in _CLOSED_STATUSES
+    
 
 
 ########################################################################################
@@ -222,7 +122,7 @@ def search_intakes(
 
     return sorted_intakes
 
-
+#TODO -- make this logic check the last status in a group of ticket
 def filter_out_closed_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
@@ -350,8 +250,8 @@ def get_ticket_group_public_description(
     :rtype: PublicDescription
     """
     descriptions = {ticket.get("Public Description") for ticket in tickets}
-    description = ". ".join(desc for desc in descriptions if desc is not None)
-    return None if not description else description
+    description = [desc for desc in descriptions if desc is not None]
+    return None if len(description) == 0 else description[-1]
 
 
 def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
@@ -408,36 +308,33 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         }
     ]
 
-    # loop through each ticket type
-    for order in _TICKET_STATUS_ORDERS:
-        # for each status, we'll choose its earliest record
-        for order_status, order_detail in order["order"].items():
-            detail = {"timestamp": datetime.max, "match": False}
-            for rec in tickets:
+    # loop through each ticket
+    detail = {"timestamp": datetime.max, "match": False}
+    for rec in tickets:
 
-                # only consider one status each loop
-                if rec["To Status"] != order_status:
-                    continue
+        # only consider one status each loop
+        if rec["To Status"] != order_status:
+            continue
 
-                record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
+        record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
 
-                # find this ticket status w earliest timestamp of others w same status
-                if detail["timestamp"] > record_ts:
+        # find this ticket status w earliest timestamp of others w same status
+        if detail["timestamp"] > record_ts:
 
-                    detail = {
-                        "title": order_detail["title"],
-                        "timestamp": record_ts,
-                        "text": order_detail["text"],
-                        "activity_state": "done",
-                        "order": order_detail["order"],
-                    }
+            detail = {
+                "title": order_detail["title"],
+                "timestamp": record_ts,
+                "text": order_detail["text"],
+                "activity_state": "done",
+                "order": order_detail["order"],
+            }
 
-            # make sure this detail's date comes after the previous detail
-            if details[-1]["timestamp"] <= detail["timestamp"] and detail.get(
-                "match", True
-            ):
-                # if it does, append the detail
-                details.append(detail)
+    # make sure this detail's date comes after the previous detail
+    if details[-1]["timestamp"] <= detail["timestamp"] and detail.get(
+        "match", True
+    ):
+        # if it does, append the detail
+        details.append(detail)
 
     ticket_group_id = grouped_entry["ticket_group_id"]
     ticket_group_name = grouped_entry["ticket_group_name"]

@@ -19,7 +19,6 @@ from .util.intake.types import (
     Intakes,
     Optional,
     PreparedIntake,
-    RequestType,
     SummarizedIntake,
     SummarizeIntakesParameter,
 )
@@ -168,18 +167,18 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     filtered_tickets = intake_utils.filter_out_closed_tickets(linked_tickets)
     named_ticket_groups = intake_utils.name_ticket_groups(filtered_tickets)
 
-    # partition by new/existing
-    result = {"new": {}, "existing": {}}
-    for ticket_id, ticket_group in named_ticket_groups.items():
-        ticket_request_types = [
-            ticket["Request Type"] for ticket in ticket_group["tickets"]
-        ]
-        if RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE in ticket_request_types:
-            result["existing"][ticket_id] = ticket_group
-        else:
-            result["new"][ticket_id] = ticket_group
+    ## partition by new/existing
+    #result = {"new": {}, "existing": {}}
+    #for ticket_id, ticket_group in named_ticket_groups.items():
+    #    ticket_request_types = [
+    #        ticket["Request Type"] for ticket in ticket_group["tickets"]
+    #    ]
+    #    if RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE in ticket_request_types:
+    #        result["existing"][ticket_id] = ticket_group
+    #    else:
+    #        result["new"][ticket_id] = ticket_group
 
-    return result
+    return named_ticket_groups
 
 
 @tk.side_effect_free
