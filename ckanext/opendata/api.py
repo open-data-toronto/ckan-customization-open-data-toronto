@@ -178,7 +178,9 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     #    else:
     #        result["new"][ticket_id] = ticket_group
 
-    return named_ticket_groups
+    # TODO - uncomment this so we only present filtered, new tickets
+    #return named_ticket_groups
+    return linked_tickets
 
 
 @tk.side_effect_free
@@ -270,9 +272,7 @@ def detail_new_intake(context, data_dict) -> DetailedIntake:
 
     ticket_group_id = data_dict["ticket_group_id"]
 
-    intake: PreparedIntake = tk.get_action("prepare_intake")(context, data_dict)[
-        "new"
-    ].get(ticket_group_id, None)
+    intake: PreparedIntake = tk.get_action("prepare_intake")(context, data_dict).get(ticket_group_id, None)
     if not intake:
         raise tk.ValidationError(
             {

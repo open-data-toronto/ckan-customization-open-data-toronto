@@ -262,8 +262,8 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     :return: grouped tickets formatted for frontend
     :rtype: DetailedIntake
     """
-    # TODO pair-program to refactor this?
-    tickets = grouped_entry["tickets"]
+    # TODO finish this!
+    tickets = grouped_entry#["tickets"]
 
     assert isinstance(tickets, list), f"Input must be a list of dicts!"
     assert len(tickets), f"Input must be populated!"
@@ -294,47 +294,6 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
         to_statuses.add(rec["To Status"])
         from_statuses.add(rec["From Status"])
 
-    # Let's make representatives for each ticket type
-    details = [
-        {
-            "title": "Request Received",
-            "timestamp": start_date,
-            "text": (
-                "Open Data has received a request. Follow up "
-                "actions on this will be logged here."
-            ),
-            "activity_state": "done",
-            "order": 0,
-        }
-    ]
-
-    # loop through each ticket
-    detail = {"timestamp": datetime.max, "match": False}
-    for rec in tickets:
-
-        # only consider one status each loop
-        if rec["To Status"] != order_status:
-            continue
-
-        record_ts = get_leftmost_datetime(rec, "Status Timestamp", "Created")
-
-        # find this ticket status w earliest timestamp of others w same status
-        if detail["timestamp"] > record_ts:
-
-            detail = {
-                "title": order_detail["title"],
-                "timestamp": record_ts,
-                "text": order_detail["text"],
-                "activity_state": "done",
-                "order": order_detail["order"],
-            }
-
-    # make sure this detail's date comes after the previous detail
-    if details[-1]["timestamp"] <= detail["timestamp"] and detail.get(
-        "match", True
-    ):
-        # if it does, append the detail
-        details.append(detail)
 
     ticket_group_id = grouped_entry["ticket_group_id"]
     ticket_group_name = grouped_entry["ticket_group_name"]

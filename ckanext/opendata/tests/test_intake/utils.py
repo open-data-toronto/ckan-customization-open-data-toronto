@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ckanext.opendata.util.intake.types import RequestType, Ticket
+from ckanext.opendata.util.intake.types import Ticket
 
 ODP_ADDR = "https://open.toronto.ca/dataset"
 
@@ -30,7 +30,7 @@ class TicketFactory:
             "Inquiry Source": "Inq Source",
             "Linked Ticket Id": "",
             "Public Description": "",
-            "Request Type": RequestType.PUBLISH_NEW_OPEN_DATASET_PAGE,
+            "Request Type": "placeholder",
             "Status Timestamp": None,
             "Ticket Id": f"DIA-{instance_id}",
             "Ticket Name": f"Ticket Name {instance_id}",
