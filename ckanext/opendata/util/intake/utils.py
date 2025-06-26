@@ -253,7 +253,7 @@ def get_ticket_group_public_description(
     description = [desc for desc in descriptions if desc is not None]
     return None if len(description) == 0 else description[-1]
 
-
+'''
 def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     """detail_intake
 
@@ -272,10 +272,10 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
     last_update = None
     start_date = None
     jira_ticket_ids = set()
-    inquiry_source = set()
+    #inquiry_source = set()
     request_types = set()
-    to_statuses = set()
-    from_statuses = set()
+    #to_statuses = set()
+    #from_statuses = set()
 
     for rec in tickets:
         # last update
@@ -289,35 +289,35 @@ def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
             start_date = ticket_start_date
 
         jira_ticket_ids.add(rec["Ticket Id"])
-        inquiry_source.add(rec["Inquiry Source"])
+        #inquiry_source.add(rec["Inquiry Source"])
         request_types.add(rec["Request Type"])
-        to_statuses.add(rec["To Status"])
-        from_statuses.add(rec["From Status"])
+        #to_statuses.add(rec["To Status"])
+        #from_statuses.add(rec["From Status"])
 
 
-    ticket_group_id = grouped_entry["ticket_group_id"]
-    ticket_group_name = grouped_entry["ticket_group_name"]
-    public_description = get_ticket_group_public_description(tickets)
-    divisions = get_divisions_from_intake_tickets(tickets)
+    #ticket_group_id = grouped_entry["ticket_group_id"]
+    #ticket_group_name = grouped_entry["ticket_group_name"]
+    #public_description = get_ticket_group_public_description(tickets)
+    #divisions = get_divisions_from_intake_tickets(tickets)
 
-    # add active state to last detail if its not a closing status
-    if details[-1]["title"] not in CLOSING_STATUSES:
-        details[-1]["activity_state"] = "active"
+    ## add active state to last detail if its not a closing status
+    #if details[-1]["title"] not in CLOSING_STATUSES:
+    #    details[-1]["activity_state"] = "active"
 
     return {
-        "details": details,
-        "divisions": divisions,
-        "from_statuses": list(from_statuses),
-        "inquiry_source": list(inquiry_source),
+        "details": tickets,
+        #"divisions": divisions,
+        #"from_statuses": list(from_statuses),
+        #"inquiry_source": list(inquiry_source),
         "jira_ticket_ids": list(jira_ticket_ids),
         "last_update": last_update,
-        "public_description": public_description,
+        #"public_description": public_description,
         "request_types": list(request_types),
-        "ticket_group_id": ticket_group_id,
-        "ticket_group_name": ticket_group_name,
-        "to_statuses": list(to_statuses),
+        #"ticket_group_id": ticket_group_id,
+        #"ticket_group_name": ticket_group_name,
+        #"to_statuses": list(to_statuses),
     }
-
+'''
 
 def get_most_recent_ticket(tickets: List[Ticket]) -> Optional[Ticket]:
     """get_most_recent_ticket

@@ -180,7 +180,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
     # TODO - uncomment this so we only present filtered, new tickets
     #return named_ticket_groups
-    return linked_tickets
+    return named_ticket_groups
 
 
 @tk.side_effect_free
@@ -262,7 +262,7 @@ def summarize_new_intake(
 
 
 @tk.side_effect_free
-def detail_new_intake(context, data_dict) -> DetailedIntake:
+def detail_intake(context, data_dict) -> DetailedIntake:
     """
     input a ticket group name, output a dict with all info needed on dataset detail page
     """
@@ -282,9 +282,39 @@ def detail_new_intake(context, data_dict) -> DetailedIntake:
             }
         )
 
-    return intake_utils.detail_intake(intake)
+    ticket_group_name = intake["ticket_group_name"]
+    last_update = None
+    start_date = None
+    jira_ticket_ids = set()
+    request_types = set()
 
+    for rec in intake["tickets"]:
+        # last update
+        ticket_last_updated = intake_utils.get_leftmost_datetime(rec, "Status Timestamp", "Created")
+        if last_update is None or ticket_last_updated > last_update:
+            last_update = ticket_last_updated
 
+        # start date
+        ticket_start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
+        if start_date is None or ticket_start_date < start_date:
+            start_date = ticket_start_date
+
+        jira_ticket_ids.add(rec["Ticket Id"])
+        request_types.add(rec["Request Type"])
+
+    return {
+        "ticket_group_id": ticket_group_id,
+        "ticket_group_name": ticket_group_name,
+        "details": intake["tickets"],
+        "jira_ticket_ids": list(jira_ticket_ids),
+        "last_update": last_update,
+        "start_date": start_date,
+        "request_types": list(request_types),
+    }
+
+    #return intake_utils.detail_intake(intake)
+
+'''
 @tk.side_effect_free
 def detail_existing_intake(context, data_dict) -> DetailedIntake:
     """detail_existing_intake
@@ -340,7 +370,7 @@ def detail_existing_intake(context, data_dict) -> DetailedIntake:
         # raise NotFound()
 
     return intake_utils.detail_intake(intake)
-
+'''
 
 @tk.side_effect_free
 def search_packages(context, data_dict):
