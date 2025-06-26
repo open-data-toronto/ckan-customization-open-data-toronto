@@ -284,6 +284,7 @@ def detail_intake(context, data_dict) -> DetailedIntake:
 
     ticket_group_name = intake["ticket_group_name"]
     last_update = None
+    last_status = None
     start_date = None
     jira_ticket_ids = set()
     request_types = set()
@@ -293,6 +294,7 @@ def detail_intake(context, data_dict) -> DetailedIntake:
         ticket_last_updated = intake_utils.get_leftmost_datetime(rec, "Status Timestamp", "Created")
         if last_update is None or ticket_last_updated > last_update:
             last_update = ticket_last_updated
+            last_status = rec["To Status"]
 
         # start date
         ticket_start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
@@ -310,9 +312,8 @@ def detail_intake(context, data_dict) -> DetailedIntake:
         "last_update": last_update,
         "start_date": start_date,
         "request_types": list(request_types),
+        "last_status": last_status,
     }
-
-    #return intake_utils.detail_intake(intake)
 
 '''
 @tk.side_effect_free

@@ -33,7 +33,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
             "quality_show": api.quality_show,
             "search_facet": api.search_facet,
             "search_packages": api.search_packages,
-            "summarize_new_intake": api.summarize_new_intake,
+            #"summarize_new_intake": api.summarize_new_intake,
         }
 
 
