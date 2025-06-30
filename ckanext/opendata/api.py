@@ -152,6 +152,8 @@ def search_facet(context, data_dict):
 
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
+    output = {}
+
     intake_tickets = intake_utils.get_intake_tickets(context)
 
     ticket_ids = {row["Ticket Id"] for row in intake_tickets}
@@ -163,25 +165,56 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             rec for rec in intake_tickets if rec["Ticket Id"] == ticket_id
         ]
 
+    # group records by linked ticket id
     linked_tickets = intake_utils.join_linked_tickets(grouped_tickets)
-    filtered_tickets = intake_utils.filter_out_closed_tickets(linked_tickets)
-    named_ticket_groups = intake_utils.name_ticket_groups(filtered_tickets)
 
-    ## partition by new/existing
-    #result = {"new": {}, "existing": {}}
-    #for ticket_id, ticket_group in named_ticket_groups.items():
-    #    ticket_request_types = [
-    #        ticket["Request Type"] for ticket in ticket_group["tickets"]
-    #    ]
-    #    if RequestType.UPDATE_EXISTING_OPEN_DATASET_PAGE in ticket_request_types:
-    #        result["existing"][ticket_id] = ticket_group
-    #    else:
-    #        result["new"][ticket_id] = ticket_group
+    # loop through groups to add summary info for each
+    for ticket_group_id in linked_tickets.keys():
+        group = linked_tickets[ticket_group_id]
+        
+        ticket_group_name = None
+        last_update = None
+        last_status = None
+        start_date = None
+        jira_ticket_ids = set()
+        request_types = set()
+        divisions = set()
 
-    # TODO - uncomment this so we only present filtered, new tickets
-    #return named_ticket_groups
-    return named_ticket_groups
+        for record in group:
 
+            # last update, status
+            ticket_last_updated = intake_utils.get_leftmost_datetime(record, "Status Timestamp", "Created")
+            if last_update is None or ticket_last_updated > last_update:
+                last_update = ticket_last_updated
+                last_status = record["To Status"]
+
+            # start date
+            ticket_start_date = datetime.strptime(record["Created"], "%Y-%m-%dT%H:%M:%S")
+            if start_date is None or ticket_start_date < start_date:
+                start_date = ticket_start_date
+
+            # ticket group name
+            if record["Ticket Id"] == ticket_group_id:
+                ticket_group_name = record["Ticket Name"]
+
+            jira_ticket_ids.add(record["Ticket Id"])
+            request_types.add(record["Request Type"])
+            divisions.add(record["Division"])
+
+        output[ticket_group_id] = {
+            "ticket_group_id": ticket_group_id,
+            "ticket_group_name": ticket_group_name,
+            "details": group,
+            "jira_ticket_ids": list(jira_ticket_ids),
+            "last_update": last_update,
+            "start_date": start_date,
+            "request_types": list(request_types),
+            "last_status": last_status,
+            "divisions": list(divisions),
+        }
+
+    return output
+    
 
 @tk.side_effect_free
 def summarize_new_intake(
