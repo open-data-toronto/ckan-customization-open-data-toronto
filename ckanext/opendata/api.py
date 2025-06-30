@@ -152,8 +152,8 @@ def search_facet(context, data_dict):
 
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
+    # prepare output, raw intake data
     output = {}
-
     intake_tickets = intake_utils.get_intake_tickets(context)
 
     ticket_ids = {row["Ticket Id"] for row in intake_tickets}
@@ -201,16 +201,36 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             request_types.add(record["Request Type"])
             divisions.add(record["Division"])
 
+
+        # if there were inputs to the API call, use them to filter
+        print("==================")
+        print(data_dict.get("status"))
+        print(last_status)
+        print(f"{data_dict.get('status')} == {last_status}?")
+
+        if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
+            continue
+
+        #TODO: Why isnt this filter running?        
+        if data_dict.get("name", False) and data_dict.get("name", None) is not ticket_group_name:
+            continue
+
+        if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
+            continue
+        #TODO: Why isnt this filter running?
+        if data_dict.get("status", False) and data_dict.get("status", None) is not last_status:
+            continue  
+
         output[ticket_group_id] = {
             "ticket_group_id": ticket_group_id,
             "ticket_group_name": ticket_group_name,
-            "details": group,
             "jira_ticket_ids": list(jira_ticket_ids),
             "last_update": last_update,
             "start_date": start_date,
             "request_types": list(request_types),
             "last_status": last_status,
             "divisions": list(divisions),
+            "details": group,
         }
 
     return output
