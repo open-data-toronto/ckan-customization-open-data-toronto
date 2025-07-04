@@ -204,21 +204,23 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
         # if there were inputs to the API call, use them to filter
         print("==================")
-        print(data_dict.get("status"))
-        print(last_status)
+        print(record)
         print(f"{data_dict.get('status')} == {last_status}?")
+        print({data_dict.get('status')} == {last_status})
+        print(data_dict.get("status", False) and data_dict.get("status", None) != last_status)
+        print(data_dict.get("status", False))
+        print(data_dict.get("status", None) != last_status)
 
         if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
             continue
 
-        #TODO: Why isnt this filter running?        
-        if data_dict.get("name", False) and data_dict.get("name", None) is not ticket_group_name:
+        if data_dict.get("name", False) and data_dict.get("name", None) != ticket_group_name:
             continue
 
         if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
             continue
-        #TODO: Why isnt this filter running?
-        if data_dict.get("status", False) and data_dict.get("status", None) is not last_status:
+
+        if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
             continue  
 
         output[ticket_group_id] = {
