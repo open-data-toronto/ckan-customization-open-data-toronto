@@ -213,7 +213,10 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
             continue
 
-        if data_dict.get("name", False) and data_dict.get("name", None) != ticket_group_name:
+        if (
+                data_dict.get("name", False) and not
+                intake_utils.fuzzy_match_ticket_name(data_dict.get("name", None), ticket_group_name)
+            ):
             continue
 
         if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):

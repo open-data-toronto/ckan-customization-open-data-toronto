@@ -14,6 +14,8 @@ from .types import (
     CLOSING_STATUSES,
 )
 
+import difflib
+
 ########################################################################################
 # Private
 ########################################################################################
@@ -40,17 +42,13 @@ def _subset_dict_by(
     return {k: v for k, v in dictionary.items() if predicate(k, v)}
 
 
-def _extract_ticket_name(s: str) -> str:
-    match = re.search(r"^https://open.toronto.ca/dataset/([^/]+)/?$", s)
-    if match:
-        return match.group(1)
-    return s
+def _prep_for_fuzzy_match(s: str) -> str:
+    return s.lower().replace(" ", "").replace("-", "")
 
 
 def _get_ticket_group_name(ticket_group_id: str, tickets: List[Ticket]) -> str:
     for ticket in tickets:
         if ticket["Ticket Id"] == ticket_group_id:
-            #return _extract_ticket_name(ticket["Ticket Name"])
             return ticket["Ticket Name"]
     raise ValueError(f"Ticket with id {ticket_group_id} not found")
 
@@ -90,40 +88,28 @@ def get_intake_tickets(context) -> List[Ticket]:
     )["records"]
 
 
-def search_intakes(
-    intakes: List[SummarizedIntake], search: str
-) -> List[SummarizedIntake]:
-    """search_intakes
+def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
+    """fuzzy_match_ticket_name
 
     Args:
-        intakes (List[SummarizedIntake]): list of intakes to search
         search (str): search query
+        ticket_group_name (str): name to match the search against
 
     Returns:
-        List[SummarizedIntake]: intakes filtered and sorted based on search term
+        True or False if search variable somewhat matches ticket_group_name
     """
 
-    # "0asdf12 other_things!@#$ 34" -> [0, 12, 34]
-    ticket_ids_in_search = [
-        f"DIA-{ticket_id}" for ticket_id in re.findall(r"\d+", search)
-    ]
+    search = _prep_for_fuzzy_match(search)
+    ticket_group_name = _prep_for_fuzzy_match(ticket_group_name)
 
-    intake_matches_ticket_id = lambda intake: any(
-        ticket in intake["ticket_ids"] for ticket in ticket_ids_in_search
-    )
+    # if search is in input string (after processing), return true
+    if search in ticket_group_name:
+        return True
+    else:
+        return False
 
-    filtered_intakes = [
-        intake
-        for intake in intakes
-        if intake_matches_ticket_id(intake)
-        or search in intake["ticket_group_name"].lower()
-    ]
+    
 
-    sorted_intakes = sorted(filtered_intakes, key=lambda x: x["ticket_group_name"])
-
-    return sorted_intakes
-
-#TODO -- make this logic check the last status in a group of ticket
 def filter_out_closed_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
