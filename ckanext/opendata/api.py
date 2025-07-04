@@ -153,7 +153,13 @@ def search_facet(context, data_dict):
 @tk.side_effect_free
 def prepare_intake(context, data_dict) -> PreparedIntake:
     # prepare output, raw intake data
-    output = {}
+    output = {"intake": {}}
+
+    all_statuses = set()
+    all_request_types = set()
+    #TODO: consider mapping logic from jira division names to our metadata_catalog division names
+    all_divisions = set()
+
     intake_tickets = intake_utils.get_intake_tickets(context)
 
     ticket_ids = {row["Ticket Id"] for row in intake_tickets}
@@ -179,6 +185,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         jira_ticket_ids = set()
         request_types = set()
         divisions = set()
+        statuses = set()
 
         for record in group:
 
@@ -200,7 +207,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             jira_ticket_ids.add(record["Ticket Id"])
             request_types.add(record["Request Type"])
             divisions.add(record["Division"])
-
+            statuses.add(record["To Status"])
 
         # if there were inputs to the API call, use them to filter
         if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
@@ -212,10 +219,18 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
             continue
 
-        if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
-            continue  
+        if data_dict.get("division", False) and data_dict.get("division", None) not in list(divisions):
+            continue
 
-        output[ticket_group_id] = {
+        if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
+            continue
+
+        # the "all_" sets should also consider the filters above
+        all_request_types = all_request_types.union(request_types)
+        all_divisions = all_divisions.union(divisions)
+        all_statuses = all_statuses.union(statuses)
+
+        output["intake"][ticket_group_id] = {
             "ticket_group_id": ticket_group_id,
             "ticket_group_name": ticket_group_name,
             "jira_ticket_ids": list(jira_ticket_ids),
@@ -224,8 +239,13 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             "request_types": list(request_types),
             "last_status": last_status,
             "divisions": list(divisions),
+            "statuses": list(statuses),
             "details": group,
         }
+
+    output["all_statuses"] = list(all_statuses)
+    output["all_request_types"] = list(all_request_types)
+    output["all_divisions"] = list(all_divisions)
 
     return output
 

@@ -26,14 +26,10 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
         return {
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
-            #"detail_existing_intake": api.detail_existing_intake,
-            #"detail_new_intake": api.detail_new_intake,
-            "detail_intake": api.detail_intake,
             "prepare_intake": api.prepare_intake,
             "quality_show": api.quality_show,
             "search_facet": api.search_facet,
             "search_packages": api.search_packages,
-            #"summarize_new_intake": api.summarize_new_intake,
         }
 
 
