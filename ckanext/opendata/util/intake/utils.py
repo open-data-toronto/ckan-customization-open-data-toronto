@@ -62,6 +62,23 @@ def _get_leftmost_is_truthy(in_dict: Dict[Any, Any], *keys) -> Any:
 def _is_closed_ticket(ticket: Dict[str, Any]) -> bool:
     _CLOSED_STATUSES = ["Closed", "Published", "Retired"]
     return ticket["To Status"] in _CLOSED_STATUSES
+
+def _get_datastore_records(context, resource_name):
+    open_data_intake_package_id = "open-data-intake"
+    package = tk.get_action("package_show")(
+        context, {"id": open_data_intake_package_id}
+    )
+    try:
+        resource_id = next(
+            resource["id"]
+            for resource in package["resources"]
+            if resource["name"] == resource_name
+        )
+    except StopIteration:
+        raise ValueError(f"Could not find {resource_name} Resource")
+    return tk.get_action("datastore_search")(
+        context, {"resource_id": resource_id, "limit": 32000}
+    )["records"]
     
 
 
@@ -71,22 +88,11 @@ def _is_closed_ticket(ticket: Dict[str, Any]) -> bool:
 
 
 def get_intake_tickets(context) -> List[Ticket]:
-    open_data_intake_package_id = "open-data-intake"
-    package = tk.get_action("package_show")(
-        context, {"id": open_data_intake_package_id}
-    )
-    try:
-        resource_id = next(
-            resource["id"]
-            for resource in package["resources"]
-            if resource["name"] == "Open Data Intake Records"
-        )
-    except StopIteration:
-        raise ValueError("Could not find Open Data Intake Resource")
-    return tk.get_action("datastore_search")(
-        context, {"resource_id": resource_id, "limit": 32000}
-    )["records"]
+    return _get_datastore_records(context, "Open Data Intake Records")
 
+def get_status_definitions(context):
+    definitions = _get_datastore_records(context, "statuses")
+    return dict((d["status"], d["description"]) for d in definitions)
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     """fuzzy_match_ticket_name

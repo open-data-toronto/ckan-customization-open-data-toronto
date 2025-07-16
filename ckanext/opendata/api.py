@@ -157,8 +157,9 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
     all_statuses = set()
     all_request_types = set()
-    #TODO: consider mapping logic from jira division names to our metadata_catalog division names
     all_divisions = set()
+
+    status_definitions = intake_utils.get_status_definitions(context)
 
     intake_tickets = intake_utils.get_intake_tickets(context)
 
@@ -187,27 +188,31 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         divisions = set()
         statuses = set()
 
-        for record in group:
+        for i in range(len(group)):
 
             # last update, status
-            ticket_last_updated = intake_utils.get_leftmost_datetime(record, "Status Timestamp", "Created")
+            ticket_last_updated = intake_utils.get_leftmost_datetime(group[i], "Status Timestamp", "Created")
             if last_update is None or ticket_last_updated > last_update:
                 last_update = ticket_last_updated
-                last_status = record["To Status"]
+                last_status = group[i]["To Status"]
 
             # start date
-            ticket_start_date = datetime.strptime(record["Created"], "%Y-%m-%dT%H:%M:%S")
+            ticket_start_date = datetime.strptime(group[i]["Created"], "%Y-%m-%dT%H:%M:%S")
             if start_date is None or ticket_start_date < start_date:
                 start_date = ticket_start_date
 
             # ticket group name
-            if record["Ticket Id"] == ticket_group_id:
-                ticket_group_name = record["Ticket Name"]
+            if group[i]["Ticket Id"] == ticket_group_id:
+                ticket_group_name = group[i]["Ticket Name"]
 
-            jira_ticket_ids.add(record["Ticket Id"])
-            request_types.add(record["Request Type"])
-            divisions.add(record["Division"])
-            statuses.add(record["To Status"])
+            # TODO: map status and definition from ckan "statuses" dataset
+            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], None)
+
+
+            jira_ticket_ids.add(group[i]["Ticket Id"])
+            request_types.add(group[i]["Request Type"])
+            divisions.add(group[i]["Division"])
+            statuses.add(group[i]["To Status"])
 
         # if there were inputs to the API call, use them to filter
         if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
