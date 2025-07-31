@@ -206,7 +206,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
                 ticket_group_name = group[i]["Ticket Name"]
 
             # TODO: map status and definition from ckan "statuses" dataset
-            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], None)
+            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], group[i]["To Status"])
 
 
             jira_ticket_ids.add(group[i]["Ticket Id"])
@@ -288,9 +288,9 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake: Intakes = tk.get_action("prepare_intake")(context, None)["existing"]
+    intake: Intakes = tk.get_action("prepare_intake")(context, None)
 
-    intake_names = {intake["ticket_group_name"] for intake in intake.values()}
+    intake_names = {intake["ticket_group_name"] for intake in intake["intake"].values()}
 
     for i in range(len(output["results"])):
         output["results"][i]["updating"] = output["results"][i]["name"] in intake_names

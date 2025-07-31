@@ -91,7 +91,10 @@ def get_intake_tickets(context) -> List[Ticket]:
     return _get_datastore_records(context, "Open Data Intake Records")
 
 def get_status_definitions(context):
-    definitions = _get_datastore_records(context, "statuses")
+    try:
+        definitions = _get_datastore_records(context, "statuses")
+    except ValueError:
+        return {}
     return dict((d["status"], d["description"]) for d in definitions)
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
