@@ -86,6 +86,30 @@ def _get_datastore_records(context, resource_name):
 # Public Utils
 ########################################################################################
 
+def fuzzy_match_ticket_ids(this_ticket_id, all_ticket_ids):
+    """
+    fuzzy_match_ticket_ids
+
+    Args:
+        this_ticket_id (str): jira ticket id (ex: DIA-123)
+        all_ticket_ids (list): list of jira ticket id strings
+
+    Returns:
+        true if this_ticket_id is fuzzily contained in all_ticket_ids
+    """
+
+    # if this_ticket_id is empty, return false
+    if not this_ticket_id:
+        return False
+
+    # check if any ticket ids fuzzily match
+    for that_ticket_id in all_ticket_ids:
+        if re.sub(r'\D', '', this_ticket_id) == re.sub(r'\D', '', that_ticket_id):
+            return True
+
+    # if none matched, return false
+    return False
+
 
 def get_intake_tickets(context) -> List[Ticket]:
     return _get_datastore_records(context, "Open Data Intake Records")

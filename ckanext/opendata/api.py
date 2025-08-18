@@ -215,7 +215,15 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             statuses.add(group[i]["To Status"])
 
         # if there were inputs to the API call, use them to filter
-        if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
+        #if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
+        #    continue
+
+        print("--------------------------------")
+        print(data_dict.get("ticket_id", False))
+        print(list(jira_ticket_ids))
+        print(intake_utils.fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids)))
+        print("--------------------------------")
+        if not intake_utils.fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids)):
             continue
 
         if (
