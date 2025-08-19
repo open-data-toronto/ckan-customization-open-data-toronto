@@ -187,6 +187,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
         request_types = set()
         divisions = set()
         statuses = set()
+        resolved = "true"
 
         for i in range(len(group)):
 
@@ -205,8 +206,12 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             if group[i]["Ticket Id"] == ticket_group_id:
                 ticket_group_name = group[i]["Ticket Name"]
 
-            # TODO: map status and definition from ckan "statuses" dataset
+            # map status and definition from ckan "statuses" dataset
             group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], group[i]["To Status"])
+
+            # is the ticket resolved or active?
+            if group[i]["Ticket Resolved?"] == "false":
+                resolved = "false"
 
 
             jira_ticket_ids.add(group[i]["Ticket Id"])
@@ -215,21 +220,26 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             statuses.add(group[i]["To Status"])
 
         # if there were inputs to the API call, use them to filter
-        #if data_dict.get("ticket_id", False) and data_dict.get("ticket_id", None) not in list(jira_ticket_ids):
-        #    continue
-
-        print("--------------------------------")
-        print(data_dict.get("ticket_id", False))
-        print(list(jira_ticket_ids))
-        print(intake_utils.fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids)))
-        print("--------------------------------")
-        if not intake_utils.fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids)):
+        
+        if (
+            data_dict.get("ticket_id", False) and not 
+            intake_utils.fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids))
+        ):
             continue
+
+        if data_dict.get("max_age", False):
+            try:
+                max_age = int(data_dict["max_age"])
+            except ValueError as e:
+                raise ValueError("max_age parameter must be an integer. " + str(e))
+            age = (datetime.today() - start_date).days
+            if age > max_age:
+                continue
 
         if (
                 data_dict.get("name", False) and not
                 intake_utils.fuzzy_match_ticket_name(data_dict.get("name", None), ticket_group_name)
-            ):
+        ):
             continue
 
         if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
@@ -239,6 +249,9 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
             continue
 
         if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
+            continue
+
+        if data_dict.get("resolved", False) and data_dict.get("resolved", None) != resolved:
             continue
 
         # the "all_" sets should also consider the filters above
