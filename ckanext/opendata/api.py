@@ -14,13 +14,7 @@ from .constants import MULTIPLE_CHOICE_PACKAGE_FIELDS, DatastoreCacheFormats
 from .util import utils
 from .util.intake import utils as intake_utils
 from .util.intake.types import (
-    DetailedIntake,
-    GroupedEntry,
-    Intakes,
-    Optional,
     PreparedIntake,
-    SummarizedIntake,
-    SummarizeIntakesParameter,
 )
 
 
@@ -166,11 +160,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
     ticket_ids = {row["Ticket Id"] for row in intake_tickets}
 
     # group records by ticket id
-    grouped_tickets: Dict[str, List[Dict]] = {}
-    for ticket_id in ticket_ids:
-        grouped_tickets[ticket_id] = [
-            rec for rec in intake_tickets if rec["Ticket Id"] == ticket_id
-        ]
+    grouped_tickets = intake_utils.group_tickets(intake_tickets, ticket_ids)
 
     # group records by linked ticket id
     linked_tickets = intake_utils.join_linked_tickets(grouped_tickets)
@@ -309,7 +299,7 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake: Intakes = tk.get_action("prepare_intake")(context, None)
+    intake = tk.get_action("prepare_intake")(context, None)
 
     intake_names = {intake["ticket_group_name"] for intake in intake["intake"].values()}
 

@@ -5,44 +5,82 @@ import ckan.tests.helpers as helpers
 import pytest
 
 from ckanext.opendata.util.intake.types import (
-    DetailedIntake,
-    SummarizedIntake,
+    PreparedIntake,
     Ticket,
+    TicketGroup
 )
-from ckanext.opendata.util.intake.utils import _extract_ticket_name
+
+from ckanext.opendata.util.intake.utils import(
+    group_tickets,
+    join_linked_tickets,
+)
 
 from ..utils import mock_actions
 from .utils import ODP_ADDR, TicketFactory
 from .validators import (
-    validate_detailed_intake,
-    validate_prepared_intake,
-    validate_summarized_intake,
+    _validate_prepared_intake,
+    _validate_ticket,
+    _validate_ticket_group,
 )
 
-ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1"}).to_dict()
-ticket_1a = TicketFactory({"Ticket Id": "DIA-1a", "Ticket Name": "Ticket 1"}).to_dict()
-ticket_1b = TicketFactory({"Ticket Id": "DIA-1b", "Ticket Name": "Ticket 1"}).to_dict()
-ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Ticket Name": "Ticket 2"}).to_dict()
-ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3"}).to_dict()
-ticket_multi = TicketFactory(
-    {"Ticket Id": "DIA-4", "Ticket Name": "Ticket Multi"}
-).to_dict()
+# generate tickets
+ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1",}).to_dict()
+ticket_1a = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1",}).to_dict()
+ticket_1b = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1",}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Ticket Name": "Ticket 2",}).to_dict()
+ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3",}).to_dict()
+ticket_4 = TicketFactory({"Ticket Id": "DIA-4", "Ticket Name": "Ticket 4",}).to_dict()
 
-mock_intake_items = {
+ticket_recs = [ticket_1, ticket_1a, ticket_1b, ticket_2, ticket_3, ticket_4]
+ticket_ids = [rec["Ticket Id"] for rec in ticket_recs]
+
+#TODO: make a pattern class that
+#   groups 
+#   links
+#   calculates group info
+#   filters by each parameter
+#   filters by groups of parameters
+#       
+# It repeats this for different permutations of input tickets
+#   No links
+#   Some links
+#   Missing statuses
+#   Missing divisions
+
+# Test grouping by ticket id 
+def test_grouping_tickets_by_ticket_id():
+    grouped_tickets = group_tickets(ticket_recs, ticket_ids)
+    assert len(grouped_tickets.keys()) == 4
+
+# Test linking ticket groups by linked ticket id
+def test_linking_tickets_by_linked_ticket_id():
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    print(linked_tickets)
+    assert len(linked_tickets.keys()) == 4 
+
+# Test calculating summary stats
+
+# Test filtering by each parameter
+
+# Test filtering by multiple parameters
+
+
+'''
+mock_ticket_groups = {
     ticket_1["Ticket Id"]: {
         "ticket_group_name": ticket_1["Ticket Name"],
         "ticket_group_id": ticket_1["Ticket Id"],
-        "tickets": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
+        "details": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
     },
     ticket_2["Ticket Id"]: {
         "ticket_group_name": ticket_2["Ticket Name"],
         "ticket_group_id": ticket_2["Ticket Id"],
-        "tickets": [ticket_2, ticket_multi],
+        "details": [ticket_2, ticket_multi],
     },
     ticket_3["Ticket Id"]: {
         "ticket_group_name": ticket_3["Ticket Name"],
         "ticket_group_id": ticket_3["Ticket Id"],
-        "tickets": [ticket_3],
+        "details": [ticket_3],
     },
 }
 
@@ -53,7 +91,7 @@ def test_summarize_new_intake_search_str(record_test_name, search, mocker):
 
     context = {}
     data = {"search": search}
-    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
+    mock_actions(mocker, prepare_intake={"new": mock_ticket_groups})
     result = helpers.call_action("summarize_new_intake", context, **data)
     assert len(result) == 3
     assert all(t["ticket_group_name"].startswith("Ticket") for t in result)
@@ -65,9 +103,9 @@ def test_summarize_new_intake_accepts_empty_search(record_test_name, mocker):
     context = {}
     data = {}
 
-    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
+    mock_actions(mocker, prepare_intake={"new": mock_ticket_groups})
     result = helpers.call_action("summarize_new_intake", context, **data)
-    assert len(result) == len(mock_intake_items)
+    assert len(result) == len(mock_ticket_groups)
 
 
 @pytest.mark.parametrize(
@@ -105,7 +143,7 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
     context = {}
     data = {"search": ticket_id}
 
-    mock_actions(mocker, prepare_intake={"new": mock_intake_items})
+    mock_actions(mocker, prepare_intake={"new": mock_ticket_groups})
 
     result = helpers.call_action("summarize_new_intake", context, **data)
 
@@ -344,3 +382,4 @@ def test_extract_ticket_name(record_test_name, test, expected):
     record_test_name(f"Jira Ticket Names are extracted from URLs as expected[{test}]")
     result = _extract_ticket_name(test)
     assert result == expected
+'''

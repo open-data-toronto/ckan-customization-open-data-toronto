@@ -5,13 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 import ckan.plugins.toolkit as tk
 
 from .types import (
-    DetailedIntake,
-    GroupedEntry,
-    Intakes,
-    PublicDescription,
-    SummarizedIntake,
+    TicketGroup,
     Ticket,
-    CLOSING_STATUSES,
 )
 
 import difflib
@@ -161,6 +156,13 @@ def filter_out_closed_tickets(
         ),
     )
 
+def group_tickets(intake_tickets, ticket_ids) -> TicketGroup:
+    grouped_tickets = {}
+    for ticket_id in ticket_ids:
+        grouped_tickets[ticket_id] = [
+            rec for rec in intake_tickets if rec["Ticket Id"] == ticket_id
+        ]
+    return grouped_tickets
 
 def join_linked_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
@@ -207,7 +209,7 @@ def join_linked_tickets(
     return joined
 
 
-def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> Intakes:
+def name_ticket_groups(grouped_tickets: Dict[str, List[Ticket]]) -> TicketGroup:
     """name_ticket_groups
 
     :param grouped_tickets: tickets grouped under ticket_group_ids
@@ -261,7 +263,7 @@ def get_divisions_from_intake_tickets(intakes: List[Dict]) -> List[str]:
 
 def get_ticket_group_public_description(
     tickets: List[Ticket],
-) -> Optional[PublicDescription]:
+):
     """get_ticket_group_public_description
 
     :param tickets: list of tickets
@@ -273,71 +275,6 @@ def get_ticket_group_public_description(
     description = [desc for desc in descriptions if desc is not None]
     return None if len(description) == 0 else description[-1]
 
-'''
-def detail_intake(grouped_entry: GroupedEntry) -> DetailedIntake:
-    """detail_intake
-
-    :param grouped_entry: ticket groups
-    :type grouped_entry: GroupedEntry
-    :return: grouped tickets formatted for frontend
-    :rtype: DetailedIntake
-    """
-    # TODO finish this!
-    tickets = grouped_entry#["tickets"]
-
-    assert isinstance(tickets, list), f"Input must be a list of dicts!"
-    assert len(tickets), f"Input must be populated!"
-
-    # Let's make high level info for this ticket group
-    last_update = None
-    start_date = None
-    jira_ticket_ids = set()
-    #inquiry_source = set()
-    request_types = set()
-    #to_statuses = set()
-    #from_statuses = set()
-
-    for rec in tickets:
-        # last update
-        ticket_last_updated = get_leftmost_datetime(rec, "Status Timestamp", "Created")
-        if last_update is None or ticket_last_updated > last_update:
-            last_update = ticket_last_updated
-
-        # start date
-        ticket_start_date = datetime.strptime(rec["Created"], "%Y-%m-%dT%H:%M:%S")
-        if start_date is None or ticket_start_date < start_date:
-            start_date = ticket_start_date
-
-        jira_ticket_ids.add(rec["Ticket Id"])
-        #inquiry_source.add(rec["Inquiry Source"])
-        request_types.add(rec["Request Type"])
-        #to_statuses.add(rec["To Status"])
-        #from_statuses.add(rec["From Status"])
-
-
-    #ticket_group_id = grouped_entry["ticket_group_id"]
-    #ticket_group_name = grouped_entry["ticket_group_name"]
-    #public_description = get_ticket_group_public_description(tickets)
-    #divisions = get_divisions_from_intake_tickets(tickets)
-
-    ## add active state to last detail if its not a closing status
-    #if details[-1]["title"] not in CLOSING_STATUSES:
-    #    details[-1]["activity_state"] = "active"
-
-    return {
-        "details": tickets,
-        #"divisions": divisions,
-        #"from_statuses": list(from_statuses),
-        #"inquiry_source": list(inquiry_source),
-        "jira_ticket_ids": list(jira_ticket_ids),
-        "last_update": last_update,
-        #"public_description": public_description,
-        "request_types": list(request_types),
-        #"ticket_group_id": ticket_group_id,
-        #"ticket_group_name": ticket_group_name,
-        #"to_statuses": list(to_statuses),
-    }
-'''
 
 def get_most_recent_ticket(tickets: List[Ticket]) -> Optional[Ticket]:
     """get_most_recent_ticket

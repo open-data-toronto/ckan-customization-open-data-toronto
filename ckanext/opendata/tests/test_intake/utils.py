@@ -35,6 +35,7 @@ class TicketFactory:
             "Ticket Id": f"DIA-{instance_id}",
             "Ticket Name": f"Ticket Name {instance_id}",
             "To Status": None,
+            "Ticket Resolved?": "false"
         }
 
     def to_dict(self) -> Ticket:
