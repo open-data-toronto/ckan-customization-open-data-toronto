@@ -169,6 +169,15 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         ):
             continue
 
+        # custom logic for the requests page - it will never have update tickets on it
+        # WARNING: if we change the name of an update ticket in Jira, this will break
+        # TODO: consider ways around this by externalizing the name of update tickets
+        if (
+            data_dict.get("page", None) == "requests" and 
+            "I’d like to update an existing dataset or page" in request_types
+        ):
+            continue
+
         # ticket type (publish, update, inquiry, etc) 
         if data_dict.get("type", False):
             input_ticket_types = set(data_dict["type"].split("~"))
