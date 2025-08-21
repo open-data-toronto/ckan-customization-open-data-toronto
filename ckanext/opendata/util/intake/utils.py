@@ -141,7 +141,6 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             inquiry_sources = _split_string_into_set(inquiry_sources, group[i]["Inquiry Source"])
 
         # if there were inputs to the API call, use them to filter
-        
         if (
             data_dict.get("ticket_id", False) and not 
             fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids))
@@ -163,8 +162,19 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         ):
             continue
 
-        if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
-            continue
+        # ticket type (publish, update, inquiry, etc) 
+        if data_dict.get("type", False):
+            input_ticket_types = set(data_dict["type"].split("~"))
+            all_current_request_types = set(request_types)
+
+            print("================================")
+            print(data_dict["type"])
+            print(data_dict["type"].split("~"))
+            print(input_ticket_types)
+            print(all_current_request_types)
+            # if none overlap, then continue
+            if not all_current_request_types.intersection(input_ticket_types):
+                continue
 
         if data_dict.get("division", False) and data_dict.get("division", None) not in list(divisions):
             continue
