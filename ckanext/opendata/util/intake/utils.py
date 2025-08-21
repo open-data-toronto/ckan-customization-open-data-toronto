@@ -81,6 +81,117 @@ def _get_datastore_records(context, resource_name):
 # Public Utils
 ########################################################################################
 
+def summarize_intake(status_definitions, linked_tickets, data_dict):
+    # prepare output, raw intake data
+    output = {"intake": {}}
+
+    all_statuses = set()
+    all_request_types = set()
+    all_divisions = set()
+
+    # loop through groups to add summary info for each
+    for ticket_group_id in linked_tickets.keys():
+        group = linked_tickets[ticket_group_id]
+        
+        ticket_group_name = None
+        last_update = None
+        last_status = None
+        start_date = None
+        jira_ticket_ids = set()
+        request_types = set()
+        divisions = set()
+        statuses = set()
+        resolved = "true"
+
+        for i in range(len(group)):
+
+            # last update, status
+            ticket_last_updated = get_leftmost_datetime(group[i], "Status Timestamp", "Created")
+            if last_update is None or ticket_last_updated > last_update:
+                last_update = ticket_last_updated
+                last_status = group[i]["To Status"]
+
+            # start date
+            ticket_start_date = datetime.strptime(group[i]["Created"], "%Y-%m-%dT%H:%M:%S")
+            if start_date is None or ticket_start_date < start_date:
+                start_date = ticket_start_date
+
+            # ticket group name
+            if group[i]["Ticket Id"] == ticket_group_id:
+                ticket_group_name = group[i]["Ticket Name"]
+
+            # map status and definition from ckan "statuses" dataset
+            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], group[i]["To Status"])
+
+            # is the ticket resolved or active?
+            if group[i]["Ticket Resolved?"] == "false":
+                resolved = "false"
+
+            jira_ticket_ids.add(group[i]["Ticket Id"])
+            request_types.add(group[i]["Request Type"])
+            divisions.add(group[i]["Division"])
+            statuses.add(group[i]["To Status"])
+
+        # if there were inputs to the API call, use them to filter
+        
+        if (
+            data_dict.get("ticket_id", False) and not 
+            fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids))
+        ):
+            continue
+
+        if data_dict.get("max_age", False):
+            try:
+                max_age = int(data_dict["max_age"])
+            except ValueError as e:
+                raise ValueError("max_age parameter must be an integer. " + str(e))
+            age = (datetime.today() - start_date).days
+            if age > max_age:
+                continue
+
+        if (
+                data_dict.get("name", False) and not
+                fuzzy_match_ticket_name(data_dict.get("name", None), ticket_group_name)
+        ):
+            continue
+
+        if data_dict.get("type", False) and data_dict.get("type", None) not in list(request_types):
+            continue
+
+        if data_dict.get("division", False) and data_dict.get("division", None) not in list(divisions):
+            continue
+
+        if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
+            continue
+
+        if data_dict.get("resolved", False) and data_dict.get("resolved", None) != resolved:
+            continue
+
+        # the "all_" sets should also consider the filters above
+        all_request_types = all_request_types.union(request_types)
+        all_divisions = all_divisions.union(divisions)
+        all_statuses = all_statuses.union(statuses)
+
+        output["intake"][ticket_group_id] = {
+            "ticket_group_id": ticket_group_id,
+            "ticket_group_name": ticket_group_name,
+            "jira_ticket_ids": list(jira_ticket_ids),
+            "last_update": last_update,
+            "start_date": start_date,
+            "request_types": list(request_types),
+            "last_status": last_status,
+            "divisions": list(divisions),
+            "statuses": list(statuses),
+            "details": group,
+        }
+
+    output["all_statuses"] = list(all_statuses)
+    output["all_request_types"] = list(all_request_types)
+    output["all_divisions"] = list(all_divisions)
+
+    return output
+
+
 def fuzzy_match_ticket_ids(this_ticket_id, all_ticket_ids):
     """
     fuzzy_match_ticket_ids
