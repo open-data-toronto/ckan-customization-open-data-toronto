@@ -165,7 +165,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         # ticket group name
         if (
                 data_dict.get("name", False) and not
-                fuzzy_match_ticket_name(data_dict.get("name", None), ticket_group_name)
+                parse_package_name(ticket_group_name) == data_dict["name"]
         ):
             continue
 
