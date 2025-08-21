@@ -75,7 +75,12 @@ def _get_datastore_records(context, resource_name):
         context, {"resource_id": resource_id, "limit": 32000}
     )["records"]
     
-
+def _split_string_into_set(this_set, value):
+    if value:
+        this_set.update(value.split(", "))
+        return this_set
+    else:
+        return this_set
 
 ########################################################################################
 # Public Utils
@@ -88,6 +93,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
     all_statuses = set()
     all_request_types = set()
     all_divisions = set()
+    all_inquiry_sources = set()
 
     # loop through groups to add summary info for each
     for ticket_group_id in linked_tickets.keys():
@@ -100,6 +106,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         jira_ticket_ids = set()
         request_types = set()
         divisions = set()
+        inquiry_sources = set()
         statuses = set()
         resolved = "true"
 
@@ -129,8 +136,9 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
             jira_ticket_ids.add(group[i]["Ticket Id"])
             request_types.add(group[i]["Request Type"])
-            divisions.add(group[i]["Division"])
             statuses.add(group[i]["To Status"])
+            divisions = _split_string_into_set(divisions, group[i]["Division"])
+            inquiry_sources = _split_string_into_set(inquiry_sources, group[i]["Inquiry Source"])
 
         # if there were inputs to the API call, use them to filter
         
@@ -171,6 +179,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         all_request_types = all_request_types.union(request_types)
         all_divisions = all_divisions.union(divisions)
         all_statuses = all_statuses.union(statuses)
+        all_inquiry_sources = all_inquiry_sources.union(inquiry_sources)
 
         output["intake"][ticket_group_id] = {
             "ticket_group_id": ticket_group_id,
@@ -181,6 +190,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "request_types": list(request_types),
             "last_status": last_status,
             "divisions": list(divisions),
+            "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
             "details": group,
         }
@@ -188,6 +198,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
     output["all_statuses"] = list(all_statuses)
     output["all_request_types"] = list(all_request_types)
     output["all_divisions"] = list(all_divisions)
+    output["all_inquiry_sources"] = list(all_inquiry_sources)
 
     return output
 
