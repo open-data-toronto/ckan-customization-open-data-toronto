@@ -140,13 +140,16 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             divisions = _split_string_into_set(divisions, group[i]["Division"])
             inquiry_sources = _split_string_into_set(inquiry_sources, group[i]["Inquiry Source"])
 
-        # if there were inputs to the API call, use them to filter
+        # if there were inputs to the API call, use them to filter...
+
+        # ticket id
         if (
             data_dict.get("ticket_id", False) and not 
             fuzzy_match_ticket_ids(data_dict.get("ticket_id", False), list(jira_ticket_ids))
         ):
             continue
 
+        # max age
         if data_dict.get("max_age", False):
             try:
                 max_age = int(data_dict["max_age"])
@@ -156,6 +159,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             if age > max_age:
                 continue
 
+        # ticket group name
         if (
                 data_dict.get("name", False) and not
                 fuzzy_match_ticket_name(data_dict.get("name", None), ticket_group_name)
@@ -171,12 +175,15 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             if not all_current_request_types.intersection(input_ticket_types):
                 continue
 
+        # division
         if data_dict.get("division", False) and data_dict.get("division", None) not in list(divisions):
             continue
 
+        # current jira status
         if data_dict.get("status", False) and data_dict.get("status", None) != last_status:
             continue
 
+        # whether the ticket is resolved or not
         if data_dict.get("resolved", False) and data_dict.get("resolved", None) != resolved:
             continue
 

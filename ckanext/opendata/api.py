@@ -192,9 +192,14 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake = tk.get_action("prepare_intake")(context, None)
+    intake = tk.get_action("prepare_intake")(context, {"type": "I’d like to update an existing dataset or page", "resolved": "false"})
 
-    intake_names = {intake["ticket_group_name"] for intake in intake["intake"].values()}
+    # TODO clean and put away this finding package name from url logic
+    intake_names = {intake["ticket_group_name"].replace("https://open.toronto.ca/dataset/", "").replace("/", "") for intake in intake["intake"].values()}
+
+    print("====================================")
+    print(intake)
+    print(intake_names)
 
     for i in range(len(output["results"])):
         output["results"][i]["updating"] = output["results"][i]["name"] in intake_names
