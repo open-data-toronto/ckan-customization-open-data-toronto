@@ -86,6 +86,9 @@ def _split_string_into_set(this_set, value):
 # Public Utils
 ########################################################################################
 
+def parse_package_name(input_url):
+    return input_url.replace("https://open.toronto.ca/dataset/", "").replace("/", "")
+
 def summarize_intake(status_definitions, linked_tickets, data_dict):
     # prepare output, raw intake data
     output = {"intake": {}}
