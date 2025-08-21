@@ -167,11 +167,6 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             input_ticket_types = set(data_dict["type"].split("~"))
             all_current_request_types = set(request_types)
 
-            print("================================")
-            print(data_dict["type"])
-            print(data_dict["type"].split("~"))
-            print(input_ticket_types)
-            print(all_current_request_types)
             # if none overlap, then continue
             if not all_current_request_types.intersection(input_ticket_types):
                 continue
@@ -202,7 +197,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "divisions": list(divisions),
             "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
-            "details": group,
+            "details": sorted(group, key= lambda x: x["Status Timestamp"]),
         }
 
     output["all_statuses"] = list(all_statuses)
