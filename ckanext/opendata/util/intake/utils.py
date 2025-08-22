@@ -105,6 +105,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         ticket_group_name = None
         last_update = None
         last_status = None
+        last_status_colour = None
         start_date = None
         jira_ticket_ids = set()
         request_types = set()
@@ -115,11 +116,16 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
         for i in range(len(group)):
 
+            # map status and definition from ckan "statuses" dataset
+            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], {}).get("description", None)
+            group[i]["Status Colour"] = status_definitions.get(group[i]["To Status"], {}).get("colour", None)
+
             # last update, status
             ticket_last_updated = get_leftmost_datetime(group[i], "Status Timestamp", "Created")
             if last_update is None or ticket_last_updated > last_update:
                 last_update = ticket_last_updated
                 last_status = group[i]["To Status"]
+                last_status_colour = group[i]["Status Colour"]
 
             # start date
             ticket_start_date = datetime.strptime(group[i]["Created"], "%Y-%m-%dT%H:%M:%S")
@@ -131,7 +137,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
                 ticket_group_name = group[i]["Ticket Name"]
 
             # map status and definition from ckan "statuses" dataset
-            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], group[i]["To Status"])
+            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], {}).get("description")
 
             # is the ticket resolved or active?
             if group[i]["Ticket Resolved?"] == "false":
@@ -161,6 +167,8 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             age = (datetime.today() - start_date).days
             if age > max_age:
                 continue
+
+        # TODO: max days since resolution
 
         # ticket group name
         if (
@@ -213,6 +221,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "start_date": start_date,
             "request_types": list(request_types),
             "last_status": last_status,
+            "last_status_colour": last_status_colour,
             "divisions": list(divisions),
             "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
@@ -260,7 +269,8 @@ def get_status_definitions(context):
         definitions = _get_datastore_records(context, "statuses")
     except ValueError:
         return {}
-    return dict((d["status"], d["description"]) for d in definitions)
+    #return dict((d["status"], d["description"]) for d in definitions)
+    return {d["status"]: {"description": d["description"], "colour": d["colour"]} for d in definitions}
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     """fuzzy_match_ticket_name
