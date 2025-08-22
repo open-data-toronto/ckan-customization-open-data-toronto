@@ -91,7 +91,7 @@ def parse_package_name(input_url):
 
 def summarize_intake(status_definitions, linked_tickets, data_dict):
     # prepare output, raw intake data
-    output = {"intake": {}}
+    output = {"intake": []}
 
     all_statuses = set()
     all_request_types = set()
@@ -137,8 +137,9 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             if group[i]["Ticket Id"] == ticket_group_id:
                 ticket_group_name = group[i]["Ticket Name"]
 
-            # map status and definition from ckan "statuses" dataset
+            # map status, definition, anbd public_name from ckan "statuses" dataset
             group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], {}).get("description")
+            group[i]["Public Status Name"] = status_definitions.get(group[i]["To Status"], {}).get("public_name")
 
             # is the ticket resolved or active?
             if group[i]["Ticket Resolved?"] == "false":
@@ -149,6 +150,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             statuses.add(group[i]["To Status"])
             divisions = _split_string_into_set(divisions, group[i]["Division"])
             inquiry_sources = _split_string_into_set(inquiry_sources, group[i]["Inquiry Source"])
+
 
         # if there were inputs to the API call, use them to filter...
 
@@ -218,7 +220,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         all_statuses = all_statuses.union(statuses)
         all_inquiry_sources = all_inquiry_sources.union(inquiry_sources)
 
-        output["intake"][ticket_group_id] = {
+        output["intake"].append({
             "ticket_group_id": ticket_group_id,
             "ticket_group_name": ticket_group_name,
             "jira_ticket_ids": list(jira_ticket_ids),
@@ -232,7 +234,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "statuses": list(statuses),
             "resolved": resolved,
             "details": sorted(group, key= lambda x: x["Status Timestamp"]),
-        }
+        })
 
     output["all_statuses"] = list(all_statuses)
     output["all_request_types"] = list(all_request_types)
@@ -275,8 +277,7 @@ def get_status_definitions(context):
         definitions = _get_datastore_records(context, "statuses")
     except ValueError:
         return {}
-    #return dict((d["status"], d["description"]) for d in definitions)
-    return {d["status"]: {"description": d["description"], "colour": d["colour"]} for d in definitions}
+    return {d["status"]: {"description": d["description"], "colour": d["colour"], "public_name": d["public_name"]} for d in definitions}
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     """fuzzy_match_ticket_name
