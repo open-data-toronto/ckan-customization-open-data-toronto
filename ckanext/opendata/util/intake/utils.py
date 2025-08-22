@@ -113,6 +113,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         inquiry_sources = set()
         statuses = set()
         resolved = "true"
+        days_since_resolution = None
 
         for i in range(len(group)):
 
@@ -168,7 +169,11 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             if age > max_age:
                 continue
 
-        # TODO: max days since resolution
+        # max days since resolution
+        if data_dict.get("max_days_since_resolution", False) and resolved == "true":
+            days_since_resolution = (datetime.today() - last_update).days
+            if int(data_dict["max_days_since_resolution"]) <= days_since_resolution:
+                continue
 
         # ticket group name
         if (
@@ -225,6 +230,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "divisions": list(divisions),
             "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
+            "resolved": resolved,
             "details": sorted(group, key= lambda x: x["Status Timestamp"]),
         }
 
