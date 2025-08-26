@@ -82,6 +82,14 @@ def _split_string_into_set(this_set, value):
     else:
         return this_set
 
+def _keys_to_snake_case(input_dict):
+    output_dict = {}
+    for key, value in input_dict.items():
+        output_dict[key.replace(" ","_").lower()] = value
+
+    return output_dict
+
+
 ########################################################################################
 # Public Utils
 ########################################################################################
@@ -117,40 +125,43 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
         for i in range(len(group)):
 
+            ticket = _keys_to_snake_case(group[i])
+
             # map status and definition from ckan "statuses" dataset
-            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], {}).get("description", None)
-            group[i]["Status Colour"] = status_definitions.get(group[i]["To Status"], {}).get("colour", None)
+            ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("description", None)
+            ticket["status_colour"] = status_definitions.get(ticket["to_status"], {}).get("colour", None)
 
             # last update, status
-            ticket_last_updated = get_leftmost_datetime(group[i], "Status Timestamp", "Created")
+            ticket_last_updated = get_leftmost_datetime(ticket, "status_timestamp", "created")
             if last_update is None or ticket_last_updated > last_update:
                 last_update = ticket_last_updated
-                last_status = group[i]["To Status"]
-                last_status_colour = group[i]["Status Colour"]
+                last_status = ticket["to_status"]
+                last_status_colour = ticket["status_colour"]
 
             # start date
-            ticket_start_date = datetime.strptime(group[i]["Created"], "%Y-%m-%dT%H:%M:%S")
+            ticket_start_date = datetime.strptime(ticket["created"], "%Y-%m-%dT%H:%M:%S")
             if start_date is None or ticket_start_date < start_date:
                 start_date = ticket_start_date
 
             # ticket group name
-            if group[i]["Ticket Id"] == ticket_group_id:
-                ticket_group_name = group[i]["Ticket Name"]
+            if ticket["ticket_id"] == ticket_group_id:
+                ticket_group_name = ticket["ticket_name"]
 
             # map status, definition, anbd public_name from ckan "statuses" dataset
-            group[i]["Status Definition"] = status_definitions.get(group[i]["To Status"], {}).get("description")
-            group[i]["Public Status Name"] = status_definitions.get(group[i]["To Status"], {}).get("public_name")
+            ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("description")
+            ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
 
             # is the ticket resolved or active?
-            if group[i]["Ticket Resolved?"] == "false":
+            if ticket["ticket_resolved?"] == "false":
                 resolved = "false"
 
-            jira_ticket_ids.add(group[i]["Ticket Id"])
-            request_types.add(group[i]["Request Type"])
-            statuses.add(group[i]["To Status"])
-            divisions = _split_string_into_set(divisions, group[i]["Division"])
-            inquiry_sources = _split_string_into_set(inquiry_sources, group[i]["Inquiry Source"])
+            jira_ticket_ids.add(ticket["ticket_id"])
+            request_types.add(ticket["request_type"])
+            statuses.add(ticket["to_status"])
+            divisions = _split_string_into_set(divisions, ticket["division"])
+            inquiry_sources = _split_string_into_set(inquiry_sources, ticket["inquiry_source"])
 
+            group[i] = ticket
 
         # if there were inputs to the API call, use them to filter...
 
@@ -233,7 +244,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
             "resolved": resolved,
-            "details": sorted(group, key= lambda x: x["Status Timestamp"]),
+            "details": sorted(group, key= lambda x: x["status_timestamp"]),
         })
 
     output["all_statuses"] = list(all_statuses)
