@@ -34,7 +34,7 @@ class TicketFactory:
             "Status Timestamp": "2024-01-01T11:00:0",
             "Ticket Id": f"DIA-{instance_id}",
             "Ticket Name": f"Ticket Name {instance_id}",
-            "To Status": None,
+            "To Status": f"Status{instance_id}",
             "Ticket Resolved?": "false"
         }
 

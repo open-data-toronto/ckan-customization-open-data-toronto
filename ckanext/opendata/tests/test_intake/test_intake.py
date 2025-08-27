@@ -26,82 +26,104 @@ from .validators import (
 
 # useful vars
 yesterday = datetime.strftime(datetime.today() - timedelta(days=1), "%Y-%m-%dT%H:%M:%S")
+one_year_ago = datetime.strftime(datetime.today() - timedelta(days=365), "%Y-%m-%dT%H:%M:%S")
 
-# generate tickets
+### generate tickets
+
+# basic group
 ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1","Created": yesterday}).to_dict()
 ticket_1a = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1","Created": yesterday}).to_dict()
 ticket_1b = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Created": yesterday}).to_dict()
-ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Ticket Name": "Ticket 2",}).to_dict()
-ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3",}).to_dict()
-ticket_4 = TicketFactory({"Ticket Id": "DIA-4", "Ticket Name": "Ticket 4",}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Ticket Name": "Ticket 2","Created": one_year_ago}).to_dict()
+ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3","Created": one_year_ago}).to_dict()
+ticket_4 = TicketFactory({"Ticket Id": "DIA-4", "Ticket Name": "Ticket 4","Created": one_year_ago, "To Status": "WIP"}).to_dict()
 
-ticket_recs = [ticket_1, ticket_1a, ticket_1b, ticket_2, ticket_3, ticket_4]
-ticket_ids = [rec["Ticket Id"] for rec in ticket_recs]
+basic_ticket_recs = [ticket_1, ticket_1a, ticket_1b, ticket_2, ticket_3, ticket_4]
+basic_ticket_ids = [rec["Ticket Id"] for rec in basic_ticket_recs]
+basic_correct_vals = {
+    "grouped_ticket_count": 4,
+    "linked_ticket_count": 4,
+}
 
-#TODO: make a pattern class that
-#   groups 
-#   links
-#   calculates group info
-#   filters by each parameter
-#   filters by groups of parameters
+# linked group
+ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": yesterday}).to_dict()
+ticket_1a = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": yesterday}).to_dict()
+ticket_1b = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": yesterday}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Linked Ticket Id": "DIA-1", "Ticket Name": "Ticket 2","Created": yesterday}).to_dict()
+ticket_3 = TicketFactory({"Ticket Id": "DIA-3", "Ticket Name": "Ticket 3","Created": one_year_ago, "To Status": "WIP"}).to_dict()
+ticket_4 = TicketFactory({"Ticket Id": "DIA-4", "Ticket Name": "Ticket 4","Created": one_year_ago}).to_dict()
+ticket_5 = TicketFactory({"Ticket Id": "DIA-5", "Ticket Name": "Ticket 4","Created": one_year_ago}).to_dict()
+
+linked_ticket_recs = [ticket_1, ticket_1a, ticket_1b, ticket_2, ticket_3, ticket_4, ticket_5]
+linked_ticket_ids = [rec["Ticket Id"] for rec in linked_ticket_recs]
+linked_correct_vals = {
+    "grouped_ticket_count": 5,
+    "linked_ticket_count": 4,
+}
+
+#TODO: make tests that
+#   groups, checks number of groups
+#   links, checks number of linked groups
+#   calculates group info, checks its correct
+#   filters by each parameter, checks count of returned groups
+#   filters by groups of parameters, checks count of returned groups
 #       
 # It repeats this for different permutations of input tickets
 #   No links
 #   Some links
-#   Missing statuses
-#   Missing divisions
+#   Different ticket attributes
 
 pytestmark = pytest.mark.parametrize(
-    "ticket_recs,ticket_ids", 
+    "ticket_recs,ticket_ids,correct_vals", 
     [
-        (ticket_recs, ticket_ids),
+        (basic_ticket_recs, basic_ticket_ids, basic_correct_vals),
+        (linked_ticket_recs, linked_ticket_ids, linked_correct_vals),
     ]
 )
 
-class TestIntake:
 
-    # Test grouping by ticket_id 
-    def test_grouping_tickets_by_ticket_id(self, ticket_recs, ticket_ids):
-        grouped_tickets = group_tickets(ticket_recs, ticket_ids)
-        assert len(grouped_tickets.keys()) == 4
+# Test grouping by ticket_id 
+def test_grouping_tickets_by_ticket_id(ticket_recs, ticket_ids, correct_vals):
+    grouped_tickets = group_tickets(ticket_recs, ticket_ids)
+    assert len(grouped_tickets.keys()) == correct_vals["grouped_ticket_count"]
 
-    # Test linking ticket groups by linked ticket_id
-    def test_linking_tickets_by_linked_ticket_id(self, ticket_recs, ticket_ids):
-        linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
-        assert len(linked_tickets.keys()) == 4
+# Test linking ticket groups by linked ticket_id
+def test_linking_tickets_by_linked_ticket_id(ticket_recs, ticket_ids, correct_vals):
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    assert len(linked_tickets.keys()) == correct_vals["linked_ticket_count"]
 
-    # Test calculating summary stats
-    def test_creating_summarized_intake(self, ticket_recs, ticket_ids):
-        status_definitions = {}
-        data_dict = {}
-        linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
-        summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)      
-        assert isinstance(summarized_intake.get("all_statuses", False), list)
-        assert isinstance(summarized_intake.get("all_request_types", False), list)
-        assert isinstance(summarized_intake.get("all_divisions", False), list)
+# Test calculating summary stats
+def test_creating_summarized_intake(ticket_recs, ticket_ids, correct_vals):
+    status_definitions = {}
+    data_dict = {}
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)      
+    assert isinstance(summarized_intake.get("all_statuses", False), list)
+    assert isinstance(summarized_intake.get("all_request_types", False), list)
+    assert isinstance(summarized_intake.get("all_divisions", False), list)
 
-    # Test filtering by each parameter
-    def test_filtering_on_ticket_id(self, ticket_recs, ticket_ids):
-        # test with exact ticket_id
-        status_definitions = {}
-        data_dict = {"ticket_id":"DIA-1"}       
-        linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
-        summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
-        assert len(summarized_intake["intake"]) == 1
+# Test filtering by each parameter
+def test_filtering_on_ticket_id(ticket_recs, ticket_ids, correct_vals):
+    # test with exact ticket_id
+    status_definitions = {}
+    data_dict = {"ticket_id":"DIA-1"}       
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
+    assert len(summarized_intake["intake"]) == 1
 
-        # test with imprecise ticket_id
-        data_dict = {"ticket_id":"1"}       
-        linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
-        summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
-        assert len(summarized_intake["intake"]) == 1
+    # test with imprecise ticket_id
+    data_dict = {"ticket_id":"1"}       
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
+    assert len(summarized_intake["intake"]) == 1
 
-    def test_filtering_on_max_age(self, ticket_recs, ticket_ids):
-        status_definitions = {}
-        ticket_recs
-        data_dict = {"max_age":"1"}       
-        linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
-        summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
-        assert len(summarized_intake["intake"]) == 1
+def test_filtering_on_max_age(ticket_recs, ticket_ids, correct_vals):
+    status_definitions = {}
+    ticket_recs
+    data_dict = {"max_age":"1"}       
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
+    assert len(summarized_intake["intake"]) == 1
 
 # Test filtering by multiple parameters
 
