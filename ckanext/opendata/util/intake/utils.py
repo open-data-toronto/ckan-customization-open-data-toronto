@@ -343,7 +343,7 @@ def join_linked_tickets(
 ) -> Dict[str, List[Ticket]]:
     """join_linked_tickets
 
-    :param grouped_tickets: Join tickets with "Linked Ticket ID" to their parent
+    :param grouped_tickets: Join tickets with "linked_ticket_id" to their parent
       ticket_group
     :type grouped_tickets: Dict[str, List[Ticket]]
     :return: dictionary with linked tickets joined to their 'linked' ticket group

@@ -31,7 +31,7 @@ class TicketFactory:
             "Linked Ticket Id": "",
             "Public Description": "",
             "Request Type": "placeholder",
-            "Status Timestamp": None,
+            "Status Timestamp": "2024-01-01T11:00:0",
             "Ticket Id": f"DIA-{instance_id}",
             "Ticket Name": f"Ticket Name {instance_id}",
             "To Status": None,

@@ -60,12 +60,12 @@ pytestmark = pytest.mark.parametrize(
 
 class TestIntake:
 
-    # Test grouping by ticket id 
+    # Test grouping by ticket_id 
     def test_grouping_tickets_by_ticket_id(self, ticket_recs, ticket_ids):
         grouped_tickets = group_tickets(ticket_recs, ticket_ids)
         assert len(grouped_tickets.keys()) == 4
 
-    # Test linking ticket groups by linked ticket id
+    # Test linking ticket groups by linked ticket_id
     def test_linking_tickets_by_linked_ticket_id(self, ticket_recs, ticket_ids):
         linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
         assert len(linked_tickets.keys()) == 4
@@ -82,14 +82,14 @@ class TestIntake:
 
     # Test filtering by each parameter
     def test_filtering_on_ticket_id(self, ticket_recs, ticket_ids):
-        # test with exact ticket id
+        # test with exact ticket_id
         status_definitions = {}
         data_dict = {"ticket_id":"DIA-1"}       
         linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
         summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
         assert len(summarized_intake["intake"]) == 1
 
-        # test with imprecise ticket id
+        # test with imprecise ticket_id
         data_dict = {"ticket_id":"1"}       
         linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
         summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
@@ -108,19 +108,19 @@ class TestIntake:
 
 '''
 mock_ticket_groups = {
-    ticket_1["Ticket Id"]: {
-        "ticket_group_name": ticket_1["Ticket Name"],
-        "ticket_group_id": ticket_1["Ticket Id"],
+    ticket_1["ticket_id"]: {
+        "ticket_group_name": ticket_1["ticket_name"],
+        "ticket_group_id": ticket_1["ticket_id"],
         "details": [ticket_1, ticket_1a, ticket_1b, ticket_multi],
     },
-    ticket_2["Ticket Id"]: {
-        "ticket_group_name": ticket_2["Ticket Name"],
-        "ticket_group_id": ticket_2["Ticket Id"],
+    ticket_2["ticket_id"]: {
+        "ticket_group_name": ticket_2["ticket_name"],
+        "ticket_group_id": ticket_2["ticket_id"],
         "details": [ticket_2, ticket_multi],
     },
-    ticket_3["Ticket Id"]: {
-        "ticket_group_name": ticket_3["Ticket Name"],
-        "ticket_group_id": ticket_3["Ticket Id"],
+    ticket_3["ticket_id"]: {
+        "ticket_group_name": ticket_3["ticket_name"],
+        "ticket_group_id": ticket_3["ticket_id"],
         "details": [ticket_3],
     },
 }
@@ -153,17 +153,17 @@ def test_summarize_new_intake_accepts_empty_search(record_test_name, mocker):
     "ticket_id,expected_ticket_groups",
     [
         (
-            ticket_multi["Ticket Id"],
+            ticket_multi["ticket_id"],
             {"Ticket 1", "Ticket 2"},
         ),
         (
             # strip the "DIA-""
-            ticket_multi["Ticket Id"][4:],
+            ticket_multi["ticket_id"][4:],
             {"Ticket 1", "Ticket 2"},
         ),
         (
             # Add arbitrary padding text
-            f'padding:12 {ticket_multi["Ticket Id"]} padding34',
+            f'padding:12 {ticket_multi["ticket_id"]} padding34',
             {"Ticket 1", "Ticket 2"},
         ),
         (
@@ -195,7 +195,7 @@ def test_summarize_new_intake_accepts_ticket_number_in_search(
 def test_summarize_new_intake_reports_most_recent_status(record_test_name, mocker):
     record_test_name("Detail New Intake API indicates the most recent status")
     ticket_defaults = {
-        "Ticket Id": "DIA-summarize_new_intake_reports_most_recent_status",
+        "ticket_id": "DIA-summarize_new_intake_reports_most_recent_status",
         "Request Type": "Make Open Data Inquiry",
     }
 
@@ -292,7 +292,7 @@ class TestIntakeActions:
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )
-        ticket_group_id = tickets[0]["Ticket Id"]
+        ticket_group_id = tickets[0]["ticket_id"]
         result: DetailedIntake = helpers.call_action(
             "detail_new_intake", {}, ticket_group_id=ticket_group_id
         )
@@ -345,7 +345,7 @@ class TestIntakeActions:
         mocker.patch(
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )
-        ticket_group_id = tickets[0]["Ticket Id"]
+        ticket_group_id = tickets[0]["ticket_id"]
         result: DetailedIntake = helpers.call_action(
             "detail_new_intake", {}, ticket_group_id=ticket_group_id
         )
@@ -366,7 +366,7 @@ class TestIntakeActions:
             "ckanext.opendata.api.intake_utils.get_intake_tickets", return_value=tickets
         )
 
-        query_key = "Ticket Id" if query_by == "ticket_group_id" else "Ticket Name"
+        query_key = "ticket_id" if query_by == "ticket_group_id" else "ticket_name"
         query = {query_by: tickets[0][query_key]}
 
         result: DetailedIntake = helpers.call_action(
@@ -420,7 +420,7 @@ class TestIntakeActions:
     ],
 )
 def test_extract_ticket_name(record_test_name, test, expected):
-    record_test_name(f"Jira Ticket Names are extracted from URLs as expected[{test}]")
+    record_test_name(f"Jira ticket_names are extracted from URLs as expected[{test}]")
     result = _extract_ticket_name(test)
     assert result == expected
 '''

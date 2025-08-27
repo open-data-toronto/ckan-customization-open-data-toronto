@@ -161,6 +161,7 @@ def prepare_intake(context, data_dict) -> PreparedIntake:
 
     return intake_utils.summarize_intake(status_definitions, linked_tickets, data_dict)
 
+
 @tk.side_effect_free
 def search_packages(context, data_dict):
     """Used by the catalog page to determine which packages should be listed
