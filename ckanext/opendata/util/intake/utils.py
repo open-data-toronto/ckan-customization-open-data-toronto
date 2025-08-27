@@ -147,7 +147,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             if ticket["ticket_id"] == ticket_group_id:
                 ticket_group_name = ticket["ticket_name"]
 
-            # map status, definition, anbd public_name from ckan "statuses" dataset
+            # map status, definition, and public_name from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("description")
             ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
 
