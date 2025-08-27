@@ -48,6 +48,7 @@ basic_correct_vals = {
     "tickets_resolved_yesterday_or_unresolved_count": 3,
     "type1_tickets_count": 1,
     "type1_and_type2_tickets_count": 2,
+    "unresolved_ticket_count": 3,
 }
 
 # linked group
@@ -68,6 +69,7 @@ linked_correct_vals = {
     "tickets_resolved_yesterday_or_unresolved_count": 4,
     "type1_tickets_count": 1,
     "type1_and_type2_tickets_count": 2,
+    "unresolved_ticket_count": 4,
 }
 
 #TODO: make tests that
@@ -161,6 +163,20 @@ def test_filtering_on_two_types(ticket_recs, ticket_ids, correct_vals):
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == correct_vals["type1_and_type2_tickets_count"]
 
+def test_filtering_status(ticket_recs, ticket_ids, correct_vals):
+    status_definitions = {}
+    data_dict = {"status":"the_active_status"}       
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
+    assert len(summarized_intake["intake"]) == correct_vals["type1_and_type2_tickets_count"]
+
+def test_filtering_status(ticket_recs, ticket_ids, correct_vals):
+    status_definitions = {}
+    data_dict = {"resolved":"false"}       
+    linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
+    summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
+    assert len(summarized_intake["intake"]) == correct_vals["unresolved_ticket_count"]
+ 
 
 # Test filtering by multiple parameters
 
