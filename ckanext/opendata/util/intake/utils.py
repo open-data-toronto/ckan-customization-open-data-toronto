@@ -162,7 +162,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
 
             # is the ticket resolved or active?
-            if ticket["ticket_resolved?"] == "false":
+            if ticket["ticket_resolved?"] == False:
                 resolved = False
 
             jira_ticket_ids.add(ticket["ticket_id"])
