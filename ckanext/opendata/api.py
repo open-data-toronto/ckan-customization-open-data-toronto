@@ -145,7 +145,7 @@ def search_facet(context, data_dict):
 
 
 @tk.side_effect_free
-def prepare_intake(context, data_dict) -> PreparedIntake:
+def search_requests(context, data_dict) -> PreparedIntake:
 
     intake_tickets = intake_utils.get_intake_tickets(context)
 
@@ -193,7 +193,7 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake = tk.get_action("prepare_intake")(context, {"type": "I’d like to update an existing dataset or page", "resolved": "false"})
+    intake = tk.get_action("search_requests")(context, {"type": "I’d like to update an existing dataset or page", "resolved": "false"})
 
     intake_names = {intake_utils.parse_package_name(intake["ticket_group_name"]) for intake in intake["intake"]}
 
