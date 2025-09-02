@@ -161,7 +161,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
             # map status, definition, and public_name from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition")
-            ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
+            #ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
 
             # is the ticket resolved or active?
             if ticket["ticket_resolved"] == False:
@@ -172,6 +172,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             statuses.add(ticket["to_status"])
             divisions = _split_string_into_set(divisions, ticket["division"])
             inquiry_sources = _split_string_into_set(inquiry_sources, ticket["inquiry_source"])
+            public_description = ticket["public_description"]
 
             group[i] = ticket
 
@@ -247,6 +248,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "ticket_group_id": ticket_group_id,
             "ticket_group_name": ticket_group_name,
             "jira_ticket_ids": list(jira_ticket_ids),
+            "public_description": public_description,
             "last_update": last_update,
             "start_date": start_date,
             "request_types": list(request_types),
