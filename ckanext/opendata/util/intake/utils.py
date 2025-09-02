@@ -82,10 +82,12 @@ def _split_string_into_set(this_set, value):
     else:
         return this_set
 
-def _keys_to_snake_case(input_dict):
+def _clean_tickets(input_dict):
     output_dict = {}
     for key, value in input_dict.items():
-        output_dict[key.replace(" ","_").lower()] = value
+        if isinstance(value, str):
+            value = value.strip()
+        output_dict[key.replace(" ","_").replace("?", "").lower()] = value
 
     return output_dict
 
@@ -102,7 +104,7 @@ def _to_boolean(input_string):
 ########################################################################################
 
 def parse_package_name(input_url):
-    return input_url.replace("https://open.toronto.ca/dataset/", "").replace("/", "")
+    return input_url.replace("https://open.toronto.ca/dataset/", "").replace("/", "").lower()
 
 def summarize_intake(status_definitions, linked_tickets, data_dict):
     # prepare output, raw intake data
@@ -132,13 +134,13 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
         for i in range(len(group)):
 
-            ticket = _keys_to_snake_case(group[i])
+            ticket = _clean_tickets(group[i])
 
             # map status and definition from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition", None)
             ticket["status_colour"] = status_definitions.get(ticket["to_status"], {}).get("colour", None)
             ticket["public_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name", None)
-            ticket["ticket_resolved?"] = _to_boolean(ticket["ticket_resolved?"])
+            ticket["ticket_resolved"] = _to_boolean(ticket["ticket_resolved"])
 
             # last update, status
             ticket_last_updated = get_leftmost_datetime(ticket, "status_timestamp", "created")
@@ -162,7 +164,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
 
             # is the ticket resolved or active?
-            if ticket["ticket_resolved?"] == False:
+            if ticket["ticket_resolved"] == False:
                 resolved = False
 
             jira_ticket_ids.add(ticket["ticket_id"])
@@ -201,7 +203,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         # ticket group name
         if (
                 data_dict.get("name", False) and not
-                parse_package_name(ticket_group_name) == data_dict["name"]
+                parse_package_name(ticket_group_name) == parse_package_name(data_dict["name"])
         ):
             continue
 
@@ -232,7 +234,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             continue
 
         # whether the ticket is resolved or not
-        if data_dict.get("resolved", False) and data_dict.get("resolved", None) != resolved:
+        if data_dict.get("resolved", False) and _to_boolean(data_dict.get("resolved", None)) != resolved:
             continue
 
         # the "all_" sets should also consider the filters above
