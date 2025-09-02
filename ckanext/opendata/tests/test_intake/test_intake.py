@@ -128,35 +128,35 @@ def test_filtering_on_ticket_id(ticket_recs, ticket_ids, correct_vals):
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == 1
 
-def test_filtering_on_max_age(ticket_recs, ticket_ids, correct_vals):
+def test_filtering_max_age(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
     data_dict = {"max_age":"1"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == correct_vals["tickets_one_day_old_count"]
 
-def test_filtering_on_max_days_since_resolution(ticket_recs, ticket_ids, correct_vals):
+def test_filtering_max_days_since_resolution(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
     data_dict = {"max_days_since_resolution":"1"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == correct_vals["tickets_resolved_yesterday_or_unresolved_count"]
 
-def test_filtering_on_name(ticket_recs, ticket_ids, correct_vals):
+def test_filtering_name(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
     data_dict = {"name":"Ticket 1"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == 1
 
-def test_filtering_on_one_type(ticket_recs, ticket_ids, correct_vals):
+def test_filtering_one_type(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
     data_dict = {"type":"type1"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == correct_vals["type1_tickets_count"]
 
-def test_filtering_on_two_types(ticket_recs, ticket_ids, correct_vals):
+def test_filtering_two_types(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
     data_dict = {"type":"type1~type2"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
