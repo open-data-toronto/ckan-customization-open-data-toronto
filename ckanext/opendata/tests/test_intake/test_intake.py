@@ -29,7 +29,7 @@ yesterday = datetime.strftime(datetime.today() - timedelta(days=1), "%Y-%m-%dT%H
 two_days_ago = datetime.strftime(datetime.today() - timedelta(days=2), "%Y-%m-%dT%H:%M:%S")
 one_year_ago = datetime.strftime(datetime.today() - timedelta(days=365), "%Y-%m-%dT%H:%M:%S")
 
-### generate tickets
+### generate test data
 
 # basic group
 ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1","Created": two_days_ago, "Ticket Resolved?": "true"}).to_dict()
@@ -72,6 +72,26 @@ linked_correct_vals = {
     "unresolved_ticket_count": 4,
 }
 
+# another linked group
+ticket_1 = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": two_days_ago, "Request Type": "type3", "category": None}).to_dict()
+ticket_1a = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": two_days_ago, "Request Type": "type3", "category": None}).to_dict()
+ticket_1b = TicketFactory({"Ticket Id": "DIA-1", "Ticket Name": "Ticket 1", "Linked Ticket Id": "DIA-2", "Created": two_days_ago, "Request Type": "type3", "category": "done"}).to_dict()
+ticket_2 = TicketFactory({"Ticket Id": "DIA-2", "Linked Ticket Id": "DIA-1", "Ticket Name": "Ticket 2","Created": yesterday, "Request Type": "type1", "category": None}).to_dict()
+ticket_2a = TicketFactory({"Ticket Id": "DIA-2", "Linked Ticket Id": "DIA-1", "Ticket Name": "Ticket 2","Created": yesterday, "Request Type": "type1", "category": "done"}).to_dict()
+ticket_4 = TicketFactory({"Ticket Id": "DIA-4", "Ticket Name": "Ticket 4","Created": one_year_ago, "Request Type": "type2", "Ticket Resolved?": "true"}).to_dict()
+
+more_linked_ticket_recs = [ticket_1, ticket_1a, ticket_1b, ticket_2, ticket_2a, ticket_4]
+more_linked_ticket_ids = [rec["Ticket Id"] for rec in more_linked_ticket_recs]
+more_linked_correct_vals = {
+    "grouped_ticket_count": 3,
+    "linked_ticket_count": 2,
+    "tickets_one_day_old_count": 0,
+    "tickets_resolved_yesterday_or_unresolved_count": 1,
+    "type1_tickets_count": 1,
+    "type1_and_type2_tickets_count": 2,
+    "unresolved_ticket_count": 1,
+}
+
 #TODO: make tests that
 #   groups, checks number of groups
 #   links, checks number of linked groups
@@ -89,6 +109,7 @@ pytestmark = pytest.mark.parametrize(
     [
         (basic_ticket_recs, basic_ticket_ids, basic_correct_vals),
         (linked_ticket_recs, linked_ticket_ids, linked_correct_vals),
+        (more_linked_ticket_recs, more_linked_ticket_ids, more_linked_correct_vals),
     ]
 )
 
