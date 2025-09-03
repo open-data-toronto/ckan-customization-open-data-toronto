@@ -139,7 +139,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             # map status and definition from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition", None)
             ticket["status_colour"] = status_definitions.get(ticket["to_status"], {}).get("colour", None)
-            ticket["public_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name", None)
+            ticket["status_public_name"] = status_definitions.get(ticket["to_status"], {}).get("status_public_name", None)
             ticket["ticket_resolved"] = _to_boolean(ticket["ticket_resolved"])
 
             # last update, status
@@ -148,7 +148,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
                 last_update = ticket_last_updated
                 last_status = ticket["to_status"]
                 last_status_colour = ticket["status_colour"]
-                last_status_public_name = ticket["public_name"]
+                last_status_public_name = ticket["status_public_name"]
 
             # start date
             ticket_start_date = datetime.strptime(ticket["created"], "%Y-%m-%dT%H:%M:%S")
@@ -161,7 +161,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
             # map status, definition, and public_name from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition")
-            #ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("public_name")
+            #ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("status_public_name")
 
             # is the ticket resolved or active?
             if ticket["ticket_resolved"] == False:
@@ -303,7 +303,7 @@ def get_status_definitions(context):
         definitions = _get_datastore_records(context, "statuses")
     except ValueError:
         return {}
-    return {d["status"]: {"definition": d["definition"], "colour": d["colour"], "public_name": d["public_name"]} for d in definitions}
+    return {d["status"]: {"definition": d["definition"], "colour": d["colour"], "status_public_name": d["public_name"]} for d in definitions}
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     """fuzzy_match_ticket_name

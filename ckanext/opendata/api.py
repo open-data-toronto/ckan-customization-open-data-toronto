@@ -193,7 +193,7 @@ def search_packages(context, data_dict):
         },
     )
 
-    intake = tk.get_action("search_requests")(context, {"type": "I’d like to update an existing dataset or page", "resolved": "false"})
+    intake = tk.get_action("search_requests")(context, {"page": "dataset", "resolved": "false"})
 
     intake_names = {intake_utils.parse_package_name(intake["ticket_group_name"]) for intake in intake["intake"]}
 
