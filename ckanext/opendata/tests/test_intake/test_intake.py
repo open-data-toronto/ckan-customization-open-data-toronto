@@ -144,7 +144,7 @@ def test_filtering_max_days_since_resolution(ticket_recs, ticket_ids, correct_va
 
 def test_filtering_name(ticket_recs, ticket_ids, correct_vals):
     status_definitions = {}
-    data_dict = {"name":"Ticket 1"}       
+    data_dict = {"name":"Ticket 4"}       
     linked_tickets = join_linked_tickets(group_tickets(ticket_recs, ticket_ids))
     summarized_intake = summarize_intake(status_definitions, linked_tickets, data_dict)
     assert len(summarized_intake["intake"]) == 1
