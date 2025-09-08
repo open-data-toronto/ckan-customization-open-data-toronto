@@ -82,7 +82,7 @@ def _split_string_into_set(this_set, value):
     else:
         return this_set
 
-def _clean_tickets(input_dict):
+def _to_snake_case(input_dict):
     output_dict = {}
     for key, value in input_dict.items():
         if isinstance(value, str):
@@ -98,6 +98,7 @@ def _to_boolean(input_string):
         return False
     else:
         raise TypeError("An input was expected to be a string and was not")
+
 
 ########################################################################################
 # Public Utils
@@ -132,14 +133,29 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         resolved = True
         days_since_resolution = None
 
+        # sort ticket group by the timestamp
+        group = sorted(group, key= lambda x: x["Status Timestamp"])
+
+        cleaned_group = []
+
         for i in range(len(group)):
 
-            ticket = _clean_tickets(group[i])
+            ticket = _to_snake_case(group[i])
 
             # map status and definition from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition", None)
             ticket["status_colour"] = status_definitions.get(ticket["to_status"], {}).get("colour", None)
             ticket["status_public_name"] = status_definitions.get(ticket["to_status"], {}).get("status_public_name", None)
+            ticket["category"] = status_definitions.get(ticket["to_status"], {}).get("category", None)
+
+            # remove new ticket statuses that arent at the start
+            if ticket["category"] == "new" and i != 0:
+                continue
+
+            # remove done ticket statuses that arent at the end
+            if ticket["category"] == "done" and i != len(group)-1:
+                continue
+            
             ticket["ticket_resolved"] = _to_boolean(ticket["ticket_resolved"])
 
             # last update, status
@@ -174,10 +190,9 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             inquiry_sources = _split_string_into_set(inquiry_sources, ticket["inquiry_source"])
             public_description = ticket["public_description"]
 
-            group[i] = ticket
+            cleaned_group.append(ticket)
 
         # if there were inputs to the API call, use them to filter...
-
         # ticket id
         if (
             data_dict.get("ticket_id", False) and not 
@@ -259,7 +274,7 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             "inquiry_sources": list(inquiry_sources),
             "statuses": list(statuses),
             "resolved": resolved,
-            "details": sorted(group, key= lambda x: x["status_timestamp"]),
+            "details": cleaned_group,
         })
 
     output["all_statuses"] = list(all_statuses)
@@ -303,7 +318,7 @@ def get_status_definitions(context):
         definitions = _get_datastore_records(context, "statuses")
     except ValueError:
         return {}
-    return {d["status"]: {"definition": d["definition"], "colour": d["colour"], "status_public_name": d["public_name"]} for d in definitions}
+    return {d["status"]: {"definition": d["definition"], "colour": d["colour"], "status_public_name": d["public_name"], "category": d["category"]} for d in definitions}
 
 def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     """fuzzy_match_ticket_name
