@@ -112,6 +112,7 @@ def parse_package_name(input_url):
 
 def summarize_intake(status_definitions, linked_tickets, data_dict):
     # prepare output, raw intake data
+
     output = {"intake": []}
 
     all_statuses = set()
@@ -136,10 +137,9 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
         resolved = True
         days_since_resolution = None
 
-        # sort ticket group by the timestamp
-        group = sorted(group, key= lambda x: x["Status Timestamp"])
-
         cleaned_group = []
+
+        group = sorted(group, key= lambda x: x["Status Timestamp"])
 
         for i in range(len(group)):
 
@@ -150,14 +150,6 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             ticket["status_colour"] = status_definitions.get(ticket["to_status"], {}).get("colour", None)
             ticket["status_public_name"] = status_definitions.get(ticket["to_status"], {}).get("status_public_name", None)
             ticket["category"] = status_definitions.get(ticket["to_status"], {}).get("category", None)
-
-            # remove new ticket statuses that arent at the start
-            if ticket["category"] == "new" and i != 0:
-                continue
-
-            # remove done ticket statuses that arent at the end
-            if ticket["category"] == "done" and i != len(group)-1:
-                continue
             
             ticket["ticket_resolved"] = _to_boolean(ticket["ticket_resolved"])
 
@@ -180,7 +172,6 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
 
             # map status, definition, and public_name from ckan "statuses" dataset
             ticket["status_definition"] = status_definitions.get(ticket["to_status"], {}).get("definition")
-            #ticket["public_status_name"] = status_definitions.get(ticket["to_status"], {}).get("status_public_name")
 
             # is the ticket resolved or active?
             if ticket["ticket_resolved"] == False:
@@ -192,6 +183,14 @@ def summarize_intake(status_definitions, linked_tickets, data_dict):
             divisions = _split_string_into_set(divisions, ticket["division"])
             inquiry_sources = _split_string_into_set(inquiry_sources, ticket["inquiry_source"])
             public_description = ticket["public_description"]
+
+            # remove new ticket statuses that arent at the start
+            if ticket["category"] == "new" and i != 0:
+                continue
+
+            # remove done ticket statuses that arent at the end
+            if ticket["category"] == "done" and i != len(group)-1:
+                continue
 
             cleaned_group.append(ticket)
 
@@ -343,8 +342,6 @@ def fuzzy_match_ticket_name(search: str, ticket_group_name: str):
     else:
         return False
 
-    
-
 def filter_out_closed_tickets(
     grouped_tickets: Dict[str, List[Ticket]]
 ) -> Dict[str, List[Ticket]]:
@@ -408,8 +405,11 @@ def join_linked_tickets(
                         this = grouped_tickets.pop(linked_id)
                         for item in this:
                             records.append(item)
+                        
+                # ensure newest ticket is the ticket_id here
+                # records = sorted(records, key= lambda x: x["Status Timestamp"])
+                joined[get_most_recent_ticket(records)["Ticket Id"]] = records
 
-                joined[ticket_id] = records
     # adding records that dont have linked tickets
     for k, v in grouped_tickets.items():
         joined[k] = v
