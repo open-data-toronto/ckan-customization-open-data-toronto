@@ -105,7 +105,10 @@ def _to_boolean(input_string):
 ########################################################################################
 
 def parse_package_name(input_url):
-    return input_url.replace("https://open.toronto.ca/dataset/", "").replace("/", "").lower()
+    if input_url:
+        return input_url.replace("https://open.toronto.ca/dataset/", "").replace("/", "").lower()
+    else:
+        return input_url
 
 def summarize_intake(status_definitions, linked_tickets, data_dict):
     # prepare output, raw intake data
