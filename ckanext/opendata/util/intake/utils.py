@@ -407,8 +407,8 @@ def join_linked_tickets(
                             records.append(item)
                         
                 # ensure newest ticket is the ticket_id here
-                # records = sorted(records, key= lambda x: x["Status Timestamp"])
-                joined[get_most_recent_ticket(records)["Ticket Id"]] = records
+                records = sorted(records, key= lambda x: x["Created"])
+                joined[records[-1]["Ticket Id"]] = records
 
     # adding records that dont have linked tickets
     for k, v in grouped_tickets.items():
