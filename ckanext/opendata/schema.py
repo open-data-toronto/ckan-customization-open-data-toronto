@@ -7,58 +7,23 @@ def create_resource_views(context, resource):
         "map": {
             "resource_id": resource["id"],
             "title": "Map",
-            "view_type": "recline_map_view",
-            "auto_zoom": True,
-            "cluster_markers": False,
-            "map_field_type": "geojson",
-            "limit": 500,
+            "view_type": "geojson_view",
         },
-        "data explorer": {
+        "data_table": {
             "resource_id": resource["id"],
-            "title": "Data Explorer",
-            "view_type": "recline_view",
-        },
-        "dqs": {
-            "resource_id": resource["id"],
-            "title": "DQS",
-            "view_type": "dqs_view",
+            "title": "Data Table",
+            "view_type": "datatables_view",
+            "ellipsis_length": 0,
+            "date_format": "llll",
         },
     }
 
-    # we dont make views for datastore_cache resources
-    if resource.get("is_datastore_cache_file", False) in [True, "True", "true"]:
-        return
-
-    # gather all old views for this resource
-    views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
-    existing_view_types = []
-    for view in views:
-        existing_view_types.append(view["view_type"])
-
-    # make DQS views for any resource
-    if "dqs_view" not in existing_view_types:
-        tk.get_action("resource_view_create")(context, format_views["dqs"])
-
-    # only make "preview" views for datastore resources
-    # those require datastore resources, so if not datasore, we stop here
-    if resource["datastore_active"] in [False, "False", "false"]:
-        return
-
-    # make a data explorer view for all resources
-    if "recline_view" not in existing_view_types:
-        tk.get_action("resource_view_create")(context, format_views["data explorer"])
+    # make a data tables view for all datastore resources
+    if resource["datastore_active"] in [True, "true", "True"]:
+        tk.get_action("resource_view_create")(context, format_views["data_table"])
 
     # make a map view for a resource with a 'geometry' field
-    if (
-        "geometry"
-        in [
-            field["id"]
-            for field in tk.get_action("datastore_search")(
-                context, {"id": resource["id"], "limit": 0}
-            )["fields"]
-        ]
-        and "recline_map_view" not in existing_view_types
-    ):
+    if resource["format"].lower() == "geojson":
         tk.get_action("resource_view_create")(context, format_views["map"])
 
 

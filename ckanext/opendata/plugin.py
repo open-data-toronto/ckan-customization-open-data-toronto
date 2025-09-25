@@ -87,13 +87,13 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
         resource["format"] = resource["format"].upper()
 
-    def after_resource_create(self, context, resource):
-        schema.create_resource_views(context, resource)
-        schema.update_package(context)
-
-    def after_resource_update(self, context, resource):
-        schema.create_resource_views(context, resource)
-        schema.update_package(context)
+    #def after_resource_create(self, context, resource):
+    #    schema.create_resource_views(context, resource)
+    #    schema.update_package(context)
+#
+    #def after_resource_update(self, context, resource):
+    #    schema.create_resource_views(context, resource)
+    #    schema.update_package(context)
 
     def after_resource_delete(self, context, resources):
         schema.update_package(context)
