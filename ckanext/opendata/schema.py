@@ -19,11 +19,11 @@ def create_resource_views(context, resource):
     }
 
     # make a data tables view for all datastore resources
-    if resource["datastore_active"] in [True, "true", "True"]:
+    if resource["datastore_active"] in [True, "true", "True"]:        
         tk.get_action("resource_view_create")(context, format_views["data_table"])
 
-    # make a map view for a resource with a 'geometry' field
-    if resource["format"].lower() == "geojson":
+    # make a map view for a geojson filestore resource
+    if resource["format"].lower() == "geojson" and resource["datastore_active"] not in [True, "true", "True"] and resource["size"]:
         tk.get_action("resource_view_create")(context, format_views["map"])
 
 
