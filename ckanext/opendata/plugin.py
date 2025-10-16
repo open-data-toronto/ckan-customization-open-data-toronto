@@ -117,6 +117,8 @@ class ExtendedThemePlugin(p.SingletonPlugin):
             "get_dqs": utils.get_dqs,
         }
 
+    def get_commands(self):
+        return [opendatatoronto]
 
     # ==============================
     # IActions
