@@ -117,36 +117,6 @@ class ExtendedThemePlugin(p.SingletonPlugin):
             "get_dqs": utils.get_dqs,
         }
 
-    # Custom DQS preview logic
-    p.implements(p.IResourceView, inherit=True)
-
-    def info(self):
-        return {
-            "name": "dqs_view",
-            "title": _("DQS"),
-            "icon": "cog",
-            "iframed": False,
-            "always-available": True,
-        }
-
-    def can_view(self, data_dict):
-        return True
-
-    def setup_template_variables(self, context, data_dict):
-        return {
-            "resource": data_dict["resource"],
-            "resource_view_json": data_dict["resource_view"],
-            "package": data_dict["package"],
-        }
-
-    def view_template(self, context, data_dict):
-        return "views/dqs_view.html"
-
-    def form_template(self, context, data_dict):
-        return "views/dqs_form.html"
-
-    def get_commands(self):
-        return [opendatatoronto]
 
     # ==============================
     # IActions
