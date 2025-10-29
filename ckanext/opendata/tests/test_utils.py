@@ -17,6 +17,7 @@ class TestCalculateListFacets:
         # Accepts both `json` formatted, or list of strings
         ('["Health"]', ["Health"]),
     )
+    @pytest.mark.usefixtures("with_plugins")
     def test_aggregates_facets(self, name):
         in_facets = [
             ListFacet(name=name, display_name=name, count=1),
@@ -29,6 +30,7 @@ class TestCalculateListFacets:
         result = calculate_list_facets(in_facets)
         assert self._get_facet_by_name(result, "Health")["count"] == 3
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_counts_single_occurences(self):
         in_facets = [
             ListFacet(name='["Health"]', display_name='["Health"]', count=1),
@@ -41,6 +43,7 @@ class TestCalculateListFacets:
         result = calculate_list_facets(in_facets)
         assert self._get_facet_by_name(result, "Public safety")["count"] == 2
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_returns_correct_number_of_items(self):
         in_facets = [
             ListFacet(
@@ -56,6 +59,7 @@ class TestCalculateListFacets:
         n_unique_facets = 3  # Health, Something, Public safety
         assert len(result) == n_unique_facets
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_takes_first_name_as_display_name(self):
         in_facets = [
             ListFacet(name='["Health"]', display_name='["Healthabcds"]', count=1),
@@ -72,15 +76,17 @@ class TestCalculateListFacets:
         # calculate_list_facets for details)
         assert self._get_facet_by_name(result, "Health")["display_name"] == "Health"
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_accepts_empty(self):
         in_facets = []
         result = calculate_list_facets(in_facets)
         assert len(result) == 0
-
+    
     @pytest.mark.parametrize(
         "not_json",
         ("{not json}", 1, False),
     )
+    @pytest.mark.usefixtures("with_plugins")
     def test_warns_invalid_json(self, not_json):
         facets = [ListFacet(name=not_json, display_name=not_json, count=1)]
         with pytest.warns():
@@ -90,6 +96,7 @@ class TestCalculateListFacets:
         "not_json",
         ("{not json}", 1, False),
     )
+    @pytest.mark.usefixtures("with_plugins")
     def test_ignores_invalid_json(self, not_json):
         facets = [ListFacet(name=not_json, display_name=not_json, count=1)]
         assert len(calculate_list_facets(facets)) == 0

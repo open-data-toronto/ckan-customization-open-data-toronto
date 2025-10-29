@@ -73,11 +73,15 @@ class TestDatastoreCache:
                     # the resource
                     helpers.call_action("resource_delete", context, id=resource_id)
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_enforces_authorization(self, record_test_name):
         record_test_name("Datastore Cache API enforces authorization")
         with pytest.raises(tk.NotAuthorized):
             helpers.call_action("datastore_cache")
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_enforces_package_or_resource_id(self, record_test_name):
         record_test_name("Datastore Cache API performs package/resoruce validation")
         context = {"auth_user_obj": "some_user"}
@@ -94,6 +98,8 @@ class TestDatastoreCache:
         resource = helpers.call_action("resource_show", id=resource_id)
         return resource["is_datastore_cache_file"]
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_creates_cache_resources(
         self, record_test_name, sysadmin, datastore_resource
     ):
@@ -147,11 +153,15 @@ class TestDatastoreCreate:
                     force=True,
                 )
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_enforces_authorization(self, record_test_name):
         record_test_name("Datastore Create API enforces authorization")
         with pytest.raises(tk.NotAuthorized):
             helpers.call_action("datastore_create")
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_creates_datastore_records(self, record_test_name, sysadmin, resource):
         """
         test that our chained action successfully calls datastore_create
@@ -168,6 +178,8 @@ class TestDatastoreCreate:
             )
         assert result["records"] == self._mock_records
 
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_creates_cached_files(self, record_test_name, sysadmin, resource):
         """
         test that datastore cache files get created
@@ -190,13 +202,18 @@ class TestDatastoreCreate:
 
 
 class TestQualityShow:
+    
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_raises_for_missing_package_id(self, record_test_name):
         record_test_name("Data Quality Score API performs validation")
 
         with pytest.raises(tk.ValidationError):
             # No package_id provided, expect a ValidationError
             helpers.call_action("quality_show")
-
+    
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_silently_fails_when_dqs_resource_dne(self, record_test_name, mocker):
         # TODO is this the desired behavior? 404 might be more appropriate...
         # 'silent failure' -> harder to detect and debug
@@ -208,7 +225,9 @@ class TestQualityShow:
         mock_actions(mocker, package_show=mock_dqs_package)
         result = helpers.call_action("quality_show", context={}, package_id="any")
         assert result is None
-
+    
+    @pytest.mark.ckan_config("ckan.plugins", ["datastore", "iotrans", "extendedapi"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_returns_list_of_relevant_datasets_if_score_exists(
         self, record_test_name, mocker
     ):
@@ -319,7 +338,8 @@ class TestSearchFacet:
         if data_dict is None:
             data_dict = {"facet_field[]": ""}
         return helpers.call_action("search_facet", {}, **data_dict)
-
+    
+    @pytest.mark.usefixtures("with_plugins")
     def test_returns_valid_json(self, record_test_name, mocker):
         record_test_name("Search Facet API returns valid JSON response")
 
@@ -346,6 +366,7 @@ class TestSearchFacet:
         # sort
         assert isinstance(result["sort"], str), err_message
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_counts_mc_facets_correctly(self, record_test_name, mocker):
         """
         Test that counts for multiple-choice fields (e.g. topics/civic_issues/formats)
@@ -372,6 +393,7 @@ class TestSearchFacet:
             assert counts["display_name"] == format
             assert counts["count"] == count
 
+    @pytest.mark.usefixtures("with_plugins")
     def test_counts_non_mc_facets_correctly(self, record_test_name, mocker):
         """
         Test that counts for single-response fields (e.g. 'publisher') aggregate'
@@ -406,6 +428,7 @@ class TestSearchFacet:
             ({"facet_field[]": "topics"}, False),  # correct
         ),
     )
+    @pytest.mark.usefixtures("with_plugins")
     def test_param_validation(self, mocker, params: dict, expect_errors):
         def run_test():
             self._search_facet_with_mock_data(
@@ -444,6 +467,7 @@ class TestSearchPackages:
     )
     @pytest.mark.integration
     @pytest.mark.parametrize("search", ["water", "services", "year"])
+    @pytest.mark.usefixtures("with_plugins")
     def test_retired_last_true_integration(self, search):
         result = helpers.call_action(
             "search_packages", search=search, rows="9999", retired_last="true"
@@ -469,6 +493,7 @@ class TestSearchPackages:
         "some non-retired datasets (test case skips if this is not the case)"
     )
     @pytest.mark.integration
+    @pytest.mark.usefixtures("with_plugins")
     def test_retired_last_false_integration(self):
         """
         What we're testing here:
@@ -511,6 +536,7 @@ class TestSearchPackages:
     @pytest.mark.skip
     @pytest.mark.usefixtures("with_request_context")
     @pytest.mark.usefixtures("local_clean_db", "with_plugins")
+    @pytest.mark.usefixtures("with_plugins")
     def test_solr_sort_deprioritizes_is_retired(self):
 
         owner_org = factories.Organization()

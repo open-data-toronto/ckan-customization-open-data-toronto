@@ -41,6 +41,7 @@ from typing import Tuple
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.usefixtures("with_plugins")
 def sysadmin() -> Generator[User, None, None]:
     sysadmin = factories.Sysadmin()
     user_id = sysadmin["id"]
@@ -57,6 +58,7 @@ def sysadmin() -> Generator[User, None, None]:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.usefixtures("with_plugins")
 def org(sysadmin: Dict) -> Generator[Dict, None, None]:
     context = {"user": sysadmin.name}
     org_dict = factories.Organization()
@@ -82,6 +84,7 @@ def package(sysadmin: Dict) -> Generator[Dict, None, None]:
         "dataset_category": "Document",
         "owner_division": "311 Toronto",
         "refresh_rate": "Daily",
+        "owner_org": "city-of-toronto",
     }
     package_dict = helpers.call_action("package_create", context=context, **kwargs)
     try:
@@ -91,6 +94,8 @@ def package(sysadmin: Dict) -> Generator[Dict, None, None]:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.ckan_config("ckan.plugins", ["datastore"])
+@pytest.mark.usefixtures("with_plugins")
 def resource(sysadmin: Dict, package: Dict) -> Generator[Dict, None, None]:
     context = {"user": sysadmin.name}
     resource = helpers.call_action(
@@ -107,23 +112,4 @@ def resource(sysadmin: Dict, package: Dict) -> Generator[Dict, None, None]:
         helpers.call_action("resource_delete", context=context, id=resource["id"])
 
 
-@pytest.fixture(scope="session")
-def topics_resource(sysadmin: Dict) -> Generator[Dict, None, None]:
-    lc = LocalCKAN(username=sysadmin.name)
 
-    resource_alias = "topics"
-    search = lc.action.datastore_search(resource_id=resource_alias)
-    resource_id = search["resource_id"]
-    created_test_options = lc.action.datastore_upsert(
-        resource_id=resource_id,
-        records=SCHEMING_MOCK_TEST_OPTIONS,
-        method="insert",
-        force=True,
-    )
-    yield created_test_options["records"]
-    for option in SCHEMING_MOCK_TEST_OPTIONS:
-        lc.action.datastore_delete(
-            resource_id=resource_id,
-            filters={"value": option["value"]},
-            force=True,
-        )

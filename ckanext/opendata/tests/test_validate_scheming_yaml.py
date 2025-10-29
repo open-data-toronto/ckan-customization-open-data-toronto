@@ -74,6 +74,7 @@ def _get_default_dataset_field(
         ({"validators": "string_to_choices scheming_multiple_choice"}, True),
     ],
 )
+@pytest.mark.usefixtures("with_plugins")
 def test_validate_dataset_fields(field_kwargs, is_valid):
     if is_valid:
         _get_default_dataset_field(**field_kwargs)

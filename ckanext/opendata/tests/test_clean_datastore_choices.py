@@ -69,6 +69,8 @@ updated_values = {
         ),
     ],
 )
+
+@pytest.mark.usefixtures("with_plugins")
 def test_map_to_new_values(case, expected_json):
     dummy_logger = logging.Logger("test_map_to_new_values")
     result = SchemingMigration._map_to_new_values(dummy_logger, case, updated_values)
