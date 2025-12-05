@@ -19,12 +19,16 @@ def create_resource_views(context, resource):
     }
 
     # make a data tables view for all datastore resources
-    if resource["datastore_active"] in [True, "true", "True"]:        
-        tk.get_action("resource_view_create")(context, format_views["data_table"])
+    if resource["datastore_active"] in [True, "true", "True"]:
+        views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
+        if not any([view["view_type"]=="datatables_view" for view in views]):
+            tk.get_action("resource_view_create")(context, format_views["data_table"])
+        
 
     # make a map view for a geojson filestore resource
     if resource["format"].lower() == "geojson" and resource["datastore_active"] not in [True, "true", "True"] and resource["size"]:
-        tk.get_action("resource_view_create")(context, format_views["map"])
+        if not any([view["view_type"]=="geojson_view" for view in views]):
+            tk.get_action("resource_view_create")(context, format_views["map"])
 
 
 def update_package(context):
