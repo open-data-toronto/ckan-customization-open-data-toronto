@@ -483,3 +483,24 @@ def to_bool(item: Any, default: Optional[bool] = None) -> bool:
         return default
 
     raise ValueError(f"Could not parse {item} as a bool")
+
+def count_vertices(raw_geojson):
+  final_count = 0
+  def counter(coords):
+    count = 0
+    # check if this element is a coord
+    if isinstance(coords, (list, tuple)) and len(coords) == 2:
+      if all(isinstance(coord, (int, float)) for coord in coords):
+        return 1
+
+    if isinstance(coords, (list, tuple)):
+      for item in coords:
+        count += counter(item)
+
+    return count
+
+  for feature in raw_geojson["features"]:
+    coords = feature["geometry"]["coordinates"]
+    final_count += counter(coords)
+
+  return final_count

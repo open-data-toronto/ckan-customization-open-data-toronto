@@ -1,4 +1,7 @@
 import ckan.plugins.toolkit as tk
+from .util import utils
+import json
+import requests
 
 
 def create_resource_views(context, resource):
@@ -18,15 +21,21 @@ def create_resource_views(context, resource):
         },
     }
 
+    views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
+
     # make a data tables view for all datastore resources
     if resource["datastore_active"] in [True, "true", "True"]:
-        views = tk.get_action("resource_view_list")(context, {"id": resource["id"]})
         if not any([view["view_type"]=="datatables_view" for view in views]):
             tk.get_action("resource_view_create")(context, format_views["data_table"])
         
 
     # make a map view for a geojson filestore resource
     if resource["format"].lower() == "geojson" and resource["datastore_active"] not in [True, "true", "True"] and resource["size"]:
+        # load geojson and count vertices
+        raw = json.loads(requests.get((resource["url"])).text)
+        vertices = utils.count_vertices(raw)
+        print(vertices)
+
         if not any([view["view_type"]=="geojson_view" for view in views]):
             tk.get_action("resource_view_create")(context, format_views["map"])
 
