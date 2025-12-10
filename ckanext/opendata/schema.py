@@ -34,10 +34,12 @@ def create_resource_views(context, resource):
         # load geojson and count vertices
         raw = json.loads(requests.get((resource["url"])).text)
         vertices = utils.count_vertices(raw)
-        print(vertices)
-
-        if not any([view["view_type"]=="geojson_view" for view in views]):
-            tk.get_action("resource_view_create")(context, format_views["map"])
+        if vertices <= 50000:
+            if not any([view["view_type"]=="geojson_view" for view in views]):
+                tk.get_action("resource_view_create")(context, format_views["map"])
+        elif vertices > 50000:
+            if any([view["view_type"]=="geojson_view" for view in views]):
+                tk.get_action("resource_view_clear")(context, ["geojson_view"])
 
 
 def update_package(context):
