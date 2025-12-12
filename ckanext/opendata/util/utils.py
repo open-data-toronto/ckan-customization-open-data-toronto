@@ -1,12 +1,15 @@
 import codecs
 import csv
+import requests
 import json
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict
 from warnings import warn
+import sqlalchemy as sa
 
 import ckan.plugins.toolkit as tk
+from ckan.common import config
 
 from .types import SchemingSchema
 
@@ -504,3 +507,18 @@ def count_vertices(raw_geojson):
     final_count += counter(coords)
 
   return final_count
+
+def count_datastore_rows(resource_id):
+    db_url = config['ckan.datastore.read_url']
+    engine = sa.create_engine(db_url)
+    
+    with engine.connect() as conn:
+        result = conn.execute(
+            sa.text(f'SELECT count(*) FROM "{resource_id}"')
+        )
+
+    for row in result:
+        output = row[0]
+
+
+    return output

@@ -303,10 +303,7 @@ def datastore_cache(context, data_dict):
         logging.info("[ckanext-opendatatoronto]--------- checking if spatial")
         is_geospatial = utils.is_geospatial(resource_info["id"])
 
-        # create df of gdf for
-        # df = downloads._prepare_df(resource_info["id"], is_geospatial)
-
-        # run iotrans wrapper on (g)df for each file + EPSG combination
+        # run iotrans wrapper on each file + EPSG combination
         # if this is spatial, we'll need to repeat the stuff below for
         # EPSG codes 4326 and 2952 in spatial formats
         if is_geospatial:
@@ -467,8 +464,7 @@ def datastore_cache(context, data_dict):
         # delete the temp directory where we stored the cached files
         tk.get_action("prune")(context, {"path": cached_files_dir})
 
-        # put array of filepaths into package_patch call
-        # and current date into resource_patch call
+        # current date and cache paths into resource_patch call
         tk.get_action("resource_patch")(
             context,
             {
@@ -477,6 +473,7 @@ def datastore_cache(context, data_dict):
                 "datastore_cache_last_update": datetime.now().strftime(
                     "%Y-%m-%dT%H:%M:%S.%f"
                 ),
+                "record_count": utils.count_datastore_rows(resource_info["id"])
             },
         )
 
