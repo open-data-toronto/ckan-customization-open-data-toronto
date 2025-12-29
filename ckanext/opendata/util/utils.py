@@ -503,8 +503,9 @@ def count_vertices(raw_geojson):
     return count
 
   for feature in raw_geojson["features"]:
-    coords = feature["geometry"]["coordinates"]
-    final_count += counter(coords)
+    if feature.get("geometry"):
+        coords = feature["geometry"]["coordinates"]
+        final_count += counter(coords)
 
   return final_count
 
