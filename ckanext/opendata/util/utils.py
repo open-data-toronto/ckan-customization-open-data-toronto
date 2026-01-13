@@ -493,7 +493,7 @@ def count_cached_geojson_vertices(datastore_cache):
     if geojson_ids:
         geojson_id = geojson_ids["4326"]
 
-    if not geojson_id or not geojson_ids:
+    elif not geojson_ids:
         return None
 
     resource = tk.get_action("resource_show")(data_dict={"id": geojson_id})

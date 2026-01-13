@@ -39,7 +39,7 @@ def create_resource_views(context, resource):
                 tk.get_action("resource_view_create")(context, format_views["map"])
         elif vertices > 50000:
             if any([view["view_type"]=="geojson_view" for view in views]):
-                tk.get_action("resource_view_clear")(context, ["geojson_view"])
+                tk.get_action("resource_view_clear")(context, {"view_type": ["geojson_view"]})
 
 
 def update_package(context):
