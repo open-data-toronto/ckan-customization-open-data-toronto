@@ -487,6 +487,20 @@ def to_bool(item: Any, default: Optional[bool] = None) -> bool:
 
     raise ValueError(f"Could not parse {item} as a bool")
 
+
+def count_cached_geojson_vertices(datastore_cache):
+    geojson_ids = datastore_cache.get("GEOJSON", None)
+    if geojson_ids:
+        geojson_id = geojson_ids["4326"]
+
+    if not geojson_id or not geojson_ids:
+        return None
+
+    resource = tk.get_action("resource_show")(data_dict={"id": geojson_id})
+    raw = json.loads(requests.get((resource["url"])).text)
+    return count_vertices(raw)
+
+
 def count_vertices(raw_geojson):
   final_count = 0
   def counter(coords):

@@ -473,7 +473,8 @@ def datastore_cache(context, data_dict):
                 "datastore_cache_last_update": datetime.now().strftime(
                     "%Y-%m-%dT%H:%M:%S.%f"
                 ),
-                "record_count": utils.count_datastore_rows(resource_info["id"])
+                "record_count": utils.count_datastore_rows(resource_info["id"]),
+                "vertex_count": utils.count_cached_geojson_vertices(output)
             },
         )
 
