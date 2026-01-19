@@ -1,4 +1,10 @@
 User-agent: *
+# disallow dataset management interface
+Disallow: /dataset/$
 Disallow: /dataset/*$
-Allow: /dataset/*/resources/*/view/*
+# disallow dataset download URLs
+Disallow: /dataset/*/resource/*/download/*
+# allow map iframe and explore interface URLs
+Allow: /dataset/*/resource/*/view/*
+# allow api requests
 Allow: /api/
