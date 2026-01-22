@@ -30,9 +30,13 @@ def create_resource_views(context, resource):
         
     # make a map view for a geojson filestore resource
     if resource["format"].lower() == "geojson" and resource["datastore_active"] not in [True, "true", "True"] and resource["size"]:
-        # load geojson and count vertices
-        if not any([view["view_type"]=="geojson_view" for view in views]):
-            tk.get_action("resource_view_create")(context, format_views["map"])
+        # check geojson size
+        if resource["size"] <= 2200000:
+            if not any([view["view_type"]=="geojson_view" for view in views]):
+                tk.get_action("resource_view_create")(context, format_views["map"])
+        elif resource["size"] > 2200000:
+            if any([view["view_type"]=="geojson_view" for view in views]):
+                tk.get_action("resource_view_clear")(context, {"view_type": ["geojson_view"]})
 
 def update_package(context):
     # Ensures that changes to a resource in a package also affect the
