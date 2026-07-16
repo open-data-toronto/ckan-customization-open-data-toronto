@@ -3,11 +3,41 @@ import os
 import click
 
 from .clean_datastore_choices import SchemingMigration
+from .seed_data import seed_org, seed_lookup_tables, seed_sample_dataset, seed_intake_dataset
 
 
 @click.group()
 def opendatatoronto():
     pass
+
+
+@opendatatoronto.command()
+def seed():
+    """Seed lookup tables and a sample dataset for local development.
+
+    Safe to run multiple times — all steps are skipped if the relevant
+    packages or resources already exist.
+
+    Steps:
+      0. Ensures the 'city-of-toronto' organisation exists.
+      1. Creates the 'metadata-catalog' package and populates lookup tables
+         so scheming_datastore_choices can resolve choices.
+      2. Creates a 'sample-dataset' with a sample datastore resource.
+      3. Creates the 'open-data-intake' package with 'Open Data Intake
+         Records' and 'statuses' resources.
+    """
+    import uuid as uuid_module
+    import ckan.model as model
+    from ckanapi import LocalCKAN
+
+    sysadmin = os.environ.get("CKAN_SYSADMIN_NAME", "admin")
+    lc = LocalCKAN(username=sysadmin)
+
+    org = seed_org(lc)
+    seed_lookup_tables(lc, model, uuid_module, org["id"])
+    seed_sample_dataset(lc, org["id"])
+    seed_intake_dataset(lc, model, uuid_module, org["id"])
+    click.echo("Seeding complete.")
 
 
 @opendatatoronto.group()

@@ -1,3 +1,4 @@
+
 from enum import Enum
 
 MULTIPLE_CHOICE_PACKAGE_FIELDS = (
@@ -10,3 +11,4 @@ MULTIPLE_CHOICE_PACKAGE_FIELDS = (
 class DatastoreCacheFormats(Enum):
     spatial = ["CSV", "SHP", "GPKG", "GEOJSON"]
     non_spatial = ["CSV", "XML", "JSON"]
+

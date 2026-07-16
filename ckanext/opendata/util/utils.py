@@ -282,7 +282,7 @@ def get_catalog():
         )
         output["url"] = package["resources"][0]["url"]
         return output
-    except tk.NotAuthorized:
+    except (tk.NotAuthorized, tk.ObjectNotFound):
         pass
 
     return None

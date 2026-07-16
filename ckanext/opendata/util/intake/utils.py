@@ -314,12 +314,15 @@ def fuzzy_match_ticket_ids(this_ticket_id, all_ticket_ids):
 
 
 def get_intake_tickets(context) -> List[Ticket]:
-    return _get_datastore_records(context, "Open Data Intake Records")
+    try:
+        return _get_datastore_records(context, "Open Data Intake Records")
+    except tk.ObjectNotFound:
+        return []
 
 def get_status_definitions(context):
     try:
         definitions = _get_datastore_records(context, "statuses")
-    except ValueError:
+    except (ValueError, tk.ObjectNotFound):
         return {}
     return {d["status"]: {"definition": d["definition"], "colour": d["colour"], "status_public_name": d["public_name"], "category": d["category"]} for d in definitions}
 
