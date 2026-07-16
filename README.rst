@@ -50,6 +50,30 @@ For a user to get a large datastore resource from CKAN as a file download, the s
 By default, ``/datastore_cache`` is run after a datastore resource is updated ... but it can also be run on demand.
 
 
+----------------------
+Dependency management
+----------------------
+
+``requirements.txt`` is the compiled lockfile for all Python dependencies across
+the CKAN stack (CKAN core, this extension, and ``od-ckanext-iotrans``). It is
+generated from ``requirements.in`` and committed — do not edit it by hand.
+
+To add or update a dependency, edit ``requirements.in``, then recompile::
+
+    bin/compile-requirements.sh
+
+The script requires ``uv`` (recommended) or ``pip-tools``::
+
+    # uv (install once):
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # or pip-tools:
+    pip install pip-tools
+
+Commit both ``requirements.in`` and the regenerated ``requirements.txt``.
+The local Docker build and the CloudFormation deployment both consume
+``requirements.txt`` directly.
+
 ------------
 Contribution
 ------------
