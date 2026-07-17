@@ -13,6 +13,9 @@
 # ckanext-iotrans deps
 -r ../od-ckanext-iotrans/requirements.txt
 
+# ckanext-solr-sqs deps (boto3 already pinned below; included for completeness)
+-r ../ckanext-solr-sqs/requirements.txt
+
 # ckanext-scheming (no requirements file; no extra deps beyond CKAN core)
 
 # opendata_ckan direct deps
@@ -24,3 +27,9 @@ botocore==1.40.39
 boto3==1.40.39
 urllib3==1.26.17
 setuptools==78.1.1
+# MarkupSafe 3.x changed Markup.replace() behaviour so dominate's util.escape()
+# actually mutates Markup objects, causing HTML inside link labels (e.g. FA icons)
+# to be double-escaped and rendered as visible entities.  2.1.x silently treated
+# the replacements as no-ops because it escaped the search pattern itself first.
+# Unblock when the od-ckan link_to() helper is fixed to use dominate.util.raw().
+MarkupSafe==2.1.5

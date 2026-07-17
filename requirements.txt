@@ -7,7 +7,7 @@ attrs==26.1.0             # via fiona
 babel==2.15.0             # via flask-babel, -r repos/opendata_ckan/../od-ckan/requirements.in
 bleach==6.1.0             # via -r repos/opendata_ckan/../od-ckan/requirements.in
 blinker==1.8.2            # via flask, -r repos/opendata_ckan/../od-ckan/requirements.in
-boto3==1.40.39            # via -r repos/opendata_ckan/requirements.in
+boto3==1.40.39            # via -r repos/opendata_ckan/../ckanext-solr-sqs/requirements.txt, -r repos/opendata_ckan/requirements.in
 botocore==1.40.39         # via boto3, s3transfer, -r repos/opendata_ckan/requirements.in
 cachelib==0.14.0          # via flask-session
 certifi==2026.6.17        # via fiona, pyproj, requests, -r repos/opendata_ckan/../od-ckan/requirements.in
@@ -33,7 +33,7 @@ librt==0.13.0             # via mypy
 lxml==6.1.1               # via feedgen
 mako==1.3.12              # via alembic
 markdown==3.6             # via -r repos/opendata_ckan/../od-ckan/requirements.in
-markupsafe==3.0.3         # via jinja2, mako, werkzeug, wtforms
+markupsafe==2.1.5         # via jinja2, mako, werkzeug, wtforms, -r repos/opendata_ckan/requirements.in
 msgspec==0.18.6           # via flask-session, -r repos/opendata_ckan/../od-ckan/requirements.in
 mypy==1.19.1              # via sqlalchemy
 mypy-extensions==1.1.0    # via mypy
