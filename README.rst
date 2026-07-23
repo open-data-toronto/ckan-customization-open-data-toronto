@@ -54,11 +54,22 @@ By default, ``/datastore_cache`` is run after a datastore resource is updated ..
 Dependency management
 ----------------------
 
-``requirements.txt`` is the compiled lockfile for all Python dependencies across
-the CKAN stack (CKAN core, this extension, and ``od-ckanext-iotrans``). It is
-generated from ``requirements.in`` and committed — do not edit it by hand.
+There are three requirements files:
 
-To add or update a dependency, edit ``requirements.in``, then recompile::
+* ``requirements.txt`` — this extension's own direct dependencies (loose bounds).
+  Edit this file to add or change ``opendata_ckan``-specific deps. It is also
+  used as ``install_requires`` in ``setup.py`` so other adopters get the right deps.
+* ``requirements.in`` — aggregator for the full deployment stack (CKAN core,
+  ``od-ckanext-iotrans``, ``ckanext-solr-sqs``, and production pin overrides).
+  Edit this file only for cross-repo or deployment-specific changes.
+* ``requirements-lock.txt`` — the fully compiled, pinned lockfile generated from
+  ``requirements.in``. Do not edit it by hand.
+
+The local Docker build and the CloudFormation deployment both consume
+``requirements-lock.txt``.
+
+To regenerate the lockfile after any change to ``requirements.txt`` or
+``requirements.in``::
 
     bin/compile-requirements.sh
 
@@ -70,9 +81,8 @@ The script requires ``uv`` (recommended) or ``pip-tools``::
     # or pip-tools:
     pip install pip-tools
 
-Commit both ``requirements.in`` and the regenerated ``requirements.txt``.
-The local Docker build and the CloudFormation deployment both consume
-``requirements.txt`` directly.
+Commit ``requirements.txt``, ``requirements.in``, and the regenerated
+``requirements-lock.txt``.
 
 ------------
 Contribution

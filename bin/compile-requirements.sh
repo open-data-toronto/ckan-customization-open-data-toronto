@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Regenerate requirements.txt from requirements.in.
+# Regenerate requirements-lock.txt from requirements.in.
 # Run from anywhere inside the opendata_ckan repo:
 #
 #   bin/compile-requirements.sh
 #
-# Output: opendata_ckan/requirements.txt (commit this file)
-# Source: opendata_ckan/requirements.in  (edit this file to change deps)
+# Output: opendata_ckan/requirements-lock.txt (commit this file)
+# Source: opendata_ckan/requirements.in  (edit for cross-repo deps / production pins)
+#         opendata_ckan/requirements.txt  (edit for this extension's own direct deps)
 
 set -euo pipefail
 
@@ -23,13 +24,13 @@ else
   exit 1
 fi
 
-echo "Compiling $REPO_DIR/requirements.txt ..."
+echo "Compiling $REPO_DIR/requirements-lock.txt ..."
 
 $COMPILE \
   --python-version 3.9 \
-  --output-file "$REPO_DIR/requirements.txt" \
+  --output-file "$REPO_DIR/requirements-lock.txt" \
   --annotation-style line \
   --strip-extras \
   "$REPO_DIR/requirements.in"
 
-echo "Done. Commit requirements.txt."
+echo "Done. Commit requirements-lock.txt."

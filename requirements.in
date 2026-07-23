@@ -1,10 +1,12 @@
 # Unified dependency source for all CKAN extensions deployed together.
-# Edit this file to add/change/remove dependencies, then regenerate requirements.txt:
+# Edit requirements.txt to add/change/remove opendata_ckan's own deps.
+# Edit this file only to add/change dependencies from other repos or production pins.
+# Then regenerate the lockfile:
 #
 #   bin/compile-requirements.sh
 #
-# requirements.txt is the generated lockfile consumed by:
-#   - CloudFormation install_ckanext (pip install -r requirements.txt)
+# requirements-lock.txt is the generated lockfile consumed by:
+#   - CloudFormation install_ckanext (pip install -r requirements-lock.txt)
 #   - Docker build (COPY + pip install -r)
 
 # CKAN core deps
@@ -19,8 +21,7 @@
 # ckanext-scheming (no requirements file; no extra deps beyond CKAN core)
 
 # opendata_ckan direct deps
-werkzeug>=3.0.6
-pydantic>=2.9.2
+-r requirements.txt
 
 # Production version pins (security/stability overrides — keep in sync with CloudFormation)
 botocore==1.40.39

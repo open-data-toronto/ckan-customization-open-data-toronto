@@ -29,7 +29,10 @@ setup(
     keywords="",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
     namespace_packages=["ckanext"],
-    install_requires=[],
+    install_requires=[
+        "werkzeug>=3.0.6",
+        "pydantic>=2.9.2",
+    ],
     include_package_data=True,
     package_data={},
     data_files=[],
