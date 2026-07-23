@@ -1,7 +1,3 @@
-# Direct dependencies of the opendata_ckan extension.
-# Edit this file to add/change/remove this extension's own deps.
-#
-# To regenerate the full deployment lockfile (requirements-lock.txt):
-#   bin/compile-requirements.sh
-werkzeug>=3.0.6
-pydantic>=2.9.2
+# imported explicitly for FileStorage utils
+werkzeug>=2.0.3
+pydantic>=2.10.6

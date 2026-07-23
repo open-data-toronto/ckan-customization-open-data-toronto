@@ -42,8 +42,8 @@ passlib==1.7.4            # via -r repos/opendata_ckan/../od-ckan/requirements.i
 pathspec==1.1.1           # via mypy
 polib==1.2.0              # via -r repos/opendata_ckan/../od-ckan/requirements.in
 psycopg2==2.9.9           # via -r repos/opendata_ckan/../od-ckan/requirements.in
-pydantic==2.9.2           # via -r repos/opendata_ckan/../od-ckanext-iotrans/requirements.txt, -r repos/opendata_ckan/requirements.txt
-pydantic-core==2.23.4     # via pydantic
+pydantic==2.11.10         # via -r repos/opendata_ckan/../od-ckanext-iotrans/requirements.txt, -r repos/opendata_ckan/requirements.txt
+pydantic-core==2.33.2     # via pydantic
 pyjwt==2.8.0              # via -r repos/opendata_ckan/../od-ckan/requirements.in
 pyparsing==3.1.2          # via -r repos/opendata_ckan/../od-ckan/requirements.in
 pyproj==3.6.1             # via -r repos/opendata_ckan/../od-ckanext-iotrans/requirements.txt
@@ -63,7 +63,8 @@ sqlalchemy==1.4.52        # via alembic, -r repos/opendata_ckan/../od-ckan/requi
 sqlalchemy2-stubs==0.0.2a38  # via sqlalchemy
 sqlparse==0.5.0           # via -r repos/opendata_ckan/../od-ckan/requirements.in
 tomli==2.4.1              # via mypy
-typing-extensions==4.12.2  # via alembic, mypy, pydantic, pydantic-core, sqlalchemy2-stubs, -r repos/opendata_ckan/../od-ckan/requirements.in
+typing-extensions==4.12.2  # via alembic, mypy, pydantic, pydantic-core, sqlalchemy2-stubs, typing-inspection, -r repos/opendata_ckan/../od-ckan/requirements.in
+typing-inspection==0.4.2  # via pydantic
 tzlocal==5.2              # via -r repos/opendata_ckan/../od-ckan/requirements.in
 urllib3==1.26.17          # via botocore, requests, -r repos/opendata_ckan/requirements.in
 watchdog==6.0.0           # via werkzeug
