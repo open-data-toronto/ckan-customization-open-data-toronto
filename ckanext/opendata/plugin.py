@@ -26,6 +26,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
         return {
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
+            "activity_create": api.activity_create,
             "search_requests": api.search_requests,
             "quality_show": api.quality_show,
             "search_facet": api.search_facet,

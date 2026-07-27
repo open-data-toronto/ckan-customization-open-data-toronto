@@ -1,8 +1,10 @@
 """'Logic for multiple Open Data Toronto-specific CKAN actions"""
 
+import functools
 import io
 import logging
 import os
+import threading
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -203,6 +205,75 @@ def search_packages(context, data_dict):
     return output
 
 
+# ---------------------------------------------------------------------------
+# Activity-stream suppression for datastore_cache
+#
+# Rewriting a resource's cached filestore copies (CSV/XML/JSON/geo) touches
+# several resources via resource_create/resource_patch, and each of those calls
+# package_update under the hood - which CKAN's activity plugin turns into an
+# activity-stream entry. A single cache run therefore produced six-to-eight
+# activity records, bloating the activity table for high-frequency datasets.
+#
+# We suppress every activity generated during a datastore_cache run except one
+# deliberate entry per resource, so a data refresh records a single
+# "changed package" activity instead of a burst. Suppression is thread-local,
+# so it only affects the worker handling the cache request.
+# ---------------------------------------------------------------------------
+_activity_suppression = threading.local()
+
+
+def _suppress_activity_start():
+    _activity_suppression.active = True
+    _activity_suppression.allow_next = False
+
+
+def _suppress_activity_stop():
+    _activity_suppression.active = False
+    _activity_suppression.allow_next = False
+
+
+def _allow_one_activity():
+    """Let the next activity_create call through, then resume suppressing."""
+    _activity_suppression.allow_next = True
+
+
+def _should_suppress_activity() -> bool:
+    if not getattr(_activity_suppression, "active", False):
+        return False
+    if getattr(_activity_suppression, "allow_next", False):
+        _activity_suppression.allow_next = False
+        return False
+    return True
+
+
+def _reset_activity_suppression(func):
+    """Guarantee suppression state never leaks past a datastore_cache call."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        finally:
+            _suppress_activity_stop()
+
+    return wrapper
+
+
+@tk.chained_action
+def activity_create(original_activity_create, context, data_dict):
+    """Suppress activity-stream entries generated during a datastore_cache run.
+
+    All package/resource activity created while caching is dropped except a
+    single deliberate entry per resource (see datastore_cache), reducing a data
+    refresh from six-to-eight activity records down to one. Outside of caching
+    this is a transparent pass-through to CKAN's activity_create.
+    """
+    if _should_suppress_activity():
+        return None
+    return original_activity_create(context, data_dict)
+
+
+@_reset_activity_suppression
 def datastore_cache(context, data_dict):
     """Logic for creating datastore_cache filestore resources
     Datastore_cache filestore resources are filestore copies
@@ -292,6 +363,11 @@ def datastore_cache(context, data_dict):
         raise tk.ValidationError(
             {"constraints": ["Your inputs are not associated with datastore resources"]}
         )
+
+    # Suppress the burst of activity-stream entries that the caching writes
+    # below would otherwise create; a single entry is emitted per resource
+    # instead (see _allow_one_activity before the final resource_patch).
+    _suppress_activity_start()
 
     # for each resource id in your list...
     for resource_info in package_summary["resources"]:
@@ -463,6 +539,11 @@ def datastore_cache(context, data_dict):
 
         # delete the temp directory where we stored the cached files
         tk.get_action("prune")(context, {"path": cached_files_dir})
+
+        # Allow exactly one activity-stream entry for this resource: the final
+        # metadata patch below records a single "changed package" activity,
+        # while all the per-format caching activity above stays suppressed.
+        _allow_one_activity()
 
         # current date and cache paths into resource_patch call
         tk.get_action("resource_patch")(
