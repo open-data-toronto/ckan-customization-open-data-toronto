@@ -23,15 +23,24 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 
     def get_actions(self):
         # TODO: separate intake APIs into their own plugin
-        return {
+        actions = {
             "datastore_cache": api.datastore_cache,
             "datastore_create": api.datastore_create_hook,
-            "activity_create": api.activity_create,
             "search_requests": api.search_requests,
             "quality_show": api.quality_show,
             "search_facet": api.search_facet,
             "search_packages": api.search_packages,
         }
+        # Only override activity_create when the activity plugin is enabled: it
+        # provides the base action our chained override wraps. Guarding this
+        # keeps the extension loadable when activity isn't in ckan.plugins -
+        # otherwise CKAN raises "The action 'activity_create' is not found for
+        # chained action" at startup. When activity isn't loaded there are no
+        # activity records to suppress anyway.
+        if p.plugin_loaded("activity"):
+            api.register_cached_datastore_activity_type()
+            actions["activity_create"] = api.activity_create
+        return actions
 
 
 class UpdateSchemaPlugin(p.SingletonPlugin):
