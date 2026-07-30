@@ -131,7 +131,7 @@ class TestDatastoreCache:
         "ckan.plugins", ["datastore", "iotrans", "extendedapi", "activity"]
     )
     @pytest.mark.usefixtures("with_plugins")
-    def test_emits_single_activity_per_cache_run(
+    def test_emits_no_activity_per_cache_run(
         self,
         record_test_name,
         _activity_table_migrated,
@@ -139,7 +139,7 @@ class TestDatastoreCache:
         datastore_resource,
     ):
         record_test_name(
-            "Datastore Cache API records exactly one activity per cached resource"
+            "Datastore Cache API records no activity when caching a resource"
         )
 
         resource, datastore_record = datastore_resource
@@ -164,17 +164,9 @@ class TestDatastoreCache:
 
         # Caching rewrites several filestore copies (each of which would
         # normally trigger a package_update activity) plus a doubling
-        # package_patch, but suppression collapses them into a single
-        # "cached datastore" activity for the resource.
-        assert activity_count() - before == 1
-
-        # ...and the one activity that lands is our deliberate type.
-        latest = helpers.call_action(
-            "package_activity_list",
-            context=context,
-            id=resource["package_id"],
-        )[0]
-        assert latest["activity_type"] == "cached datastore"
+        # package_patch, but suppression drops them all so a cache run adds no
+        # activity-stream entries.
+        assert activity_count() - before == 0
 
 
 class TestDatastoreCreate:
@@ -659,15 +651,6 @@ class TestActivitySuppression:
         # repeated calls keep suppressing
         assert opendata_api._should_suppress_activity() is True
 
-    def test_allow_one_lets_single_activity_through(self, record_test_name):
-        record_test_name("Exactly one activity is allowed through per cache run")
-        opendata_api._suppress_activity_start()
-        opendata_api._allow_one_activity()
-        # the next check passes through...
-        assert opendata_api._should_suppress_activity() is False
-        # ...and suppression resumes immediately afterwards
-        assert opendata_api._should_suppress_activity() is True
-
     def test_decorator_resets_state_on_success(self, record_test_name):
         record_test_name("Suppression state is reset after a successful cache run")
 
@@ -714,26 +697,4 @@ class TestActivitySuppression:
         assert recorder == []
         # ...but authorization is still checked
         check_access.assert_called_once_with("activity_create", {}, {"n": 1})
-
-    def test_activity_create_allows_exactly_one_during_cache(
-        self, record_test_name, mocker
-    ):
-        record_test_name("activity_create allows one entry then suppresses the rest")
-        # Suppressed calls invoke check_access; stub it to keep the test
-        # fast and focused on the suppression logic.
-        mocker.patch.object(opendata_api.tk, "check_access")
-        recorder = []
-        original = self._original(recorder)
-        opendata_api._suppress_activity_start()
-        opendata_api._allow_one_activity()
-
-        first = opendata_api.activity_create(original, {}, {"n": 1})
-        second = opendata_api.activity_create(original, {}, {"n": 2})
-        third = opendata_api.activity_create(original, {}, {"n": 3})
-
-        assert first == {"id": "created"}
-        assert second is None
-        assert third is None
-        # only the first, allowed, activity reaches the original action
-        assert recorder == [{"n": 1}]
 

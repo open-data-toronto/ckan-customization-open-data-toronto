@@ -8,7 +8,6 @@ import threading
 from datetime import datetime
 from typing import Dict, List, Optional
 
-import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckan.authz import is_sysadmin
 from werkzeug.datastructures import FileStorage
@@ -215,42 +214,24 @@ def search_packages(context, data_dict):
 # activity-stream entry. A single cache run therefore produced six-to-eight
 # activity records, bloating the activity table for high-frequency datasets.
 #
-# We suppress every activity generated during a datastore_cache run except one
-# deliberate entry per resource, so a data refresh records a single
-# "cached datastore" activity instead of a burst. Suppression is thread-local,
-# so it only affects the worker handling the cache request.
+# We suppress every activity generated during a datastore_cache run, so a data
+# refresh records no activity entries at all instead of a burst. Suppression is
+# thread-local, so it only affects the worker handling the cache request.
 # ---------------------------------------------------------------------------
-
-# The activity_type recorded for a completed datastore cache. It's registered
-# with ckanext-activity's validator registry at plugin load (see
-# register_cached_datastore_activity_type) so activity_create will accept it.
-CACHED_DATASTORE_ACTIVITY_TYPE = "cached datastore"
 
 _activity_suppression = threading.local()
 
 
 def _suppress_activity_start():
     _activity_suppression.active = True
-    _activity_suppression.allow_next = False
 
 
 def _suppress_activity_stop():
     _activity_suppression.active = False
-    _activity_suppression.allow_next = False
-
-
-def _allow_one_activity():
-    """Let the next activity_create call through, then resume suppressing."""
-    _activity_suppression.allow_next = True
 
 
 def _should_suppress_activity() -> bool:
-    if not getattr(_activity_suppression, "active", False):
-        return False
-    if getattr(_activity_suppression, "allow_next", False):
-        _activity_suppression.allow_next = False
-        return False
-    return True
+    return getattr(_activity_suppression, "active", False)
 
 
 def _reset_activity_suppression(func):
@@ -270,10 +251,9 @@ def _reset_activity_suppression(func):
 def activity_create(original_activity_create, context, data_dict):
     """Suppress activity-stream entries generated during a datastore_cache run.
 
-    All package/resource activity created while caching is dropped except a
-    single deliberate entry per resource (see datastore_cache), reducing a data
-    refresh from six-to-eight activity records down to one. Outside of caching
-    this is a transparent pass-through to CKAN's activity_create.
+    All package/resource activity created while caching is dropped, so a data
+    refresh records no activity entries instead of six-to-eight. Outside of
+    caching this is a transparent pass-through to CKAN's activity_create.
     """
     if _should_suppress_activity():
         # Enforce the same authorization CKAN's activity_create would, then
@@ -283,22 +263,6 @@ def activity_create(original_activity_create, context, data_dict):
         tk.check_access("activity_create", context, data_dict)
         return None
     return original_activity_create(context, data_dict)
-
-
-def register_cached_datastore_activity_type():
-    """Register our "cached datastore" activity type with ckanext-activity.
-
-    ckanext-activity validates activity_type against its object_id_validators
-    registry and refuses to create (or render) unknown types. Rather than edit
-    that extension, we add our type to the registry at plugin load, pointing it
-    at the same package validator CKAN uses for "changed package". The activity
-    feed renders it through its generic fallback snippet.
-    """
-    from ckanext.activity.logic import validators as activity_validators
-
-    activity_validators.object_id_validators.setdefault(
-        CACHED_DATASTORE_ACTIVITY_TYPE, "package_id_exists"
-    )
 
 
 @_reset_activity_suppression
@@ -393,8 +357,7 @@ def datastore_cache(context, data_dict):
         )
 
     # Suppress the burst of activity-stream entries that the caching writes
-    # below would otherwise create; a single entry is emitted per resource
-    # instead (see _allow_one_activity before the final resource_patch).
+    # below would otherwise create; none are emitted for a cache run.
     _suppress_activity_start()
 
     # for each resource id in your list...
@@ -569,8 +532,8 @@ def datastore_cache(context, data_dict):
         tk.get_action("prune")(context, {"path": cached_files_dir})
 
         # current date and cache paths into resource_patch call. The auto
-        # "changed package" activity this patch would generate stays suppressed;
-        # we emit a single deliberate "cached datastore" activity below instead.
+        # "changed package" activity this patch would generate stays suppressed,
+        # so a cache run records no activity-stream entries at all.
         tk.get_action("resource_patch")(
             context,
             {
@@ -583,25 +546,6 @@ def datastore_cache(context, data_dict):
                 "vertex_count": utils.count_cached_geojson_vertices(output)
             },
         )
-
-        # Record exactly one deliberate activity for this data refresh. We arm
-        # the gate immediately before our own activity_create call so the entry
-        # that lands is deterministically this "cached datastore" activity - not
-        # whatever the activity subscription emitted from the patch above. A
-        # fresh, ignore_auth context mirrors how ckanext-activity itself writes
-        # activities (its activity_create auth denies non-sysadmins otherwise).
-        if p.plugin_loaded("activity"):
-            activity_context = tk.fresh_context(context)
-            activity_context["ignore_auth"] = True
-            _allow_one_activity()
-            tk.get_action("activity_create")(
-                activity_context,
-                {
-                    "user_id": context["auth_user_obj"].id,
-                    "object_id": package["id"],
-                    "activity_type": CACHED_DATASTORE_ACTIVITY_TYPE,
-                },
-            )
 
     logging.info("[ckanext-opendatatoronto] --- Finished Datastore Cache")
     return output

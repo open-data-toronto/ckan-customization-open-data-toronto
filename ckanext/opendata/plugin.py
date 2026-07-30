@@ -38,7 +38,6 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
         # chained action" at startup. When activity isn't loaded there are no
         # activity records to suppress anyway.
         if p.plugin_loaded("activity"):
-            api.register_cached_datastore_activity_type()
             actions["activity_create"] = api.activity_create
         return actions
 
