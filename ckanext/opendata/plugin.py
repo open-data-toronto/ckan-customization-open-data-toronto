@@ -3,6 +3,7 @@ import logging
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckan.plugins.toolkit import _
+from ckanext.datastore.interfaces import IDataDictionaryForm
 
 from . import api, schema
 from .cli import opendatatoronto
@@ -45,6 +46,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 class UpdateSchemaPlugin(p.SingletonPlugin):
     p.implements(p.IResourceController, inherit=True)
     p.implements(p.IValidators)
+    p.implements(IDataDictionaryForm)
 
     # ===============
     # IValidators
@@ -106,6 +108,17 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
 
     def after_resource_delete(self, context, resources):
         schema.update_package(context)
+
+    def update_datastore_info_field(self, field, plugin_data):
+        # some ETL configs store label/notes as null instead of "", which
+        # crashes datatables_view's template (len() on None) - sanitize here
+        # instead of patching the vendored od-ckan template
+        info = field.get("info")
+        if info:
+            for key in ("label", "notes"):
+                if info.get(key) is None:
+                    info[key] = ""
+        return field
 
 
 class ExtendedThemePlugin(p.SingletonPlugin):
