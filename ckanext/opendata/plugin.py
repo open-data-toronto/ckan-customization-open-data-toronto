@@ -68,6 +68,9 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     # IResourceController
     # ==============================
 
+    def update_datastore_create_schema(self, schema):
+        return schema
+
     # Handles resources around their creation, update, and delete times
     # Specifically:
     #   makes sure resources that already exist arent created again
