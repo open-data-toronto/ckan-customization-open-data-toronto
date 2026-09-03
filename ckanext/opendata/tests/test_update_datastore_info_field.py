@@ -39,7 +39,3 @@ class TestUpdateDatastoreInfoField:
         result = self._update(field)
         assert result["info"]["notes"] == ""
         assert result["info"]["label"] == ""
-
-    def test_datastore_create_schema_is_unchanged(self):
-        schema = {"fields": []}
-        assert UpdateSchemaPlugin().update_datastore_create_schema(schema) is schema

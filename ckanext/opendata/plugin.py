@@ -46,7 +46,7 @@ class ExtendedAPIPlugin(p.SingletonPlugin):
 class UpdateSchemaPlugin(p.SingletonPlugin):
     p.implements(p.IResourceController, inherit=True)
     p.implements(p.IValidators)
-    p.implements(IDataDictionaryForm)
+    p.implements(IDataDictionaryForm, inherit=True)
 
     # ===============
     # IValidators
@@ -67,9 +67,6 @@ class UpdateSchemaPlugin(p.SingletonPlugin):
     # ==============================
     # IResourceController
     # ==============================
-
-    def update_datastore_create_schema(self, schema):
-        return schema
 
     # Handles resources around their creation, update, and delete times
     # Specifically:
